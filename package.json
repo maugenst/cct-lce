@@ -1,0 +1,28 @@
+{
+  "name": "cct-lce",
+  "version": "0.0.1",
+  "description": "CCT Latency Check Engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maugenst/cct-lce.git"
+  },
+  "keywords": [
+    "CCT"
+  ],
+  "author": "marius.augenstein@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maugenst/cct-lce/issues"
+  },
+  "homepage": "https://github.com/maugenst/cct-lce#readme",
+  "devDependencies": {
+    "jest": "^24.1.0"
+  },
+  "dependencies": {
+    "assert": "^1.4.1"
+  }
+}
