@@ -50,7 +50,7 @@ class LCE {
 
     async callDrone(datacenter) {
         const start = Date.now();
-        const response = await fetch(`//${calcDroneHost(datacenter)}`);
+        const response = await fetch(`//${this.calcDroneHost(datacenter)}`);
         const contentLength = response.headers.get('content-length');
         const end = Date.now();
 
