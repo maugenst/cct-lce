@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 'use strict';
 
 class LCE {
@@ -67,3 +69,5 @@ class LCE {
     }
 
 }
+
+module.exports = LCE;
