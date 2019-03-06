@@ -1,11 +1,10 @@
 {
   "name": "cct-lce",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "CCT Latency Check Engine",
   "main": "LCE.js",
   "scripts": {
-    "test": "npm test",
-    "build": "browserify LCE.js -o dist/LCE.js"
+    "test": "npm test"
   },
   "repository": {
     "type": "git",
@@ -21,10 +20,7 @@
   },
   "homepage": "https://github.com/maugenst/cct-lce#readme",
   "devDependencies": {
-    "browserify": "^16.2.3",
     "jest": "^24.1.0"
   },
-  "dependencies": {
-    "assert": "^1.4.1"
-  }
+  "dependencies": {}
 }

@@ -1,5 +1,3 @@
-const assert = require('assert');
-
 'use strict';
 
 class LCE {
@@ -9,7 +7,9 @@ class LCE {
                     droneHostDomain,
                 }) {
 
-        assert(droneHostDomain, 'Missing parameter: droneHostDomain');
+        if (!droneHostDomain) {
+            throw new Error('Missing parameter: droneHostDomain');
+        }
         this.datacenters = datacenters;
         this.droneHost = {
             prefix: droneHostPrefix,
@@ -50,7 +50,7 @@ class LCE {
 
     async callDrone(datacenter) {
         const start = Date.now();
-        const response = await fetch(`//${this.calcDroneHost(datacenter)}`);
+        const response = await fetch(`https://${this.calcDroneHost(datacenter)}`);
         const contentLength = response.headers.get('content-length');
         const end = Date.now();
 
