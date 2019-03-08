@@ -51,6 +51,19 @@ class LCE {
     };
   }
 
+  async getBandwidthForIds(idarray) {
+    idarray.forEach(id => this.getBandwidthForId(id));
+  }
+
+  async getBandwidthForId(id) {
+    const dc = this.datacenters.find(datacenter => datacenter.id === id);
+    if (!dc) {
+      return null;
+    }
+    return this.getBandwidthFor(dc);
+  }
+
+
   async getBandwidthFor(datacenter) {
     const start = Date.now();
     const response = await fetch(`https://${this.calcDroneHost(datacenter)}/drone/big`);
@@ -70,6 +83,18 @@ class LCE {
       longitude: datacenter.longitude,
       ip: datacenter.ip,
     };
+  }
+
+  async getLatencyForIds(idarray) {
+    idarray.forEach(id => this.getLatencyForId(id));
+  }
+
+  async getLatencyForId(id) {
+    const dc = this.datacenters.find(datacenter => datacenter.id === id);
+    if (!dc) {
+      return null;
+    }
+    return this.getLatencyFor(dc);
   }
 
   async getLatencyFor(datacenter) {

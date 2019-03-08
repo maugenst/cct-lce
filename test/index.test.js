@@ -23,6 +23,17 @@ const datacenters = [
     ip: '2.2.2.2',
     lastUpdate: '2000-02-02T02:02:02.000Z',
   },
+  {
+    id: '07ef5b6d-24d3-4058-841e-11bad29e49f7',
+    cloud: 'gcp',
+    name: 'asia-southeast1',
+    town: 'Jurong West',
+    country: 'Singapore',
+    latitude: '1.344059500000',
+    longitude: '103.666527500000',
+    ip: '35.187.235.129',
+    lastUpdate: '2019-03-08T07:41:45.000Z',
+  },
 ];
 
 describe('lce-tests', () => {
@@ -79,6 +90,20 @@ describe('lce-tests', () => {
     const ret = await lce.getBandwidthFor({
       name: 'australia-southeast1',
     });
+    console.log(ret);
+    expect(ret.bandwidth).toBeDefined();
+    expect(ret.bandwidth.speedBps).toBeDefined();
+    expect(ret.bandwidth.speedKbps).toBeDefined();
+    expect(ret.bandwidth.speedMbps).toBeDefined();
+  });
+
+  test('test - drone bandwidth by id', async () => {
+    const lce = new LCE({
+      datacenters,
+      droneHostPrefix: 'cct-drone',
+      droneHostDomain: 'mistone.de',
+    });
+    const ret = await lce.getBandwidthForId('07ef5b6d-24d3-4058-841e-11bad29e49f7');
     console.log(ret);
     expect(ret.bandwidth).toBeDefined();
     expect(ret.bandwidth.speedBps).toBeDefined();
