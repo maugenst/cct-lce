@@ -34,6 +34,17 @@ class LCE {
     return data;
   }
 
+  async runBandwidthCheckForAll() {
+    const results = [];
+    this.datacenters.forEach((datacenter) => {
+      results.push(this.getBandwidthForId(datacenter.id));
+    });
+
+    const pResults = await results;
+    const data = await Promise.all(pResults);
+    return data;
+  }
+
   calcDroneHost(datacenter) {
     return `${this.droneHost.prefix}-${datacenter.name}.${this.droneHost.domain}`;
   }
