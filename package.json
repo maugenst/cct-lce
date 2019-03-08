@@ -1,6 +1,6 @@
 {
   "name": "cct-lce",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "CCT Latency Check Engine",
   "main": "LCE.js",
   "scripts": {
@@ -20,7 +20,11 @@
   },
   "homepage": "https://github.com/maugenst/cct-lce#readme",
   "devDependencies": {
-    "jest": "^24.1.0"
+    "eslint": "^5.14.0",
+    "jest": "^24.1.0",
+    "eslint-plugin-import": "^2.16.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "node-fetch": "^2.3.0"
+  }
 }
