@@ -64,7 +64,7 @@ describe('lce-tests', () => {
 
     expect(lce.droneHost.domain).toEqual('drone-domain.com');
     expect(lce.droneHost.prefix).toEqual('aaa');
-    expect(lce.datacenters.length).toEqual(2);
+    expect(lce.datacenters.length).toEqual(3);
   });
 
   test('test - drone latency', async () => {

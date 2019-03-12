@@ -80,7 +80,7 @@ class LCE {
     const response = await fetch(`https://${this.calcDroneHost(datacenter)}/drone/big`);
     const end = Date.now();
     const text = await response.text();
-    const contentLength = text.split('\n')[0];
+    const contentLength = text.length;
     const bandwidth = LCE.calcBandwidth(contentLength, end - start);
 
     return {

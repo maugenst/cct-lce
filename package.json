@@ -1,6 +1,6 @@
 {
   "name": "cct-lce",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "CCT Latency Check Engine",
   "main": "LCE.js",
   "scripts": {
