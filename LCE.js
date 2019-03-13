@@ -77,7 +77,7 @@ class LCE {
 
   async getBandwidthFor(datacenter) {
     const start = Date.now();
-    const response = await fetch(`https://${this.calcDroneHost(datacenter)}/drone/big`);
+    const response = await fetch(`https://${this.calcDroneHost(datacenter)}/drone/big`, { cache: 'no-store' });
     const end = Date.now();
     const text = await response.text();
     const contentLength = text.length;
@@ -110,7 +110,7 @@ class LCE {
 
   async getLatencyFor(datacenter) {
     const start = Date.now();
-    await fetch(`https://${this.calcDroneHost(datacenter)}/drone`);
+    await fetch(`https://${this.calcDroneHost(datacenter)}/drone`, { cache: 'no-store' });
     const end = Date.now();
 
     return {
