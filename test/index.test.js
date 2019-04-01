@@ -111,5 +111,26 @@ describe('lce-tests', () => {
     expect(ret.bandwidth.speedMbps).toBeDefined();
   });
 
+  test('test - drone bandwidth and cancel download', async () => {
+    const lce = new LCE({
+      datacenters,
+      droneHostPrefix: 'cct-drone',
+      droneHostDomain: 'mistone.de',
+    });
+    lce.getBandwidthForId('07ef5b6d-24d3-4058-841e-11bad29e49f7').then((data) => {
+      console.log(data);
+    }).catch((err) => {
+      console.log(err);
+    });
+    lce.terminate();
+
+    lce.getBandwidthForId('07ef5b6d-24d3-4058-841e-11bad29e49f7').then((ret) => {
+      expect(ret.bandwidth).toBeDefined();
+      expect(ret.bandwidth.speedBps).toBeDefined();
+      expect(ret.bandwidth.speedKbps).toBeDefined();
+      expect(ret.bandwidth.speedMbps).toBeDefined();
+    });
+  });
+
   // more to come ...
 });

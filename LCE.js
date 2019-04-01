@@ -14,12 +14,20 @@ class LCE {
       prefix: droneHostPrefix,
       domain: droneHostDomain,
     };
+    this.cancelableRequests = [];
   }
 
   compare(a, b) {
     if (a.latency < b.latency) return -1;
     if (a.latency > b.latency) return 1;
     return 0;
+  }
+
+  terminate() {
+    this.cancelableRequests.forEach((xhr) => {
+      xhr.abort();
+    });
+    this.cancelableRequests = [];
   }
 
   async runLatencyCheckForAll() {
@@ -77,10 +85,9 @@ class LCE {
 
   async getBandwidthFor(datacenter) {
     const start = Date.now();
-    const response = await fetch(`https://${this.calcDroneHost(datacenter)}/drone/big`, { cache: 'no-store' });
+    const response = await this.cancelableFetch(`https://${this.calcDroneHost(datacenter)}/drone/big`);
     const end = Date.now();
-    const text = await response.text();
-    const contentLength = text.length;
+    const contentLength = response.length;
     const bandwidth = LCE.calcBandwidth(contentLength, end - start);
 
     return {
@@ -94,6 +101,25 @@ class LCE {
       longitude: datacenter.longitude,
       ip: datacenter.ip,
     };
+  }
+
+  cancelableFetch(url) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      this.cancelableRequests.push(xhr);
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            resolve(xhr.response);
+          } else {
+            reject(new Error('Request aborted.'));
+          }
+        }
+      };
+      xhr.open('GET', url, true);
+      xhr.setRequestHeader('Cache-Control', 'no-cache');
+      xhr.send();
+    });
   }
 
   async getLatencyForIds(idarray) {
