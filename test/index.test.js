@@ -352,6 +352,24 @@ describe('lce-tests', () => {
       expect(ret.bandwidth.speedMbps).toBeDefined();
     });
   });
+4
+  test('test - drone bandwidth all and cancel after 1 sec', async () => {
+    const lce = new LCE({
+      datacenters,
+      droneHostPrefix: 'cct-drone',
+      droneHostDomain: 'mistone.de',
+    });
+    lce.runLatencyCheckForAll().then((data) => {
+      console.log(data);
+    }).catch((err) => {
+      console.log(err);
+    });
+    setTimeout(() => {
+      lce.terminate();
+    }, 1000);
+    expect(lce.cancelableBandwidthRequests.length).toEqual(0);
+
+  });
 
   // more to come ...
 });
