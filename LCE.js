@@ -1,21 +1,13 @@
-const { XMLHttpRequest } = require('xmlhttprequest');
+const fetch = require('node-fetch');
 
 class LCE {
   constructor({
     datacenters,
-    droneHostPrefix = 'cct-drone',
-    droneHostDomain,
   }) {
-    if (!droneHostDomain) {
-      throw new Error('Missing parameter: droneHostDomain');
-    }
     this.datacenters = datacenters;
-    this.droneHost = {
-      prefix: droneHostPrefix,
-      domain: droneHostDomain,
-    };
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];
+    this.blockedUrls = {};
   }
 
   async runLatencyCheckForAll() {
@@ -61,7 +53,7 @@ class LCE {
 
   async getLatencyFor(datacenter) {
     const start = Date.now();
-    await this.latencyFetch(`https://${this.calcDroneHost(datacenter)}/drone`);
+    await this.latencyFetch(`https://${datacenter.ip}/drone`);
     const end = Date.now();
 
     return {
@@ -79,7 +71,7 @@ class LCE {
 
   async getBandwidthFor(datacenter) {
     const start = Date.now();
-    const response = await this.bandwidthFetch(`https://${this.calcDroneHost(datacenter)}/drone/big`);
+    const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
     const end = Date.now();
     const contentLength = response.length;
     const bandwidth = LCE.calcBandwidth(contentLength, end - start);
@@ -98,32 +90,26 @@ class LCE {
   }
 
   bandwidthFetch(url) {
-    const xhr = new XMLHttpRequest();
-    this.cancelableBandwidthRequests.push(xhr);
-    return this.fetch(url, xhr);
+    const controller = new AbortController();
+    const { signal } = controller;
+    this.cancelableBandwidthRequests.push(controller);
+    return this.abortableFetch(url, signal);
   }
 
   latencyFetch(url) {
-    const xhr = new XMLHttpRequest();
-    this.cancelableLatencyRequests.push(xhr);
-    return this.fetch(url, xhr);
+    const controller = new AbortController();
+    const { signal } = controller;
+    this.cancelableLatencyRequests.push(controller);
+    return this.abortableFetch(url, signal);
   }
 
-  fetch(url, xhr) {
-    return new Promise((resolve, reject) => {
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            resolve(xhr.response || xhr.responseText);
-          } else {
-            reject(new Error('Request aborted.'));
-          }
-        }
-      };
-      xhr.open('GET', url, true);
-      xhr.setRequestHeader('Cache-Control', 'no-cache');
-      xhr.send();
-    });
+  async abortableFetch(url, signal) {
+    const response = await fetch(url,
+      {
+        cache: 'no-store',
+        signal,
+      });
+    return response;
   }
 
   compare(a, b) {
@@ -133,11 +119,11 @@ class LCE {
   }
 
   terminate() {
-    this.cancelableLatencyRequests.forEach((xhr) => {
-      xhr.abort();
+    this.cancelableLatencyRequests.forEach((controller) => {
+      controller.abort();
     });
-    this.cancelableBandwidthRequests.forEach((xhr) => {
-      xhr.abort();
+    this.cancelableBandwidthRequests.forEach((controller) => {
+      controller.abort();
     });
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];

@@ -1,4 +1,6 @@
+const { XMLHttpRequest } = require('xmlhttprequest');
 const LCE = require('../LCE');
+
 
 const datacenters = [
   {
@@ -31,8 +33,8 @@ const datacenters = [
     country: 'USA',
     latitude: '45.609579600000',
     longitude: '-121.243900200000',
-    ip: '35.203.140.16',
-    lastUpdate: '2019-03-25T14:37:41.000Z',
+    ip: 'cct-drone-gcp-us-west1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
   },
   {
     id: '1764db7a-7827-4c68-aba2-6031cdd11503',
@@ -42,8 +44,8 @@ const datacenters = [
     country: 'USA',
     latitude: '34.020346400000',
     longitude: '-118.972172000000',
-    ip: '35.235.111.179',
-    lastUpdate: '2019-03-12T14:19:21.000Z',
+    ip: 'cct-drone-gcp-us-west2.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
   },
   {
     id: '1991775f-1f04-46f2-987a-9979d6dfff1f',
@@ -53,8 +55,8 @@ const datacenters = [
     country: 'Singapore',
     latitude: '1.344059500000',
     longitude: '103.666527500000',
-    ip: '35.187.235.129',
-    lastUpdate: '2019-03-12T14:19:20.000Z',
+    ip: 'cct-drone-gcp-asia-southeast1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: '2c59733c-5eb5-4e28-8eb5-a66f553adc1e',
@@ -64,8 +66,8 @@ const datacenters = [
     country: 'Germany',
     latitude: '50.121127700000',
     longitude: '8.496482000000',
-    ip: '35.234.85.231',
-    lastUpdate: '2019-03-12T14:19:26.000Z',
+    ip: 'cct-drone-gcp-europe-west3.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
   },
   {
     id: '2f7c733f-e061-4757-8929-ce7f9d5385b8',
@@ -75,8 +77,8 @@ const datacenters = [
     country: 'US',
     latitude: '39.988021100000',
     longitude: '-75.417550500000',
-    ip: '169.145.60.40',
-    lastUpdate: '2019-04-02T11:49:23.000Z',
+    ip: 'webphl.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: '3147b08a-ed51-4d2f-ab7c-583594c589fa',
@@ -86,8 +88,19 @@ const datacenters = [
     country: 'USA',
     latitude: '41.232890300000',
     longitude: '-95.986764400000',
-    ip: '23.251.147.24',
-    lastUpdate: '2019-03-12T14:19:36.000Z',
+    ip: 'cct-drone-gcp-us-central1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
+  },
+  {
+    id: '390396c7-25d9-4482-a758-fa12e770aa6b',
+    cloud: 'smc',
+    name: 'us-east',
+    town: 'Stirling',
+    country: 'US',
+    latitude: '39.025962000000',
+    longitude: '-77.414429000000',
+    ip: 'speedtestendpointkbyafuc54z.int.us3.hana.ondemand.com/speedtestendpoint',
+    lastUpdate: '2019-04-10T08:27:03.000Z',
   },
   {
     id: '53a97f57-754a-4f29-a663-b616d06de865',
@@ -97,8 +110,8 @@ const datacenters = [
     country: 'USA',
     latitude: '33.197555000000',
     longitude: '-80.071314500000',
-    ip: '34.73.200.209',
-    lastUpdate: '2019-03-12T14:19:33.000Z',
+    ip: 'cct-drone-gcp-us-east1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
   },
   {
     id: '6360fd99-fc5d-44a2-9ef1-eb917b78367a',
@@ -108,8 +121,8 @@ const datacenters = [
     country: 'Belgium',
     latitude: '50.489979400000',
     longitude: '3.667837600000',
-    ip: '34.76.1.43',
-    lastUpdate: '2019-03-12T14:18:47.000Z',
+    ip: 'cct-drone-gcp-europe-west1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
   },
   {
     id: '6baca5be-6251-4291-a946-f1fd42c9f5f0',
@@ -119,8 +132,8 @@ const datacenters = [
     country: 'Canada',
     latitude: '45.557633700000',
     longitude: '-74.290718800000',
-    ip: '35.203.3.227',
-    lastUpdate: '2019-03-12T14:19:13.000Z',
+    ip: 'cct-drone-gcp-northamerica-northeast1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:04.000Z',
   },
   {
     id: '8c2d6651-e705-4cb1-bd7a-e50a20103549',
@@ -130,8 +143,8 @@ const datacenters = [
     country: 'Hongkong',
     latitude: '22.353040300000',
     longitude: '113.567243500000',
-    ip: '35.220.153.230',
-    lastUpdate: '2019-03-12T14:19:30.000Z',
+    ip: 'cct-drone-gcp-asia-east2.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: '8ffca54c-21e0-4f29-9eff-0ce71f3e3e37',
@@ -141,8 +154,8 @@ const datacenters = [
     country: 'USA',
     latitude: '39.025552400000',
     longitude: '-77.463269400000',
-    ip: '35.194.85.8',
-    lastUpdate: '2019-03-12T14:19:11.000Z',
+    ip: 'cct-drone-gcp-us-east4.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: '96f6e3fa-35b6-478a-ab38-63696b4f422a',
@@ -152,8 +165,8 @@ const datacenters = [
     country: 'Japan',
     latitude: '35.673576300000',
     longitude: '139.430203200000',
-    ip: '34.85.35.225',
-    lastUpdate: '2019-03-12T14:19:27.000Z',
+    ip: 'cct-drone-gcp-asia-northeast1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: '9b22cdd1-65f9-4f3d-9f4f-3da412593568',
@@ -163,8 +176,8 @@ const datacenters = [
     country: 'India',
     latitude: '19.082522300000',
     longitude: '72.741100900000',
-    ip: '35.200.173.178',
-    lastUpdate: '2019-03-12T14:19:30.000Z',
+    ip: 'cct-drone-gcp-asia-south1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:06.000Z',
   },
   {
     id: 'a50aafd6-1dd9-4fb9-9f37-c4cd13636421',
@@ -174,8 +187,8 @@ const datacenters = [
     country: 'Finland',
     latitude: '60.569657200000',
     longitude: '27.139703900000',
-    ip: '35.228.8.52',
-    lastUpdate: '2019-03-12T14:19:39.000Z',
+    ip: 'cct-drone-gcp-europe-north1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: 'b6fda8a6-e8d5-48e6-8223-edcd2ea20054',
@@ -185,8 +198,8 @@ const datacenters = [
     country: 'Netherlands',
     latitude: '53.435730500000',
     longitude: '6.763058200000',
-    ip: '35.204.0.225',
-    lastUpdate: '2019-03-12T14:19:18.000Z',
+    ip: 'cct-drone-gcp-europe-west4.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: 'c1385980-3921-4777-8ef2-427c68c52b3e',
@@ -196,8 +209,8 @@ const datacenters = [
     country: 'Taiwan',
     latitude: '23.991873300000',
     longitude: '120.323068200000',
-    ip: '34.80.3.246',
-    lastUpdate: '2019-03-12T14:19:27.000Z',
+    ip: 'cct-drone-gcp-asia-east1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: 'd0a2eb56-e8c2-457f-be23-163af3220afc',
@@ -207,8 +220,8 @@ const datacenters = [
     country: 'US',
     latitude: '1.283910000000',
     longitude: '103.811666500000',
-    ip: '169.145.202.37',
-    lastUpdate: '2019-04-02T11:49:25.000Z',
+    ip: 'websin.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:06.000Z',
   },
   {
     id: 'd174e700-f28d-470c-94dd-269d7263479b',
@@ -218,8 +231,8 @@ const datacenters = [
     country: 'Brazil',
     latitude: '-23.680146200000',
     longitude: '-47.155743300000',
-    ip: '35.198.4.46',
-    lastUpdate: '2019-03-12T14:19:32.000Z',
+    ip: 'cct-drone-gcp-southamerica-east1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: 'def59866-2899-4ddd-94d7-c78d8fd1f144',
@@ -229,8 +242,8 @@ const datacenters = [
     country: 'Australia',
     latitude: '-33.845835200000',
     longitude: '150.371549900000',
-    ip: '35.189.32.41',
-    lastUpdate: '2019-03-12T14:19:19.000Z',
+    ip: 'cct-drone-gcp-australia-southeast1.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: 'e7585a2b-ed1c-4f71-9b9e-d7036d16f486',
@@ -240,8 +253,8 @@ const datacenters = [
     country: 'Germany',
     latitude: '49.244376900000',
     longitude: '8.636224900000',
-    ip: '155.56.56.14',
-    lastUpdate: '2019-04-02T11:49:23.000Z',
+    ip: 'webwdf.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
   {
     id: 'f283eadf-2165-4bdd-9c72-cce04b881c7a',
@@ -251,10 +264,14 @@ const datacenters = [
     country: 'United Kingdom',
     latitude: '51.528161300000',
     longitude: '-0.662001000000',
-    ip: '35.197.201.118',
-    lastUpdate: '2019-03-12T14:19:00.000Z',
+    ip: 'cct-drone-gcp-europe-west2.sapdemocloud.com',
+    lastUpdate: '2019-04-12T08:24:05.000Z',
   },
 ];
+
+beforeAll(() => {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+});
 
 describe('lce-tests', () => {
   test('test object creation', async () => {
@@ -263,40 +280,28 @@ describe('lce-tests', () => {
       lce = new LCE();
     }).toThrow(/Cannot destructure property/);
 
-    expect(() => {
-      lce = new LCE({
-        datacenters,
-      });
-    }).toThrow(/Missing parameter/);
-
-    expect(() => {
-      lce = new LCE({
-        datacenters,
-        droneHostPrefix: 'aaa',
-      });
-    }).toThrow(/Missing parameter/);
-
     lce = new LCE({
       datacenters,
-      droneHostPrefix: 'aaa',
-      droneHostDomain: 'drone-domain.com',
     });
 
-    expect(lce.droneHost.domain).toEqual('drone-domain.com');
-    expect(lce.droneHost.prefix).toEqual('aaa');
-    expect(lce.datacenters.length).toEqual(23);
+    expect(lce.datacenters.length).toEqual(24);
   });
 
   test('test - drone latency', async () => {
     const lce = new LCE({
       datacenters,
-      droneHostPrefix: 'cct-drone',
-      droneHostDomain: 'mistone.de',
     });
     const ret = await lce.getLatencyFor({
-      name: 'australia-southeast1',
+      id: 'e7585a2b-ed1c-4f71-9b9e-d7036d16f486',
+      cloud: 'sdc',
+      name: 'emea',
+      town: 'Walldorf',
+      country: 'Germany',
+      latitude: '49.244376900000',
+      longitude: '8.636224900000',
+      ip: 'webwdf.sapdemocloud.com',
+      lastUpdate: '2019-04-12T08:24:05.000Z',
     });
-    console.log(ret);
     expect(ret.latency).toBeDefined();
     expect(ret.latency > 100).toBe(true);
   });
@@ -304,13 +309,18 @@ describe('lce-tests', () => {
   test('test - drone bandwidth', async () => {
     const lce = new LCE({
       datacenters,
-      droneHostPrefix: 'cct-drone',
-      droneHostDomain: 'mistone.de',
     });
     const ret = await lce.getBandwidthFor({
-      name: 'australia-southeast1',
+      id: 'e7585a2b-ed1c-4f71-9b9e-d7036d16f486',
+      cloud: 'sdc',
+      name: 'emea',
+      town: 'Walldorf',
+      country: 'Germany',
+      latitude: '49.244376900000',
+      longitude: '8.636224900000',
+      ip: 'webwdf.sapdemocloud.com',
+      lastUpdate: '2019-04-12T08:24:05.000Z',
     });
-    console.log(ret);
     expect(ret.bandwidth).toBeDefined();
     expect(ret.bandwidth.speedBps).toBeDefined();
     expect(ret.bandwidth.speedKbps).toBeDefined();
@@ -320,11 +330,8 @@ describe('lce-tests', () => {
   test('test - drone bandwidth by id', async () => {
     const lce = new LCE({
       datacenters,
-      droneHostPrefix: 'cct-drone',
-      droneHostDomain: 'mistone.de',
     });
-    const ret = await lce.getBandwidthForId('9b22cdd1-65f9-4f3d-9f4f-3da412593568');
-    console.log(ret);
+    const ret = await lce.getBandwidthForId('e7585a2b-ed1c-4f71-9b9e-d7036d16f486');
     expect(ret.bandwidth).toBeDefined();
     expect(ret.bandwidth.speedBps).toBeDefined();
     expect(ret.bandwidth.speedKbps).toBeDefined();
@@ -334,10 +341,8 @@ describe('lce-tests', () => {
   test('test - drone bandwidth and cancel download', async () => {
     const lce = new LCE({
       datacenters,
-      droneHostPrefix: 'cct-drone',
-      droneHostDomain: 'mistone.de',
     });
-    lce.getBandwidthForId('9b22cdd1-65f9-4f3d-9f4f-3da412593568').then((data) => {
+    lce.getBandwidthForId('e7585a2b-ed1c-4f71-9b9e-d7036d16f486').then((data) => {
       console.log(data);
     }).catch((err) => {
       console.log(err);
@@ -345,30 +350,12 @@ describe('lce-tests', () => {
     lce.terminate();
     expect(lce.cancelableBandwidthRequests.length).toEqual(0);
 
-    lce.getBandwidthForId('9b22cdd1-65f9-4f3d-9f4f-3da412593568').then((ret) => {
+    lce.getBandwidthForId('e7585a2b-ed1c-4f71-9b9e-d7036d16f486').then((ret) => {
       expect(ret.bandwidth).toBeDefined();
       expect(ret.bandwidth.speedBps).toBeDefined();
       expect(ret.bandwidth.speedKbps).toBeDefined();
       expect(ret.bandwidth.speedMbps).toBeDefined();
     });
-  });
-4
-  test('test - drone bandwidth all and cancel after 1 sec', async () => {
-    const lce = new LCE({
-      datacenters,
-      droneHostPrefix: 'cct-drone',
-      droneHostDomain: 'mistone.de',
-    });
-    lce.runLatencyCheckForAll().then((data) => {
-      console.log(data);
-    }).catch((err) => {
-      console.log(err);
-    });
-    setTimeout(() => {
-      lce.terminate();
-    }, 1000);
-    expect(lce.cancelableBandwidthRequests.length).toEqual(0);
-
   });
 
   // more to come ...
