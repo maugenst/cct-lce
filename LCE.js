@@ -53,7 +53,7 @@ class LCE {
 
   async getLatencyFor(datacenter) {
     const start = Date.now();
-    await this.latencyFetch(`https://${datacenter.ip}/drone`);
+    await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
     const end = Date.now();
 
     return {
@@ -73,8 +73,8 @@ class LCE {
     const start = Date.now();
     const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
     const end = Date.now();
-    const contentLength = response.length;
-    const bandwidth = LCE.calcBandwidth(contentLength, end - start);
+    const rawBody = await response.text();
+    const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
 
     return {
       id: datacenter.id,
@@ -127,10 +127,6 @@ class LCE {
     });
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];
-  }
-
-  calcDroneHost(datacenter) {
-    return `${this.droneHost.prefix}-${datacenter.name}.${this.droneHost.domain}`;
   }
 
   static calcBandwidth(downloadSize, latency) {
