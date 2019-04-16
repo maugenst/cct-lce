@@ -19,10 +19,10 @@ class LCE {
     const pResults = await results;
     const data = await Promise.all(pResults);
     // filter failed requests
-    data = data.filter(d => d !== null);
-    data.sort(this.compare);
+    const filteredData = data.filter(d => d !== null);
+    filteredData.sort(this.compare);
     this.cancelableLatencyRequests = [];
-    return data;
+    return filteredData;
   }
 
   async runBandwidthCheckForAll() {
