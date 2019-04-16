@@ -100,7 +100,7 @@ class LCE {
   bandwidthFetch(url) {
     const controller = new AbortController();
     const {
-      signal
+      signal,
     } = controller;
     this.cancelableBandwidthRequests.push(controller);
     return this.abortableFetch(url, signal, this.agent);
@@ -109,7 +109,7 @@ class LCE {
   latencyFetch(url) {
     const controller = new AbortController();
     const {
-      signal
+      signal,
     } = controller;
     this.cancelableLatencyRequests.push(controller);
     return this.abortableFetch(url, signal, this.agent);
