@@ -52,53 +52,65 @@ class LCE {
   }
 
   async getLatencyFor(datacenter) {
-    const start = Date.now();
-    await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
-    const end = Date.now();
+    try {
+      const start = Date.now();
+      await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+      const end = Date.now();
 
-    return {
-      id: datacenter.id,
-      latency: end - start,
-      cloud: datacenter.cloud,
-      name: datacenter.name,
-      town: datacenter.town,
-      country: datacenter.country,
-      latitude: datacenter.latitude,
-      longitude: datacenter.longitude,
-      ip: datacenter.ip,
-    };
+      return {
+        id: datacenter.id,
+        latency: end - start,
+        cloud: datacenter.cloud,
+        name: datacenter.name,
+        town: datacenter.town,
+        country: datacenter.country,
+        latitude: datacenter.latitude,
+        longitude: datacenter.longitude,
+        ip: datacenter.ip,
+      };
+    } catch (error) {
+      return null;
+    }
   }
 
   async getBandwidthFor(datacenter) {
-    const start = Date.now();
-    const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
-    const end = Date.now();
-    const rawBody = await response.text();
-    const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
+    try {
+      const start = Date.now();
+      const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+      const end = Date.now();
+      const rawBody = await response.text();
+      const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
 
-    return {
-      id: datacenter.id,
-      bandwidth,
-      cloud: datacenter.cloud,
-      name: datacenter.name,
-      town: datacenter.town,
-      country: datacenter.country,
-      latitude: datacenter.latitude,
-      longitude: datacenter.longitude,
-      ip: datacenter.ip,
-    };
+      return {
+        id: datacenter.id,
+        bandwidth,
+        cloud: datacenter.cloud,
+        name: datacenter.name,
+        town: datacenter.town,
+        country: datacenter.country,
+        latitude: datacenter.latitude,
+        longitude: datacenter.longitude,
+        ip: datacenter.ip,
+      };
+    } catch (error) {
+      return null;
+    }
   }
 
   bandwidthFetch(url) {
     const controller = new AbortController();
-    const { signal } = controller;
+    const {
+      signal
+    } = controller;
     this.cancelableBandwidthRequests.push(controller);
     return this.abortableFetch(url, signal, this.agent);
   }
 
   latencyFetch(url) {
     const controller = new AbortController();
-    const { signal } = controller;
+    const {
+      signal
+    } = controller;
     this.cancelableLatencyRequests.push(controller);
     return this.abortableFetch(url, signal, this.agent);
   }

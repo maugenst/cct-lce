@@ -23,8 +23,9 @@
     "eslint": "^5.14.0",
     "eslint-plugin-import": "^2.16.0",
     "jest": "^24.1.0",
-    "node-fetch": "^2.3.0",
     "xmlhttprequest": "^1.8.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "node-fetch": "^2.3.0"
+  }
 }
