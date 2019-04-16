@@ -3,8 +3,10 @@ const fetch = require('node-fetch');
 class LCE {
   constructor({
     datacenters,
+    agent,
   }) {
     this.datacenters = datacenters;
+    this.agent = agent;
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];
     this.blockedUrls = {};
@@ -25,14 +27,12 @@ class LCE {
 
   async runBandwidthCheckForAll() {
     const results = [];
-    this.datacenters.forEach((datacenter) => {
-      results.push(this.getBandwidthFor(datacenter));
+    this.datacenters.forEach(async (datacenter) => {
+      results.push(await this.getBandwidthFor(datacenter));
     });
 
-    const pResults = await results;
-    const data = await Promise.all(pResults);
     this.cancelableBandwidthRequests = [];
-    return data;
+    return results;
   }
 
   getBandwidthForId(id) {
@@ -93,21 +93,22 @@ class LCE {
     const controller = new AbortController();
     const { signal } = controller;
     this.cancelableBandwidthRequests.push(controller);
-    return this.abortableFetch(url, signal);
+    return this.abortableFetch(url, signal, this.agent);
   }
 
   latencyFetch(url) {
     const controller = new AbortController();
     const { signal } = controller;
     this.cancelableLatencyRequests.push(controller);
-    return this.abortableFetch(url, signal);
+    return this.abortableFetch(url, signal, this.agent);
   }
 
-  async abortableFetch(url, signal) {
+  async abortableFetch(url, signal, agent) {
     const response = await fetch(url,
       {
         cache: 'no-store',
         signal,
+        agent,
       });
     return response;
   }

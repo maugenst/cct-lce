@@ -1,29 +1,7 @@
+const https = require('https');
 const LCE = require('../LCE');
 
-
 const datacenters = [
-  {
-    id: '1',
-    cloud: 'a',
-    name: 'a1',
-    town: 'A-Town',
-    country: 'A-Land',
-    latitude: '1.0000001',
-    longitude: '1.00000001',
-    ip: '1.1.1.1',
-    lastUpdate: '2000-01-01T01:01:01.000Z',
-  },
-  {
-    id: '2',
-    cloud: 'b',
-    name: 'b2',
-    town: 'B-Town',
-    country: 'B-Land',
-    latitude: '2.0000002',
-    longitude: '2.00000002',
-    ip: '2.2.2.2',
-    lastUpdate: '2000-02-02T02:02:02.000Z',
-  },
   {
     id: '07fe49e2-795b-4f06-9908-436e6dc21042',
     cloud: 'gcp',
@@ -268,8 +246,14 @@ const datacenters = [
   },
 ];
 
+let agent = null;
+
 beforeAll(() => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+  agent = new https.Agent({
+    rejectUnauthorized: false,
+  });
 });
 
 describe('lce-tests', () => {
@@ -281,38 +265,40 @@ describe('lce-tests', () => {
 
     lce = new LCE({
       datacenters,
+      agent,
     });
 
-    expect(lce.datacenters.length).toEqual(24);
+    expect(lce.datacenters.length).toEqual(22);
   });
 
   test('test - drone latency', async () => {
     const lce = new LCE({
       datacenters,
+      agent,
     });
     let ret = await lce.getLatencyFor({
-      id: 'e7585a2b-ed1c-4f71-9b9e-d7036d16f486',
-      cloud: 'sdc',
-      name: 'emea',
-      town: 'Walldorf',
-      country: 'Germany',
-      latitude: '49.244376900000',
-      longitude: '8.636224900000',
-      ip: 'webwdf.sapdemocloud.com',
+      id: 'f283eadf-2165-4bdd-9c72-cce04b881c7a',
+      cloud: 'gcp',
+      name: 'europe-west2',
+      town: 'London',
+      country: 'United Kingdom',
+      latitude: '51.528161300000',
+      longitude: '-0.662001000000',
+      ip: 'cct-drone-gcp-europe-west2.sapdemocloud.com',
       lastUpdate: '2019-04-12T08:24:05.000Z',
     });
     expect(ret.latency).toBeDefined();
     expect(ret.latency > 1).toBe(true);
 
     ret = await lce.getBandwidthFor({
-      id: 'e7585a2b-ed1c-4f71-9b9e-d7036d16f486',
-      cloud: 'sdc',
-      name: 'emea',
-      town: 'Walldorf',
-      country: 'Germany',
-      latitude: '49.244376900000',
-      longitude: '8.636224900000',
-      ip: 'webwdf.sapdemocloud.com',
+      id: 'f283eadf-2165-4bdd-9c72-cce04b881c7a',
+      cloud: 'gcp',
+      name: 'europe-west2',
+      town: 'London',
+      country: 'United Kingdom',
+      latitude: '51.528161300000',
+      longitude: '-0.662001000000',
+      ip: 'cct-drone-gcp-europe-west2.sapdemocloud.com',
       lastUpdate: '2019-04-12T08:24:05.000Z',
     });
     expect(ret.bandwidth).toBeDefined();
@@ -324,6 +310,7 @@ describe('lce-tests', () => {
   test('test - drone bandwidth by id', async () => {
     const lce = new LCE({
       datacenters,
+      agent,
     });
     const ret = await lce.getBandwidthForId('e7585a2b-ed1c-4f71-9b9e-d7036d16f486');
     expect(ret.bandwidth).toBeDefined();
@@ -335,6 +322,7 @@ describe('lce-tests', () => {
   test('test - drone bandwidth and cancel download', async () => {
     const lce = new LCE({
       datacenters,
+      agent,
     });
     lce.getBandwidthForId('e7585a2b-ed1c-4f71-9b9e-d7036d16f486').then(data => data).catch(err => err);
     lce.terminate();
@@ -347,6 +335,17 @@ describe('lce-tests', () => {
       expect(ret.bandwidth.speedMbps).toBeDefined();
     }).catch(err => err);
   });
+
+  test('test - drone all bandwidths', async () => {
+    const lce = new LCE({
+      datacenters,
+      agent,
+    });
+    const ret = await lce.runBandwidthCheckForAll();
+    console.log(ret);
+    expect(true).toBeTruthy();
+  });
+
 
   // more to come ...
 });
