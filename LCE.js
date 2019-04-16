@@ -18,6 +18,8 @@ class LCE {
 
     const pResults = await results;
     const data = await Promise.all(pResults);
+    // filter failed requests
+    data = data.filter(d => d !== null);
     data.sort(this.compare);
     this.cancelableLatencyRequests = [];
     return data;
@@ -52,31 +54,27 @@ class LCE {
   }
 
   async getLatencyFor(datacenter) {
-    try {
-      const start = Date.now();
-      await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
-      const end = Date.now();
+    const start = Date.now();
+    await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+    const end = Date.now();
 
-      return {
-        id: datacenter.id,
-        latency: end - start,
-        cloud: datacenter.cloud,
-        name: datacenter.name,
-        town: datacenter.town,
-        country: datacenter.country,
-        latitude: datacenter.latitude,
-        longitude: datacenter.longitude,
-        ip: datacenter.ip,
-      };
-    } catch (error) {
-      return null;
-    }
+    return {
+      id: datacenter.id,
+      latency: end - start,
+      cloud: datacenter.cloud,
+      name: datacenter.name,
+      town: datacenter.town,
+      country: datacenter.country,
+      latitude: datacenter.latitude,
+      longitude: datacenter.longitude,
+      ip: datacenter.ip,
+    };
   }
 
   async getBandwidthFor(datacenter) {
-    try {
-      const start = Date.now();
-      const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+    const start = Date.now();
+    const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+    if (response !== null) {
       const end = Date.now();
       const rawBody = await response.text();
       const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
@@ -92,7 +90,7 @@ class LCE {
         longitude: datacenter.longitude,
         ip: datacenter.ip,
       };
-    } catch (error) {
+    }else {
       return null;
     }
   }
@@ -116,11 +114,16 @@ class LCE {
   }
 
   async abortableFetch(url, signal) {
-    const response = await fetch(url, {
-      cache: 'no-store',
-      signal,
-    });
-    return response;
+    try {
+      const response = await fetch(url, {
+        cache: 'no-store',
+        signal,
+      });
+      return response;
+    } catch (error) {
+      return null;
+    }
+
   }
 
   compare(a, b) {
