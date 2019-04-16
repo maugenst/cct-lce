@@ -18,9 +18,11 @@ class LCE {
 
     const pResults = await results;
     const data = await Promise.all(pResults);
-    data.sort(this.compare);
+    // filter failed requests
+    const filteredData = data.filter(d => d !== null);
+    filteredData.sort(this.compare);
     this.cancelableLatencyRequests = [];
-    return data;
+    return filteredData;
   }
 
   async runBandwidthCheckForAll() {
@@ -31,8 +33,10 @@ class LCE {
 
     const pResults = await results;
     const data = await Promise.all(pResults);
+    const filteredData = data.filter(d => d !== null);
+    filteredData.sort(this.compare);
     this.cancelableBandwidthRequests = [];
-    return data;
+    return filteredData;
   }
 
   getBandwidthForId(id) {
@@ -74,9 +78,10 @@ class LCE {
   }
 
   async getBandwidthFor(datacenter) {
-    try {
-      const start = Date.now();
-      const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+
+    const start = Date.now();
+    const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+    if (response !== null) {
       const end = Date.now();
       const rawBody = await response.text();
       const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
@@ -92,7 +97,7 @@ class LCE {
         longitude: datacenter.longitude,
         ip: datacenter.ip,
       };
-    } catch (error) {
+    }else {
       return null;
     }
   }
@@ -116,11 +121,15 @@ class LCE {
   }
 
   async abortableFetch(url, signal) {
-    const response = await fetch(url, {
-      cache: 'no-store',
-      signal,
-    });
-    return response;
+    try {
+      const response = await fetch(url, {
+        cache: 'no-store',
+        signal,
+      });
+      return response;
+    } catch (error) {
+      return null;
+    }
   }
 
   compare(a, b) {
