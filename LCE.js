@@ -33,8 +33,10 @@ class LCE {
 
     const pResults = await results;
     const data = await Promise.all(pResults);
+    const filteredData = data.filter(d => d !== null);
+    filteredData.sort(this.compare);
     this.cancelableBandwidthRequests = [];
-    return data;
+    return filteredData;
   }
 
   getBandwidthForId(id) {
