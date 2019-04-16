@@ -249,6 +249,8 @@ const datacenters = [
 let agent = null;
 
 beforeAll(() => {
+  jest.setTimeout(300000);
+
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
   agent = new https.Agent({
@@ -343,7 +345,7 @@ describe('lce-tests', () => {
     });
     const ret = await lce.runBandwidthCheckForAll();
     console.log(ret);
-    expect(true).toBeTruthy();
+    expect(ret.length === lce.datacenters.length).toBeTruthy();
   });
 
 

@@ -28,17 +28,21 @@ class LCE {
   }
 
   async runBandwidthCheckForAll() {
-    const results = [];
-    this.datacenters.forEach(async (datacenter) => {
-      results.push(await this.getBandwidthFor(datacenter));
-    });
+    try {
+      const results = [];
 
-    const pResults = await results;
-    const data = await Promise.all(pResults);
-    const filteredData = data.filter(d => d !== null);
-    filteredData.sort(this.compare);
-    this.cancelableBandwidthRequests = [];
-    return filteredData;
+      for (const datacenter of this.datacenters) {
+        const bandwidth = await this.getBandwidthFor(datacenter);
+        results.push(bandwidth);
+      }
+
+      const filteredData = results.filter(d => d !== null);
+      filteredData.sort(this.compare);
+      this.cancelableBandwidthRequests = [];
+      return filteredData;
+    } catch (err) {
+      return null;
+    }
   }
 
   getBandwidthForId(id) {
@@ -80,7 +84,6 @@ class LCE {
   }
 
   async getBandwidthFor(datacenter) {
-
     const start = Date.now();
     const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
     if (response !== null) {
@@ -99,9 +102,8 @@ class LCE {
         longitude: datacenter.longitude,
         ip: datacenter.ip,
       };
-    } else {
-      return null;
     }
+    return null;
   }
 
   bandwidthFetch(url) {
@@ -122,15 +124,15 @@ class LCE {
     return this.abortableFetch(url, signal, this.agent);
   }
 
-  async abortableFetch(url, signal) {
+  async abortableFetch(url, signal, agent) {
     try {
-      const response = await fetch(url, {
+      return await fetch(url, {
         cache: 'no-store',
         signal,
         agent,
       });
-      return response;
     } catch (error) {
+      console.log(error);
       return null;
     }
   }
