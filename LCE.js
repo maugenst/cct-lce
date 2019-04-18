@@ -10,6 +10,7 @@ class LCE {
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];
     this.blockedUrls = {};
+    this.terminateAllCalls = false;
   }
 
   async runLatencyCheckForAll() {
@@ -32,6 +33,9 @@ class LCE {
       const results = [];
 
       for (const datacenter of this.datacenters) {
+        if (this.terminateAllCalls) {
+          break;
+        }
         const bandwidth = await this.getBandwidthFor(datacenter);
         results.push(bandwidth);
       }
@@ -144,6 +148,7 @@ class LCE {
   }
 
   terminate() {
+    this.terminateAllCalls = true;
     this.cancelableLatencyRequests.forEach((controller) => {
       controller.abort();
     });
@@ -152,6 +157,7 @@ class LCE {
     });
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];
+    this.terminateAllCalls = false;
   }
 
   static calcBandwidth(downloadSize, latency) {
