@@ -304,9 +304,9 @@ describe('lce-tests', () => {
       lastUpdate: '2019-04-12T08:24:05.000Z',
     });
     expect(ret.bandwidth).toBeDefined();
-    expect(ret.bandwidth.speedBps).toBeDefined();
-    expect(ret.bandwidth.speedKbps).toBeDefined();
-    expect(ret.bandwidth.speedMbps).toBeDefined();
+    expect(ret.bandwidth.bitsPerSeconds).toBeDefined();
+    expect(ret.bandwidth.kiloBitsPerSeconds).toBeDefined();
+    expect(ret.bandwidth.megaBitsPerSeconds).toBeDefined();
   });
 
   test('test - drone bandwidth by id', async () => {
@@ -316,9 +316,10 @@ describe('lce-tests', () => {
     });
     const ret = await lce.getBandwidthForId('e7585a2b-ed1c-4f71-9b9e-d7036d16f486');
     expect(ret.bandwidth).toBeDefined();
-    expect(ret.bandwidth.speedBps).toBeDefined();
-    expect(ret.bandwidth.speedKbps).toBeDefined();
-    expect(ret.bandwidth.speedMbps).toBeDefined();
+
+    expect(ret.bandwidth.bitsPerSeconds).toBeDefined();
+    expect(ret.bandwidth.kiloBitsPerSeconds).toBeDefined();
+    expect(ret.bandwidth.megaBitsPerSeconds).toBeDefined();
   });
 
   test('test - drone bandwidth and cancel download', async () => {
@@ -345,7 +346,7 @@ describe('lce-tests', () => {
     });
     const ret = await lce.runBandwidthCheckForAll();
     console.log(ret);
-    expect(ret.length === lce.datacenters.length).toBeTruthy();
+    expect(ret.length > 0).toBeTruthy();
   });
 
 

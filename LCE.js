@@ -161,15 +161,15 @@ class LCE {
   }
 
   static calcBandwidth(downloadSize, latency) {
-    const duration = latency / 1000;
+    const durationinSeconds = latency / 1000;
     const bitsLoaded = downloadSize * 8;
-    const speedBps = (bitsLoaded / duration).toFixed(2);
-    const speedKbps = (speedBps / 1024).toFixed(2);
-    const speedMbps = (speedKbps / 1024).toFixed(2);
+    const bitsPerSeconds = (bitsLoaded / durationinSeconds);
+    const kiloBitsPerSeconds = (bitsPerSeconds / 1000);
+    const megaBitsPerSeconds = (kiloBitsPerSeconds / 1000);
     return {
-      speedBps,
-      speedKbps,
-      speedMbps,
+      bitsPerSeconds,
+      kiloBitsPerSeconds,
+      megaBitsPerSeconds,
     };
   }
 }
