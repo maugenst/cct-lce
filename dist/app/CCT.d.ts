@@ -13,7 +13,7 @@ export declare class CCT {
         httpAgent: Agent;
         regions: string[];
     });
-    fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
+    fetchDatacenterInformation(dictionaryUrl: string | undefined): Promise<void>;
     private mapDatacentersOnRegions;
     stopMeasurements(): void;
     startLatencyChecks(iterations: number): void;

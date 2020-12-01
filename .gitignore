@@ -1,6 +1,7 @@
 # Other
 .DS_Store
 *.mwb.bak
+.env
 
 # Dependency directories
 node_modules

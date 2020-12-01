@@ -12,6 +12,9 @@ class CCT {
         this.regions = regions || [];
     }
     async fetchDatacenterInformation(dictionaryUrl) {
+        if (!dictionaryUrl) {
+            throw new Error('Datacenter URL missing.');
+        }
         const dcs = await node_fetch_1.default(dictionaryUrl).then((res) => res.json());
         this.datacenters = this.regions
             ? dcs.filter((dc) => this.mapDatacentersOnRegions(dc))

@@ -1,10 +1,13 @@
 import { Agent } from "https";
 import { CCT } from "../app/CCT";
 import { Util } from "../app/Util";
+import * as dotenv from "dotenv";
 
 const agent = new Agent({
   rejectUnauthorized: false,
 });
+
+dotenv.config();
 
 describe("CCT tests", () => {
   test("test initialization", async () => {
@@ -14,7 +17,7 @@ describe("CCT tests", () => {
     });
 
     await cct.fetchDatacenterInformation(
-      ""
+      process.env.CCT_DICTIONARY_URL
     );
 
     expect(cct.datacenters.length).toEqual(2);
@@ -45,7 +48,7 @@ describe("CCT tests", () => {
     });
 
     await cct.fetchDatacenterInformation(
-      ""
+        process.env.CCT_DICTIONARY_URL
     );
     cct.startLatencyChecks(1);
 
@@ -82,7 +85,7 @@ describe("CCT tests", () => {
     });
 
     await cct.fetchDatacenterInformation(
-      ""
+        process.env.CCT_DICTIONARY_URL
     );
 
     expect(cct.datacenters.length).toEqual(2);
@@ -106,7 +109,7 @@ describe("CCT tests", () => {
     });
 
     await cct.fetchDatacenterInformation(
-      ""
+        process.env.CCT_DICTIONARY_URL
     );
 
     expect(cct.datacenters.length).toEqual(1);
@@ -129,7 +132,7 @@ describe("CCT tests", () => {
     });
 
     await cct.fetchDatacenterInformation(
-      ""
+        process.env.CCT_DICTIONARY_URL
     );
 
     expect(cct.datacenters.length).toEqual(1);

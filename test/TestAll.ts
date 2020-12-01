@@ -13,7 +13,7 @@ class TestAll {
       regions: ["Galaxy", "europe-west3", "europe-west4", "europe-west2"],
     });
 
-    await cct.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters');
+    await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
 
     cct.startLatencyChecks(19);
 

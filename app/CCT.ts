@@ -17,7 +17,11 @@ export class CCT {
     this.regions = regions || [];
   }
 
-  async fetchDatacenterInformation(dictionaryUrl: string) {
+  async fetchDatacenterInformation(dictionaryUrl: string | undefined) {
+    if (!dictionaryUrl) {
+      throw new Error('Datacenter URL missing.')
+    }
+
     const dcs: Datacenter[] = await fetch(dictionaryUrl).then((res: Response) =>
       res.json()
     );

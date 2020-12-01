@@ -457,12 +457,17 @@
         "affectsGlobalScope": false
       },
       "../app/cct.ts": {
-        "version": "5d762be2b964f6666b824fd338c347658e2c88d7e98b29e3f9a3da5e49a56171",
-        "signature": "684b29abf79fc04bf4a34f57dcc3a61bb62297fd001f7c55ffbf0f08f54fb4c4",
+        "version": "70e4b7a23f8229aac479f29839d5584748d9297577b588b3d6e7485178047a52",
+        "signature": "7751b3457473d6383dfaa354270b92c3ff07a60626bf1c5585029417cee1a511",
+        "affectsGlobalScope": false
+      },
+      "../node_modules/dotenv/types/index.d.ts": {
+        "version": "c9ae0b351a07b52f29a28e869d8c7c8d29743bbb5eeddc7c0b5b2a69a2450528",
+        "signature": "c9ae0b351a07b52f29a28e869d8c7c8d29743bbb5eeddc7c0b5b2a69a2450528",
         "affectsGlobalScope": false
       },
       "../test/cct.test.ts": {
-        "version": "61c0448cc70fe24f750ac386e16d458f7faf4dbef6647938ac4f09bbf76c690b",
+        "version": "6f3ef191c72e90a01672971c865aaec0311e3a558b5ea9a72578f3520ea1fe17",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -472,7 +477,7 @@
         "affectsGlobalScope": false
       },
       "../test/testall.ts": {
-        "version": "145cd29cbf77bc3d735e002a067867a15921132a6ef5fabea002e0e8330edd3c",
+        "version": "99bda07364f97e28ccbd0470eae17669a211435598a35d30d22d10815669e5d9",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -898,10 +903,14 @@
       "../node_modules/abort-controller/dist/abort-controller.d.ts": [
         "../node_modules/event-target-shim/index.d.ts"
       ],
+      "../node_modules/dotenv/types/index.d.ts": [
+        "../node_modules/@types/node/index.d.ts"
+      ],
       "../test/cct.test.ts": [
         "../app/cct.ts",
         "../app/util.ts",
         "../node_modules/@types/node/https.d.ts",
+        "../node_modules/dotenv/types/index.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ],
       "../test/lce.test.ts": [
@@ -1171,6 +1180,9 @@
       ],
       "../node_modules/abort-controller/dist/abort-controller.d.ts": [
         "../node_modules/event-target-shim/index.d.ts"
+      ],
+      "../node_modules/dotenv/types/index.d.ts": [
+        "../node_modules/@types/node/index.d.ts"
       ]
     },
     "semanticDiagnosticsPerFile": [
@@ -1256,6 +1268,7 @@
       "../node_modules/@types/yargs-parser/index.d.ts",
       "../node_modules/@types/yargs/index.d.ts",
       "../node_modules/abort-controller/dist/abort-controller.d.ts",
+      "../node_modules/dotenv/types/index.d.ts",
       "../node_modules/event-target-shim/index.d.ts",
       "../node_modules/tslib/tslib.d.ts",
       "../node_modules/typescript/lib/lib.dom.d.ts",

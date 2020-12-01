@@ -3,16 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const https_1 = require("https");
 const CCT_1 = require("../app/CCT");
 const Util_1 = require("../app/Util");
+const dotenv = require("dotenv");
 const agent = new https_1.Agent({
     rejectUnauthorized: false,
 });
+dotenv.config();
 describe("CCT tests", () => {
     test("test initialization", async () => {
         const cct = new CCT_1.CCT({
             httpAgent: agent,
             regions: ["Galaxy", "europe-west3"],
         });
-        await cct.fetchDatacenterInformation("");
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
         expect(cct.datacenters.length).toEqual(2);
         expect(cct.datacenters[0].position).toEqual(0);
         expect(cct.datacenters[0].latencies.length).toEqual(0);
@@ -38,7 +40,7 @@ describe("CCT tests", () => {
             httpAgent: agent,
             regions: ["Galaxy", "europe-west3"],
         });
-        await cct.fetchDatacenterInformation("");
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
         cct.startLatencyChecks(1);
         while (!cct.finishedLatency) {
             await Util_1.Util.sleep(50);
@@ -68,7 +70,7 @@ describe("CCT tests", () => {
             httpAgent: agent,
             regions: ["Galaxy", "europe-west3"],
         });
-        await cct.fetchDatacenterInformation("");
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
         expect(cct.datacenters.length).toEqual(2);
         cct.startLatencyChecks(3);
         while (!cct.finishedLatency) {
@@ -84,7 +86,7 @@ describe("CCT tests", () => {
             httpAgent: agent,
             regions: ["Galaxy"],
         });
-        await cct.fetchDatacenterInformation("");
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
         expect(cct.datacenters.length).toEqual(1);
         cct.startBandwidthChecks(cct.datacenters[0], 3);
         while (!cct.finishedBandwidth) {
@@ -99,7 +101,7 @@ describe("CCT tests", () => {
             httpAgent: agent,
             regions: ["Galaxy"],
         });
-        await cct.fetchDatacenterInformation("");
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
         expect(cct.datacenters.length).toEqual(1);
         cct.startBandwidthChecks(cct.datacenters[0], 3);
         while (!cct.finishedBandwidth) {
