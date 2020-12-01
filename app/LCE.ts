@@ -1,20 +1,34 @@
-const fetch = require('node-fetch');
+import fetch, { Response } from "node-fetch";
+import { Datacenter } from "../@types/Datacenter";
+import { Result } from "../@types/Result";
+import { Bandwith, BandwithPerSecond } from "../@types/Bandwidth";
+import { Latency } from "../@types/Latency";
+import { Agent } from "http";
+import { AbortController } from "abort-controller";
 
-class LCE {
+export class LCE {
+  datacenters: Datacenter[];
+  agent: any;
+  cancelableLatencyRequests: any[];
+  cancelableBandwidthRequests: any[];
+  terminateAllCalls: boolean;
+
   constructor({
     datacenters,
     agent,
+  }: {
+    datacenters: Datacenter[];
+    agent?: any;
   }) {
     this.datacenters = datacenters;
     this.agent = agent;
     this.cancelableLatencyRequests = [];
     this.cancelableBandwidthRequests = [];
-    this.blockedUrls = {};
     this.terminateAllCalls = false;
   }
 
-  async runLatencyCheckForAll() {
-    const results = [];
+  async runLatencyCheckForAll(): Promise<Latency[]> {
+    const results: any[] = [];
     this.datacenters.forEach((datacenter) => {
       results.push(this.getLatencyFor(datacenter));
     });
@@ -22,15 +36,15 @@ class LCE {
     const pResults = await results;
     const data = await Promise.all(pResults);
     // filter failed requests
-    const filteredData = data.filter(d => d !== null);
+    const filteredData = data.filter((d) => d !== null);
     filteredData.sort(this.compare);
     this.cancelableLatencyRequests = [];
     return filteredData;
   }
 
-  async runBandwidthCheckForAll() {
+  async runBandwidthCheckForAll(): Promise<Result[] | null> {
     try {
-      const results = [];
+      const results: Result[] = [];
 
       for (const datacenter of this.datacenters) {
         if (this.terminateAllCalls) {
@@ -40,7 +54,7 @@ class LCE {
         results.push(bandwidth);
       }
 
-      const filteredData = results.filter(d => d !== null);
+      const filteredData = results.filter((d) => d !== null);
       filteredData.sort(this.compare);
       this.cancelableBandwidthRequests = [];
       return filteredData;
@@ -49,23 +63,23 @@ class LCE {
     }
   }
 
-  getBandwidthForId(id) {
-    const dc = this.datacenters.find(datacenter => datacenter.id === id);
+  getBandwidthForId(id: string) {
+    const dc = this.datacenters.find((datacenter) => datacenter.id === id);
     if (!dc) {
       return null;
     }
     return this.getBandwidthFor(dc);
   }
 
-  getLatencyForId(id) {
-    const dc = this.datacenters.find(datacenter => datacenter.id === id);
+  getLatencyForId(id: string) {
+    const dc = this.datacenters.find((datacenter) => datacenter.id === id);
     if (!dc) {
       return null;
     }
     return this.getLatencyFor(dc);
   }
 
-  async getLatencyFor(datacenter) {
+  async getLatencyFor(datacenter: Datacenter): Promise<Latency | null> {
     try {
       const start = Date.now();
       await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
@@ -81,19 +95,25 @@ class LCE {
         latitude: datacenter.latitude,
         longitude: datacenter.longitude,
         ip: datacenter.ip,
+        timestamp: Date.now(),
       };
     } catch (error) {
       return null;
     }
   }
 
-  async getBandwidthFor(datacenter) {
+  async getBandwidthFor(datacenter: Datacenter): Promise<Bandwith | null> {
     const start = Date.now();
-    const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+    const response = await this.bandwidthFetch(
+      `https://${datacenter.ip}/drone/big`
+    );
     if (response !== null) {
       const end = Date.now();
       const rawBody = await response.text();
-      const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
+      const bandwidth: BandwithPerSecond = LCE.calcBandwidth(
+        rawBody.length,
+        end - start
+      );
 
       return {
         id: datacenter.id,
@@ -110,28 +130,27 @@ class LCE {
     return null;
   }
 
-  bandwidthFetch(url) {
+  bandwidthFetch(url: string) {
     const controller = new AbortController();
-    const {
-      signal,
-    } = controller;
+    const { signal } = controller;
     this.cancelableBandwidthRequests.push(controller);
     return this.abortableFetch(url, signal, this.agent);
   }
 
-  latencyFetch(url) {
+  latencyFetch(url: string) {
     const controller = new AbortController();
-    const {
-      signal,
-    } = controller;
+    const { signal } = controller;
     this.cancelableLatencyRequests.push(controller);
     return this.abortableFetch(url, signal, this.agent);
   }
 
-  async abortableFetch(url, signal, agent) {
+  async abortableFetch(
+    url: string,
+    signal: any,
+    agent: Agent
+  ): Promise<Response | null> {
     try {
       return await fetch(url, {
-        cache: 'no-store',
         signal,
         agent,
       });
@@ -141,7 +160,7 @@ class LCE {
     }
   }
 
-  compare(a, b) {
+  compare(a: any, b: any) {
     if (a.latency < b.latency) return -1;
     if (a.latency > b.latency) return 1;
     return 0;
@@ -160,18 +179,19 @@ class LCE {
     this.terminateAllCalls = false;
   }
 
-  static calcBandwidth(downloadSize, latency) {
+  static calcBandwidth(
+    downloadSize: number,
+    latency: number
+  ): BandwithPerSecond {
     const durationinSeconds = latency / 1000;
     const bitsLoaded = downloadSize * 8;
-    const bitsPerSeconds = (bitsLoaded / durationinSeconds);
-    const kiloBitsPerSeconds = (bitsPerSeconds / 1000);
-    const megaBitsPerSeconds = (kiloBitsPerSeconds / 1000);
+    const bitsPerSeconds = bitsLoaded / durationinSeconds;
+    const kiloBitsPerSeconds = bitsPerSeconds / 1000;
+    const megaBitsPerSeconds = kiloBitsPerSeconds / 1000;
     return {
-      bitsPerSeconds,
-      kiloBitsPerSeconds,
-      megaBitsPerSeconds,
+      bitsPerSecond: bitsPerSeconds,
+      kiloBitsPerSecond: kiloBitsPerSeconds,
+      megaBitsPerSecond: megaBitsPerSeconds,
     };
   }
 }
-
-module.exports = LCE;
