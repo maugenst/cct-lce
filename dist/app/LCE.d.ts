@@ -1,10 +1,8 @@
-/// <reference types="node" />
 import { Response } from "node-fetch";
 import { Datacenter } from "../@types/Datacenter";
 import { Result } from "../@types/Result";
 import { Bandwith, BandwithPerSecond } from "../@types/Bandwidth";
 import { Latency } from "../@types/Latency";
-import { Agent } from "http";
 export declare class LCE {
     datacenters: Datacenter[];
     agent: any;
@@ -23,7 +21,7 @@ export declare class LCE {
     getBandwidthFor(datacenter: Datacenter): Promise<Bandwith | null>;
     bandwidthFetch(url: string): Promise<Response | null>;
     latencyFetch(url: string): Promise<Response | null>;
-    abortableFetch(url: string, signal: any, agent: Agent): Promise<Response | null>;
+    abortableFetch(url: string, signal: any): Promise<Response | null>;
     compare(a: any, b: any): 1 | -1 | 0;
     terminate(): void;
     static calcBandwidth(downloadSize: number, latency: number): BandwithPerSecond;

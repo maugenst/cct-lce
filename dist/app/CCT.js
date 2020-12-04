@@ -5,10 +5,9 @@ const node_fetch_1 = require("node-fetch");
 const LCE_1 = require("./LCE");
 const Util_1 = require("./Util");
 class CCT {
-    constructor({ httpAgent, regions }) {
+    constructor({ regions }) {
         this.finishedLatency = false;
         this.finishedBandwidth = false;
-        this.agent = httpAgent;
         this.regions = regions || [];
     }
     async fetchDatacenterInformation(dictionaryUrl) {
@@ -22,7 +21,6 @@ class CCT {
         this.clean();
         this.lce = new LCE_1.LCE({
             datacenters: this.datacenters,
-            agent: this.agent,
         });
     }
     mapDatacentersOnRegions(dc) {

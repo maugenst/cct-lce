@@ -1,15 +1,9 @@
-import { Agent } from "https";
 import { CCT } from "../app/CCT";
 import { Util } from "../app/Util";
-
-const agent = new Agent({
-  rejectUnauthorized: false,
-});
 
 class TestAll {
   async start() {
     const cct = new CCT({
-      httpAgent: agent,
       regions: ["Galaxy", "europe-west3", "europe-west4", "europe-west2"],
     });
 

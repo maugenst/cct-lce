@@ -1,19 +1,16 @@
 import fetch, { Response } from "node-fetch";
 import { Datacenter } from "../@types/Datacenter";
 import { LCE } from "./LCE";
-import { Agent } from "https";
 import { Util } from "./Util";
 
 export class CCT {
-  agent: Agent;
   datacenters: Datacenter[];
   regions: string[];
   lce: LCE;
   finishedLatency: boolean = false;
   finishedBandwidth: boolean = false;
 
-  constructor({ httpAgent, regions }: { httpAgent: Agent; regions: string[] }) {
-    this.agent = httpAgent;
+  constructor({ regions }: { regions: string[] }) {
     this.regions = regions || [];
   }
 
@@ -34,7 +31,6 @@ export class CCT {
 
     this.lce = new LCE({
       datacenters: this.datacenters,
-      agent: this.agent,
     });
   }
 

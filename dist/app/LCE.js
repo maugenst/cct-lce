@@ -103,19 +103,18 @@ class LCE {
         const controller = new abort_controller_1.AbortController();
         const { signal } = controller;
         this.cancelableBandwidthRequests.push(controller);
-        return this.abortableFetch(url, signal, this.agent);
+        return this.abortableFetch(url, signal);
     }
     latencyFetch(url) {
         const controller = new abort_controller_1.AbortController();
         const { signal } = controller;
         this.cancelableLatencyRequests.push(controller);
-        return this.abortableFetch(url, signal, this.agent);
+        return this.abortableFetch(url, signal);
     }
-    async abortableFetch(url, signal, agent) {
+    async abortableFetch(url, signal) {
         try {
             return await node_fetch_1.default(url, {
                 signal,
-                agent,
             });
         }
         catch (error) {

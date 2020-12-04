@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "typeRoots": ["./node_modules/@types", "./@types"],
+    "outDir": "./dist",
     "module": "commonjs",
     "moduleResolution": "node",
     "incremental": true,
@@ -23,8 +24,5 @@
     "resolveJsonModule": true,
     "esModuleInterop": false
   },
-  "exclude": ["node_modules", "dist"],
-  "compilerOptions": {
-    "outDir": "./dist"
-  }
+  "exclude": ["node_modules", "dist"]
 }

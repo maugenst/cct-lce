@@ -1,17 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const https_1 = require("https");
 const CCT_1 = require("../app/CCT");
 const Util_1 = require("../app/Util");
 const dotenv = require("dotenv");
-const agent = new https_1.Agent({
-    rejectUnauthorized: false,
-});
 dotenv.config();
 describe("CCT tests", () => {
     test("test initialization", async () => {
         const cct = new CCT_1.CCT({
-            httpAgent: agent,
             regions: ["Galaxy", "europe-west3"],
         });
         await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
@@ -37,7 +32,6 @@ describe("CCT tests", () => {
     });
     test("test cleanup", async () => {
         const cct = new CCT_1.CCT({
-            httpAgent: agent,
             regions: ["Galaxy", "europe-west3"],
         });
         await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
@@ -67,7 +61,6 @@ describe("CCT tests", () => {
     });
     test("check latency", async () => {
         const cct = new CCT_1.CCT({
-            httpAgent: agent,
             regions: ["Galaxy", "europe-west3"],
         });
         await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
@@ -83,7 +76,6 @@ describe("CCT tests", () => {
     });
     test("check bandwidth", async () => {
         const cct = new CCT_1.CCT({
-            httpAgent: agent,
             regions: ["Galaxy"],
         });
         await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
@@ -98,7 +90,6 @@ describe("CCT tests", () => {
     });
     test("abort running measurement", async () => {
         const cct = new CCT_1.CCT({
-            httpAgent: agent,
             regions: ["Galaxy"],
         });
         await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);

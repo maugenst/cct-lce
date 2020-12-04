@@ -1,16 +1,12 @@
-/// <reference types="node" />
 import { Datacenter } from "../@types/Datacenter";
 import { LCE } from "./LCE";
-import { Agent } from "https";
 export declare class CCT {
-    agent: Agent;
     datacenters: Datacenter[];
     regions: string[];
     lce: LCE;
     finishedLatency: boolean;
     finishedBandwidth: boolean;
-    constructor({ httpAgent, regions }: {
-        httpAgent: Agent;
+    constructor({ regions }: {
         regions: string[];
     });
     fetchDatacenterInformation(dictionaryUrl: string | undefined): Promise<void>;

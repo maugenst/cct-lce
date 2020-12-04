@@ -1,18 +1,12 @@
-import { Agent } from "https";
 import { CCT } from "../app/CCT";
 import { Util } from "../app/Util";
 import * as dotenv from "dotenv";
-
-const agent = new Agent({
-  rejectUnauthorized: false,
-});
 
 dotenv.config();
 
 describe("CCT tests", () => {
   test("test initialization", async () => {
     const cct = new CCT({
-      httpAgent: agent,
       regions: ["Galaxy", "europe-west3"],
     });
 
@@ -43,7 +37,6 @@ describe("CCT tests", () => {
 
   test("test cleanup", async () => {
     const cct = new CCT({
-      httpAgent: agent,
       regions: ["Galaxy", "europe-west3"],
     });
 
@@ -80,7 +73,6 @@ describe("CCT tests", () => {
 
   test("check latency", async () => {
     const cct = new CCT({
-      httpAgent: agent,
       regions: ["Galaxy", "europe-west3"],
     });
 
@@ -104,7 +96,6 @@ describe("CCT tests", () => {
 
   test("check bandwidth", async () => {
     const cct = new CCT({
-      httpAgent: agent,
       regions: ["Galaxy"],
     });
 
@@ -127,7 +118,6 @@ describe("CCT tests", () => {
 
   test("abort running measurement", async () => {
     const cct = new CCT({
-      httpAgent: agent,
       regions: ["Galaxy"],
     });
 

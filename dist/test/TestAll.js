@@ -1,15 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const https_1 = require("https");
 const CCT_1 = require("../app/CCT");
 const Util_1 = require("../app/Util");
-const agent = new https_1.Agent({
-    rejectUnauthorized: false,
-});
 class TestAll {
     async start() {
         const cct = new CCT_1.CCT({
-            httpAgent: agent,
             regions: ["Galaxy", "europe-west3", "europe-west4", "europe-west2"],
         });
         await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);

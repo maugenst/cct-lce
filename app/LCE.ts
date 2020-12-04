@@ -3,7 +3,6 @@ import { Datacenter } from "../@types/Datacenter";
 import { Result } from "../@types/Result";
 import { Bandwith, BandwithPerSecond } from "../@types/Bandwidth";
 import { Latency } from "../@types/Latency";
-import { Agent } from "http";
 import { AbortController } from "abort-controller";
 
 export class LCE {
@@ -134,25 +133,20 @@ export class LCE {
     const controller = new AbortController();
     const { signal } = controller;
     this.cancelableBandwidthRequests.push(controller);
-    return this.abortableFetch(url, signal, this.agent);
+    return this.abortableFetch(url, signal);
   }
 
   latencyFetch(url: string) {
     const controller = new AbortController();
     const { signal } = controller;
     this.cancelableLatencyRequests.push(controller);
-    return this.abortableFetch(url, signal, this.agent);
+    return this.abortableFetch(url, signal);
   }
 
-  async abortableFetch(
-    url: string,
-    signal: any,
-    agent: Agent
-  ): Promise<Response | null> {
+  async abortableFetch(url: string, signal: any): Promise<Response | null> {
     try {
       return await fetch(url, {
         signal,
-        agent,
       });
     } catch (error) {
       console.log(error);

@@ -447,8 +447,8 @@
         "affectsGlobalScope": false
       },
       "../app/lce.ts": {
-        "version": "7a38aa950a621a5eb7e5dfdd3d553c325f37a04e65b8c59fbba6dcfc8f2498c8",
-        "signature": "38dc83d733e2b669f60354f06291507c6d50938c6e53a23dee0b584b9410bd21",
+        "version": "8bc1b85aa9639974c0e71c5263e1c366f5537cec44ddcb38315f23592c5178ff",
+        "signature": "86239c94dda1d7974c316b5691a3db3632a68848fdaa9ca168899fc8b475418d",
         "affectsGlobalScope": false
       },
       "../app/util.ts": {
@@ -457,8 +457,8 @@
         "affectsGlobalScope": false
       },
       "../app/cct.ts": {
-        "version": "70e4b7a23f8229aac479f29839d5584748d9297577b588b3d6e7485178047a52",
-        "signature": "7751b3457473d6383dfaa354270b92c3ff07a60626bf1c5585029417cee1a511",
+        "version": "49e88707cc899d8b6be552c68abccbd2df40607f854d23975eca895806ab0536",
+        "signature": "ccfbb56eebd9a403269c6d703ad76216776588e783460f82e7147a4cc454e92a",
         "affectsGlobalScope": false
       },
       "../node_modules/dotenv/types/index.d.ts": {
@@ -467,17 +467,17 @@
         "affectsGlobalScope": false
       },
       "../test/cct.test.ts": {
-        "version": "6f3ef191c72e90a01672971c865aaec0311e3a558b5ea9a72578f3520ea1fe17",
+        "version": "9c8e655807e9bfe7bd0e0d481e9c2c99bedf73e90af92296ad2768adc0cd238e",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
       "../test/lce.test.ts": {
-        "version": "0930ac16742151d22d8470c2df8b11c20a936f54ed214ac291529abf43156907",
+        "version": "2a389cee15c1a1f7a7dba00580bb52a4aa681d5995376d20ba4c4cccc1e8b2eb",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
       "../test/testall.ts": {
-        "version": "99bda07364f97e28ccbd0470eae17669a211435598a35d30d22d10815669e5d9",
+        "version": "3bc7192fece9df39bcb5c49020ee7f33f30bf817ba7e5e7052dfba9788fa8d10",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -607,6 +607,7 @@
         "../node_modules/@types",
         "../@types"
       ],
+      "outDir": "./",
       "module": 1,
       "moduleResolution": 2,
       "incremental": true,
@@ -628,8 +629,6 @@
       "skipLibCheck": true,
       "resolveJsonModule": true,
       "esModuleInterop": false,
-      "outDir": "./",
-      "watch": true,
       "configFilePath": "../tsconfig.json"
     },
     "referencedMap": {
@@ -651,7 +650,6 @@
         "../app/lce.ts",
         "../app/util.ts",
         "../node_modules/@types/node-fetch/index.d.ts",
-        "../node_modules/@types/node/https.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ],
       "../app/lce.ts": [
@@ -660,7 +658,6 @@
         "../@types/latency.ts",
         "../@types/result.ts",
         "../node_modules/@types/node-fetch/index.d.ts",
-        "../node_modules/@types/node/http.d.ts",
         "../node_modules/abort-controller/dist/abort-controller.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ],
@@ -909,20 +906,17 @@
       "../test/cct.test.ts": [
         "../app/cct.ts",
         "../app/util.ts",
-        "../node_modules/@types/node/https.d.ts",
         "../node_modules/dotenv/types/index.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ],
       "../test/lce.test.ts": [
         "../@types/datacenter.ts",
         "../app/lce.ts",
-        "../node_modules/@types/node/https.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ],
       "../test/testall.ts": [
         "../app/cct.ts",
         "../app/util.ts",
-        "../node_modules/@types/node/https.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ]
     },
@@ -932,16 +926,14 @@
       ],
       "../app/cct.ts": [
         "../@types/datacenter.ts",
-        "../app/lce.ts",
-        "../node_modules/@types/node/https.d.ts"
+        "../app/lce.ts"
       ],
       "../app/lce.ts": [
         "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
         "../@types/latency.ts",
         "../@types/result.ts",
-        "../node_modules/@types/node-fetch/index.d.ts",
-        "../node_modules/@types/node/http.d.ts"
+        "../node_modules/@types/node-fetch/index.d.ts"
       ],
       "../app/util.ts": [
         "../@types/bandwidth.ts",
