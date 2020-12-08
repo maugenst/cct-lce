@@ -3,7 +3,7 @@ import { Datacenter } from "../@types/Datacenter";
 import { Result } from "../@types/Result";
 import { Bandwith, BandwithPerSecond } from "../@types/Bandwidth";
 import { Latency } from "../@types/Latency";
-import { AbortController } from "abort-controller";
+import AbortController from "abort-controller";
 
 export class LCE {
   datacenters: Datacenter[];
