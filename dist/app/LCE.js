@@ -100,13 +100,13 @@ class LCE {
         return null;
     }
     bandwidthFetch(url) {
-        const controller = new abort_controller_1.AbortController();
+        const controller = new abort_controller_1.default();
         const { signal } = controller;
         this.cancelableBandwidthRequests.push(controller);
         return this.abortableFetch(url, signal);
     }
     latencyFetch(url) {
-        const controller = new abort_controller_1.AbortController();
+        const controller = new abort_controller_1.default();
         const { signal } = controller;
         this.cancelableLatencyRequests.push(controller);
         return this.abortableFetch(url, signal);
