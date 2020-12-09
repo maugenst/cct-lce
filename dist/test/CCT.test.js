@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const CCT_1 = require("../app/CCT");
 const Util_1 = require("../app/Util");
 const dotenv = require("dotenv");
+const Datacenter_1 = require("../@types/Datacenter");
 dotenv.config();
 describe("CCT tests", () => {
     test("test initialization", async () => {
@@ -87,6 +88,42 @@ describe("CCT tests", () => {
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
         expect(cct.datacenters[0].bandwidths.length).toEqual(3);
+    });
+    test("latency judgement", async () => {
+        const cct = new CCT_1.CCT({
+            regions: ["Galaxy"],
+        });
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        expect(cct.datacenters.length).toEqual(1);
+        cct.startLatencyChecks(3);
+        while (!cct.finishedLatency) {
+            await Util_1.Util.sleep(50);
+        }
+        expect(cct.finishedLatency).toBeTruthy();
+        expect(cct.finishedBandwidth).toBeFalsy();
+        expect(cct.datacenters[0].latencies.length).toEqual(3);
+        const judgement = cct.datacenters[0].latencyJudgement;
+        expect(judgement === Datacenter_1.Speed.good ||
+            judgement === Datacenter_1.Speed.ok ||
+            judgement === Datacenter_1.Speed.bad).toBeTruthy();
+    });
+    test("bandwidth judgement", async () => {
+        const cct = new CCT_1.CCT({
+            regions: ["Galaxy"],
+        });
+        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        expect(cct.datacenters.length).toEqual(1);
+        cct.startBandwidthChecks(cct.datacenters[0], 3);
+        while (!cct.finishedBandwidth) {
+            await Util_1.Util.sleep(50);
+        }
+        expect(cct.finishedBandwidth).toBeTruthy();
+        expect(cct.finishedLatency).toBeFalsy();
+        expect(cct.datacenters[0].bandwidths.length).toEqual(3);
+        const judgement = cct.datacenters[0].bandwidthJudgement;
+        expect(judgement === Datacenter_1.Speed.good ||
+            judgement === Datacenter_1.Speed.ok ||
+            judgement === Datacenter_1.Speed.bad).toBeTruthy();
     });
     test("abort running measurement", async () => {
         const cct = new CCT_1.CCT({

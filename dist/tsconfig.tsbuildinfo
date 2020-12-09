@@ -172,8 +172,8 @@
         "affectsGlobalScope": false
       },
       "../@types/datacenter.ts": {
-        "version": "c78b4b2f7a9b8f75888f270cd86680071ab695e71ecedb9ca25e28e9804dff7c",
-        "signature": "967be2eeccf9d5f57e4196a132269b2daf7fe6243f4b9d286f51b0d258c36206",
+        "version": "39c37ce39c87a8c586c2aef27fc1d8874dceb94bfb11301add595bd2314c352a",
+        "signature": "ad43216614be1cb1d78e2de174a18a3c8039324b749d0b271a10b71cde9a6db0",
         "affectsGlobalScope": false
       },
       "../@types/latency.ts": {
@@ -448,7 +448,7 @@
       },
       "../app/lce.ts": {
         "version": "48a6e4b4e0c9dd6f1e76cf4ed7a98db6886cb0be44872d5cd18a48411f8253cd",
-        "signature": "86239c94dda1d7974c316b5691a3db3632a68848fdaa9ca168899fc8b475418d",
+        "signature": "c62d17bee2203c8f711fbf79c9d07f687db2411409c106854a39dfeb7f776def",
         "affectsGlobalScope": false
       },
       "../app/util.ts": {
@@ -457,8 +457,8 @@
         "affectsGlobalScope": false
       },
       "../app/cct.ts": {
-        "version": "49e88707cc899d8b6be552c68abccbd2df40607f854d23975eca895806ab0536",
-        "signature": "ccfbb56eebd9a403269c6d703ad76216776588e783460f82e7147a4cc454e92a",
+        "version": "a488ecaba2d3d36e6d4032e18039c61168ab26b1f708191f565411cea9b418d8",
+        "signature": "628d02ee495497860d4d35522702d3aeb76f1e95d36da88ed240b088b29f6672",
         "affectsGlobalScope": false
       },
       "../node_modules/dotenv/types/index.d.ts": {
@@ -467,7 +467,7 @@
         "affectsGlobalScope": false
       },
       "../test/cct.test.ts": {
-        "version": "9c8e655807e9bfe7bd0e0d481e9c2c99bedf73e90af92296ad2768adc0cd238e",
+        "version": "660d8dcd9bdb951a91491b31419d69ea44f7854035e0f8db7b9377a1ac1cd9e3",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -666,6 +666,7 @@
         "../node_modules/tslib/tslib.d.ts"
       ],
       "../app/cct.ts": [
+        "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
         "../app/lce.ts",
         "../app/util.ts",
@@ -933,6 +934,7 @@
         "../node_modules/@types/node/index.d.ts"
       ],
       "../test/cct.test.ts": [
+        "../@types/datacenter.ts",
         "../app/cct.ts",
         "../app/util.ts",
         "../node_modules/dotenv/types/index.d.ts",
@@ -954,6 +956,7 @@
         "../@types/bandwidth.ts"
       ],
       "../app/cct.ts": [
+        "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
         "../app/lce.ts"
       ],

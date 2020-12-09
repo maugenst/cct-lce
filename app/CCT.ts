@@ -1,7 +1,8 @@
 import fetch, { Response } from "node-fetch";
-import { Datacenter } from "../@types/Datacenter";
+import { Datacenter, Speed } from "../@types/Datacenter";
 import { LCE } from "./LCE";
 import { Util } from "./Util";
+import { BandwithPerSecond } from "../@types/Bandwidth";
 
 export class CCT {
   datacenters: Datacenter[];
@@ -16,7 +17,7 @@ export class CCT {
 
   async fetchDatacenterInformation(dictionaryUrl: string | undefined) {
     if (!dictionaryUrl) {
-      throw new Error('Datacenter URL missing.')
+      throw new Error("Datacenter URL missing.");
     }
 
     const dcs: Datacenter[] = await fetch(dictionaryUrl).then((res: Response) =>
@@ -59,8 +60,12 @@ export class CCT {
           const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
           this.datacenters[index].latencies?.push(result.latency);
-          this.datacenters[index].averageLatency = Util.getAverageLatency(
+          const averageLatency = Util.getAverageLatency(
             this.datacenters[index].latencies
+          );
+          this.datacenters[index].averageLatency = averageLatency;
+          this.datacenters[index].latencyJudgement = this.judgeLatency(
+            averageLatency
           );
         }
       }
@@ -82,10 +87,37 @@ export class CCT {
         const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
         this.datacenters[index].bandwidths?.push(result.bandwidth);
-        this.datacenters[index].averageBandwidth = Util.getAverageBandwidth(
+        const averageBandwidth = Util.getAverageBandwidth(
           this.datacenters[index].bandwidths
         );
+        this.datacenters[index].averageBandwidth = averageBandwidth;
+        this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(
+          averageBandwidth
+        );
       }
+    }
+  }
+
+  judgeLatency(averageLatency: number): Speed {
+    if (averageLatency < 170) {
+      return Speed.good; // green
+    } else if (averageLatency >= 170 && averageLatency < 280) {
+      return Speed.ok; // yellow
+    } else {
+      return Speed.bad; // red
+    }
+  }
+
+  judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed {
+    if (averageBandwidth.megaBitsPerSecond > 1) {
+      return Speed.good; // green
+    } else if (
+      averageBandwidth.megaBitsPerSecond <= 1 &&
+      averageBandwidth.megaBitsPerSecond > 0.3
+    ) {
+      return Speed.ok; // yellow
+    } else {
+      return Speed.bad; // red
     }
   }
 

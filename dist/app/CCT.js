@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CCT = void 0;
 const node_fetch_1 = require("node-fetch");
+const Datacenter_1 = require("../@types/Datacenter");
 const LCE_1 = require("./LCE");
 const Util_1 = require("./Util");
 class CCT {
@@ -12,7 +13,7 @@ class CCT {
     }
     async fetchDatacenterInformation(dictionaryUrl) {
         if (!dictionaryUrl) {
-            throw new Error('Datacenter URL missing.');
+            throw new Error("Datacenter URL missing.");
         }
         const dcs = await node_fetch_1.default(dictionaryUrl).then((res) => res.json());
         this.datacenters = this.regions
@@ -45,7 +46,9 @@ class CCT {
                 if (result && result.latency) {
                     const index = this.datacenters.findIndex((e) => e.id === dc.id);
                     (_a = this.datacenters[index].latencies) === null || _a === void 0 ? void 0 : _a.push(result.latency);
-                    this.datacenters[index].averageLatency = Util_1.Util.getAverageLatency(this.datacenters[index].latencies);
+                    const averageLatency = Util_1.Util.getAverageLatency(this.datacenters[index].latencies);
+                    this.datacenters[index].averageLatency = averageLatency;
+                    this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
                 }
             }
         }
@@ -62,8 +65,33 @@ class CCT {
             if (result && result.bandwidth) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
                 (_a = this.datacenters[index].bandwidths) === null || _a === void 0 ? void 0 : _a.push(result.bandwidth);
-                this.datacenters[index].averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
+                const averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
+                this.datacenters[index].averageBandwidth = averageBandwidth;
+                this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
             }
+        }
+    }
+    judgeLatency(averageLatency) {
+        if (averageLatency < 170) {
+            return Datacenter_1.Speed.good;
+        }
+        else if (averageLatency >= 170 && averageLatency < 280) {
+            return Datacenter_1.Speed.ok;
+        }
+        else {
+            return Datacenter_1.Speed.bad;
+        }
+    }
+    judgeBandwidth(averageBandwidth) {
+        if (averageBandwidth.megaBitsPerSecond > 1) {
+            return Datacenter_1.Speed.good;
+        }
+        else if (averageBandwidth.megaBitsPerSecond <= 1 &&
+            averageBandwidth.megaBitsPerSecond > 0.3) {
+            return Datacenter_1.Speed.ok;
+        }
+        else {
+            return Datacenter_1.Speed.bad;
         }
     }
     getCurrentDatacentersSorted() {
