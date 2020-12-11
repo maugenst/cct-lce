@@ -15,18 +15,20 @@ export class Util {
     data: BandwithPerSecond[] | undefined
   ): BandwithPerSecond {
     if (data) {
-      const bandwidthAverage: BandwithPerSecond = data.reduce((prev: BandwithPerSecond, cur: BandwithPerSecond) => {
-        return {
-          bitsPerSecond: (prev.bitsPerSecond + cur.bitsPerSecond),
-          kiloBitsPerSecond: (prev.kiloBitsPerSecond + cur.kiloBitsPerSecond),
-          megaBitsPerSecond: (prev.megaBitsPerSecond + cur.megaBitsPerSecond),
-        };
-      });
+      const bandwidthAverage: BandwithPerSecond = data.reduce(
+        (prev: BandwithPerSecond, cur: BandwithPerSecond) => {
+          return {
+            bitsPerSecond: prev.bitsPerSecond + cur.bitsPerSecond,
+            kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.kiloBitsPerSecond,
+            megaBitsPerSecond: prev.megaBitsPerSecond + cur.megaBitsPerSecond,
+          };
+        }
+      );
       return {
         bitsPerSecond: bandwidthAverage.bitsPerSecond / data.length,
         kiloBitsPerSecond: bandwidthAverage.kiloBitsPerSecond / data.length,
-        megaBitsPerSecond: bandwidthAverage.megaBitsPerSecond / data.length
-      }
+        megaBitsPerSecond: bandwidthAverage.megaBitsPerSecond / data.length,
+      };
     } else {
       return {
         bitsPerSecond: -1,
