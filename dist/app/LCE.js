@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LCE = void 0;
 const node_fetch_1 = require("node-fetch");
+const Bandwidth_1 = require("../@types/Bandwidth");
 const abort_controller_1 = require("abort-controller");
 class LCE {
     constructor({ datacenters, agent, }) {
@@ -42,12 +43,12 @@ class LCE {
             return null;
         }
     }
-    getBandwidthForId(id) {
+    getBandwidthForId(id, options) {
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
         if (!dc) {
             return null;
         }
-        return this.getBandwidthFor(dc);
+        return this.getBandwidthFor(dc, options);
     }
     getLatencyForId(id) {
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
@@ -78,9 +79,11 @@ class LCE {
             return null;
         }
     }
-    async getBandwidthFor(datacenter) {
+    async getBandwidthFor(datacenter, options = {
+        bandwidthMode: Bandwidth_1.BandwidthMode.big
+    }) {
         const start = Date.now();
-        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/big`);
+        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
         if (response !== null) {
             const end = Date.now();
             const rawBody = await response.text();

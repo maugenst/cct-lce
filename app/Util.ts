@@ -50,6 +50,7 @@ export class Util {
     const sorted = Util.sortDatacenters(datacenters);
     return sorted.slice(0, 3);
   }
+
   static sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

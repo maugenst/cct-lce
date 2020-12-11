@@ -1,8 +1,8 @@
-import fetch, { Response } from "node-fetch";
-import { Datacenter } from "../@types/Datacenter";
-import { Result } from "../@types/Result";
-import { Bandwith, BandwithPerSecond } from "../@types/Bandwidth";
-import { Latency } from "../@types/Latency";
+import fetch, {Response} from "node-fetch";
+import {Datacenter} from "../@types/Datacenter";
+import {Result} from "../@types/Result";
+import {Bandwith, BandwithPerSecond, BandwidthMode} from "../@types/Bandwidth";
+import {Latency} from "../@types/Latency";
 import AbortController from "abort-controller";
 
 export class LCE {
@@ -62,12 +62,14 @@ export class LCE {
     }
   }
 
-  getBandwidthForId(id: string) {
+  getBandwidthForId(id: string, options?: {
+    bandwidthMode: BandwidthMode
+  }) {
     const dc = this.datacenters.find((datacenter) => datacenter.id === id);
     if (!dc) {
       return null;
     }
-    return this.getBandwidthFor(dc);
+    return this.getBandwidthFor(dc, options);
   }
 
   getLatencyForId(id: string) {
@@ -101,10 +103,14 @@ export class LCE {
     }
   }
 
-  async getBandwidthFor(datacenter: Datacenter): Promise<Bandwith | null> {
+  async getBandwidthFor(datacenter: Datacenter, options: {
+    bandwidthMode: BandwidthMode
+  } = {
+    bandwidthMode: BandwidthMode.big // Default
+  }): Promise<Bandwith | null> {
     const start = Date.now();
     const response = await this.bandwidthFetch(
-      `https://${datacenter.ip}/drone/big`
+      `https://${datacenter.ip}/drone/${options.bandwidthMode}`
     );
     if (response !== null) {
       const end = Date.now();

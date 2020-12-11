@@ -15,3 +15,8 @@ export type BandwithPerSecond = {
   kiloBitsPerSecond: number;
   megaBitsPerSecond: number;
 };
+
+export enum BandwidthMode {
+  big = "big",
+  small = "small",
+}

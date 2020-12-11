@@ -1,34 +1,43 @@
 import fetch, { Response } from "node-fetch";
-import { Datacenter, Speed } from "../@types/Datacenter";
+import { Datacenter, Location, Speed, StoreData } from "../@types/Datacenter";
 import { LCE } from "./LCE";
 import { Util } from "./Util";
-import { BandwithPerSecond } from "../@types/Bandwidth";
+import { BandwidthMode, BandwithPerSecond } from "../@types/Bandwidth";
+import { v4 as uuid } from "uuid";
+declare const google: any;
 
 export class CCT {
+  allDatacenters: Datacenter[];
   datacenters: Datacenter[];
   regions: string[];
   lce: LCE;
   finishedLatency: boolean = false;
   finishedBandwidth: boolean = false;
 
-  constructor({ regions }: { regions: string[] }) {
-    this.regions = regions || [];
-  }
-
   async fetchDatacenterInformation(dictionaryUrl: string | undefined) {
     if (!dictionaryUrl) {
       throw new Error("Datacenter URL missing.");
     }
 
-    const dcs: Datacenter[] = await fetch(dictionaryUrl).then((res: Response) =>
+    this.allDatacenters = await fetch(dictionaryUrl).then((res: Response) =>
       res.json()
     );
 
-    this.datacenters = this.regions
-      ? dcs.filter((dc) => this.mapDatacentersOnRegions(dc))
-      : dcs;
+    this.datacenters = this.allDatacenters;
 
     this.clean();
+
+    this.lce = new LCE({
+      datacenters: this.datacenters,
+    });
+  }
+
+  setRegions(regions: string[]) {
+    this.regions = regions || [];
+    this.datacenters =
+      this.regions.length > 0
+        ? this.allDatacenters.filter((dc) => this.mapDatacentersOnRegions(dc))
+        : this.allDatacenters;
 
     this.lce = new LCE({
       datacenters: this.datacenters,
@@ -72,17 +81,42 @@ export class CCT {
     }
   }
 
-  startBandwidthChecks(datacenter: Datacenter, iterations: number): void {
-    this.startMeasurementForBandwidth(datacenter, iterations).then(() => {
-      this.finishedBandwidth = true;
-    });
+  startBandwidthChecks({
+    datacenter,
+    iterations,
+    bandwidthMode,
+  }: {
+    datacenter: Datacenter | Datacenter[];
+    iterations: number;
+    bandwidthMode?: BandwidthMode | undefined;
+  }): void {
+    if (Array.isArray(datacenter)) {
+      const bandwidthMeasurementPromises: Promise<void>[] = [];
+      datacenter.forEach((dc) => {
+        bandwidthMeasurementPromises.push(
+          this.startMeasurementForBandwidth(dc, iterations, bandwidthMode)
+        );
+      });
+      Promise.all(bandwidthMeasurementPromises).then(() => {
+        this.finishedBandwidth = true;
+      });
+    } else {
+      this.startMeasurementForBandwidth(
+        datacenter,
+        iterations,
+        bandwidthMode
+      ).then(() => {
+        this.finishedBandwidth = true;
+      });
+    }
   }
   private async startMeasurementForBandwidth(
     dc: Datacenter,
-    iterations: number
+    iterations: number,
+    bandwidthMode: BandwidthMode = BandwidthMode.big
   ): Promise<void> {
     for (let i = 0; i < iterations; i++) {
-      const result = await this.lce.getBandwidthForId(dc.id);
+      const result = await this.lce.getBandwidthForId(dc.id, { bandwidthMode });
       if (result && result.bandwidth) {
         const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
@@ -124,6 +158,84 @@ export class CCT {
   getCurrentDatacentersSorted(): Datacenter[] {
     Util.sortDatacenters(this.datacenters);
     return this.datacenters;
+  }
+
+  async getAddress(): Promise<Location> {
+    const location: Location = {
+      address: "",
+      latitude: 0,
+      longitude: 0,
+    };
+
+    if (navigator && navigator?.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position: GeolocationPosition) => {
+          location.latitude = position.coords.latitude;
+          location.longitude = position.coords.longitude;
+
+          const geocoder = new google.maps.Geocoder();
+
+          geocoder.geocode(
+            {
+              location: new google.maps.LatLng(
+                location.latitude,
+                location.longitude
+              ),
+            },
+            (results: any, status: string) => {
+              if (status === "OK") {
+                location.address = results[0].formatted_address;
+              }
+            }
+          );
+        }
+      );
+    }
+    return location;
+  }
+
+  async store(
+    location: Location = {
+      address: "Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany",
+      latitude: 49.2933756,
+      longitude: 8.6421212,
+    }
+  ): Promise<boolean> {
+    const data: StoreData[] = [];
+    this.datacenters.forEach((dc) => {
+      data.push({
+        id: dc.id,
+        latency: `${dc.averageLatency.toFixed(2)}`,
+        averageBandwidth: dc.averageBandwidth.megaBitsPerSecond.toFixed(2),
+      });
+    });
+
+    const body = JSON.stringify(
+      {
+        uid: uuid(),
+        address: location.address,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        data,
+      },
+      null,
+      4
+    );
+
+    // console.log(body);
+    try {
+      const result = await fetch(
+        "https://cct.demo-education.cloud.sap/measurement",
+        {
+          method: "post",
+          body: body,
+          headers: { "Content-Type": "application/json" },
+        }
+      ).then((res: Response) => res.json());
+      return result.status === "OK";
+    } catch (error) {
+      return false;
+    }
   }
 
   clean() {

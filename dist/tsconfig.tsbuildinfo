@@ -167,13 +167,13 @@
         "affectsGlobalScope": false
       },
       "../@types/bandwidth.ts": {
-        "version": "268b267d4891abc1d9fd604e86206d099a4a08691ecafc39eca844d295d93a2a",
-        "signature": "76f249a0dbae9553c6eef3a5cdb4766756c0aea25a007e2300161e0723ee8dfc",
+        "version": "233230b884101e08b98606fd2f42c9590e348dafeea38989981287ab8acd42e5",
+        "signature": "77a6e656599d5eaaae8b0b8d09121c4f97211d76eb91c1ea5ff8f5e46dc3e3dc",
         "affectsGlobalScope": false
       },
       "../@types/datacenter.ts": {
-        "version": "39c37ce39c87a8c586c2aef27fc1d8874dceb94bfb11301add595bd2314c352a",
-        "signature": "ad43216614be1cb1d78e2de174a18a3c8039324b749d0b271a10b71cde9a6db0",
+        "version": "a0c82f50b92f0d5f00bcefe9e7ccd5916f296b56c6063beb7be8ee1021cbd7b4",
+        "signature": "f03c34094ec8db050634e56c548c15a56bf7e3d9c2176199ddbfba7bdd3e2f4d",
         "affectsGlobalScope": false
       },
       "../@types/latency.ts": {
@@ -447,18 +447,23 @@
         "affectsGlobalScope": false
       },
       "../app/lce.ts": {
-        "version": "48a6e4b4e0c9dd6f1e76cf4ed7a98db6886cb0be44872d5cd18a48411f8253cd",
-        "signature": "c62d17bee2203c8f711fbf79c9d07f687db2411409c106854a39dfeb7f776def",
+        "version": "37159b0e887d843662557a11208f915644a37483fb40fa223f43462b13716d93",
+        "signature": "83f4670b285de6e67c62e5557fcf0d1d57baea62de4ebdf8b0bdc5a05eef7711",
         "affectsGlobalScope": false
       },
       "../app/util.ts": {
-        "version": "5ab1d14fb09f775bcf7731cbc181dcb0610cdee638678fcc44b1cd019fae2f8c",
+        "version": "ac872bac7754045ffbec225c0fdf99f7c74a404fa64ba603ab4515d360772c27",
         "signature": "df180de0d88fd434b8abdba1de5e567fa7af86ed97c740fca17d5a90590914a3",
         "affectsGlobalScope": false
       },
+      "../node_modules/@types/uuid/index.d.ts": {
+        "version": "96b49a9de749afcf92b5bce1d8cc42cfae6816cdf5ea36584fd9256b8b2e5292",
+        "signature": "96b49a9de749afcf92b5bce1d8cc42cfae6816cdf5ea36584fd9256b8b2e5292",
+        "affectsGlobalScope": false
+      },
       "../app/cct.ts": {
-        "version": "a488ecaba2d3d36e6d4032e18039c61168ab26b1f708191f565411cea9b418d8",
-        "signature": "628d02ee495497860d4d35522702d3aeb76f1e95d36da88ed240b088b29f6672",
+        "version": "95374dddca1dae39cdaff25495f40bf11706207008e915d6a3c2539b1e0a2b9f",
+        "signature": "72c36905b385b032c96774281eb81026c5aa8fa7ef283a861e9dc744fd18d005",
         "affectsGlobalScope": false
       },
       "../node_modules/dotenv/types/index.d.ts": {
@@ -467,17 +472,12 @@
         "affectsGlobalScope": false
       },
       "../test/cct.test.ts": {
-        "version": "660d8dcd9bdb951a91491b31419d69ea44f7854035e0f8db7b9377a1ac1cd9e3",
+        "version": "6d065a94dc465c0594b0f07729dda3e9b86175c604243b3f62826683259b7645",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
       "../test/lce.test.ts": {
         "version": "2a389cee15c1a1f7a7dba00580bb52a4aa681d5995376d20ba4c4cccc1e8b2eb",
-        "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
-        "affectsGlobalScope": false
-      },
-      "../test/testall.ts": {
-        "version": "3bc7192fece9df39bcb5c49020ee7f33f30bf817ba7e5e7052dfba9788fa8d10",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -671,6 +671,7 @@
         "../app/lce.ts",
         "../app/util.ts",
         "../node_modules/@types/node-fetch/index.d.ts",
+        "../node_modules/@types/uuid/index.d.ts",
         "../node_modules/tslib/tslib.d.ts"
       ],
       "../app/lce.ts": [
@@ -934,6 +935,7 @@
         "../node_modules/@types/node/index.d.ts"
       ],
       "../test/cct.test.ts": [
+        "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
         "../app/cct.ts",
         "../app/util.ts",
@@ -943,11 +945,6 @@
       "../test/lce.test.ts": [
         "../@types/datacenter.ts",
         "../app/lce.ts",
-        "../node_modules/tslib/tslib.d.ts"
-      ],
-      "../test/testall.ts": [
-        "../app/cct.ts",
-        "../app/util.ts",
         "../node_modules/tslib/tslib.d.ts"
       ]
     },
@@ -1302,6 +1299,7 @@
       "../node_modules/@types/normalize-package-data/index.d.ts",
       "../node_modules/@types/prettier/index.d.ts",
       "../node_modules/@types/stack-utils/index.d.ts",
+      "../node_modules/@types/uuid/index.d.ts",
       "../node_modules/@types/yargs-parser/index.d.ts",
       "../node_modules/@types/yargs/index.d.ts",
       "../node_modules/abort-controller/dist/abort-controller.d.ts",
@@ -1341,8 +1339,7 @@
       "../node_modules/typescript/lib/lib.scripthost.d.ts",
       "../node_modules/typescript/lib/lib.webworker.importscripts.d.ts",
       "../test/cct.test.ts",
-      "../test/lce.test.ts",
-      "../test/testall.ts"
+      "../test/lce.test.ts"
     ]
   },
   "version": "4.1.2"
