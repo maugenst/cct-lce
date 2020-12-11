@@ -1,6 +1,6 @@
 {
   "name": "cct-lce",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "CCT Latency Check Engine",
   "main": "dist/app/CCT.js",
   "files": [
@@ -29,8 +29,10 @@
   "homepage": "https://github.com/maugenst/cct-lce#readme",
   "dependencies": {
     "@types/node-fetch": "^2.5.7",
+    "@types/uuid": "^8.3.0",
+    "abort-controller": "^3.0.0",
     "node-fetch": "^2.6.1",
-    "abort-controller": "^3.0.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "dotenv": "^8.2.0",

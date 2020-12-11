@@ -20,6 +20,18 @@ export type Datacenter = {
   bandwidths: BandwithPerSecond[];
 };
 
+export type StoreData = {
+  latency: string;
+  averageBandwidth: string;
+  id: string;
+};
+
+export type Location = {
+  address: string;
+  latitude: number;
+  longitude: number;
+};
+
 export enum Speed {
   good = "GOOD",
   ok = "OK",

@@ -12,7 +12,25 @@ export declare type Datacenter = {
     tags: string;
     lastUpdate: string;
     averageLatency: number;
+    latencyJudgement?: Speed;
     averageBandwidth: BandwithPerSecond;
+    bandwidthJudgement?: Speed;
     latencies: number[];
     bandwidths: BandwithPerSecond[];
 };
+export declare type StoreData = {
+    latency: string;
+    averageBandwidth: string;
+    id: string;
+};
+export declare type Location = {
+    address: string;
+    latitude: number;
+    longitude: number;
+};
+export declare enum Speed {
+    good = "GOOD",
+    ok = "OK",
+    bad = "BAD",
+    nothing = "NOTHING"
+}
