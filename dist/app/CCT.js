@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CCT = void 0;
+const uuid_1 = require("uuid");
 const node_fetch_1 = require("node-fetch");
 const Datacenter_1 = require("../@types/Datacenter");
 const LCE_1 = require("./LCE");
 const Util_1 = require("./Util");
 const Bandwidth_1 = require("../@types/Bandwidth");
-const uuid_1 = require("uuid");
 class CCT {
     constructor() {
         this.finishedLatency = false;

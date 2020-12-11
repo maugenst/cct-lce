@@ -14,15 +14,15 @@ class Util {
         if (data) {
             const bandwidthAverage = data.reduce((prev, cur) => {
                 return {
-                    bitsPerSecond: (prev.bitsPerSecond + cur.bitsPerSecond),
-                    kiloBitsPerSecond: (prev.kiloBitsPerSecond + cur.kiloBitsPerSecond),
-                    megaBitsPerSecond: (prev.megaBitsPerSecond + cur.megaBitsPerSecond),
+                    bitsPerSecond: prev.bitsPerSecond + cur.bitsPerSecond,
+                    kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.kiloBitsPerSecond,
+                    megaBitsPerSecond: prev.megaBitsPerSecond + cur.megaBitsPerSecond,
                 };
             });
             return {
                 bitsPerSecond: bandwidthAverage.bitsPerSecond / data.length,
                 kiloBitsPerSecond: bandwidthAverage.kiloBitsPerSecond / data.length,
-                megaBitsPerSecond: bandwidthAverage.megaBitsPerSecond / data.length
+                megaBitsPerSecond: bandwidthAverage.megaBitsPerSecond / data.length,
             };
         }
         else {

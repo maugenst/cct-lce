@@ -1,9 +1,10 @@
+import { v4 as uuid } from "uuid";
 import fetch, { Response } from "node-fetch";
 import { Datacenter, Location, Speed, StoreData } from "../@types/Datacenter";
 import { LCE } from "./LCE";
 import { Util } from "./Util";
 import { BandwidthMode, BandwithPerSecond } from "../@types/Bandwidth";
-import { v4 as uuid } from "uuid";
+
 declare const google: any;
 
 export class CCT {

@@ -80,7 +80,7 @@ class LCE {
         }
     }
     async getBandwidthFor(datacenter, options = {
-        bandwidthMode: Bandwidth_1.BandwidthMode.big
+        bandwidthMode: Bandwidth_1.BandwidthMode.big,
     }) {
         const start = Date.now();
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
