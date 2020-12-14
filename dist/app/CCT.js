@@ -14,14 +14,12 @@ class CCT {
     }
     async fetchDatacenterInformation(dictionaryUrl) {
         if (!dictionaryUrl) {
-            throw new Error("Datacenter URL missing.");
+            throw new Error('Datacenter URL missing.');
         }
         this.allDatacenters = await node_fetch_1.default(dictionaryUrl).then((res) => res.json());
         this.datacenters = this.allDatacenters;
         this.clean();
-        this.lce = new LCE_1.LCE({
-            datacenters: this.datacenters,
-        });
+        this.lce = new LCE_1.LCE(this.datacenters);
     }
     setRegions(regions) {
         this.regions = regions || [];
@@ -29,14 +27,10 @@ class CCT {
             this.regions.length > 0
                 ? this.allDatacenters.filter((dc) => this.mapDatacentersOnRegions(dc))
                 : this.allDatacenters;
-        this.lce = new LCE_1.LCE({
-            datacenters: this.datacenters,
-        });
+        this.lce = new LCE_1.LCE(this.datacenters);
     }
     mapDatacentersOnRegions(dc) {
-        return this.regions
-            .map((region) => dc.name.toLowerCase() === region.toLowerCase())
-            .reduce((a, b) => a || b);
+        return this.regions.map((region) => dc.name.toLowerCase() === region.toLowerCase()).reduce((a, b) => a || b);
     }
     stopMeasurements() {
         this.lce.terminate();
@@ -106,8 +100,7 @@ class CCT {
         if (averageBandwidth.megaBitsPerSecond > 1) {
             return Datacenter_1.Speed.good;
         }
-        else if (averageBandwidth.megaBitsPerSecond <= 1 &&
-            averageBandwidth.megaBitsPerSecond > 0.3) {
+        else if (averageBandwidth.megaBitsPerSecond <= 1 && averageBandwidth.megaBitsPerSecond > 0.3) {
             return Datacenter_1.Speed.ok;
         }
         else {
@@ -120,7 +113,7 @@ class CCT {
     }
     async getAddress() {
         const location = {
-            address: "",
+            address: '',
             latitude: 0,
             longitude: 0,
         };
@@ -132,7 +125,7 @@ class CCT {
                 geocoder.geocode({
                     location: new google.maps.LatLng(location.latitude, location.longitude),
                 }, (results, status) => {
-                    if (status === "OK") {
+                    if (status === 'OK') {
                         location.address = results[0].formatted_address;
                     }
                 });
@@ -141,7 +134,7 @@ class CCT {
         return location;
     }
     async store(location = {
-        address: "Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany",
+        address: 'Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany',
         latitude: 49.2933756,
         longitude: 8.6421212,
     }) {
@@ -161,12 +154,12 @@ class CCT {
             data,
         }, null, 4);
         try {
-            const result = await node_fetch_1.default("https://cct.demo-education.cloud.sap/measurement", {
-                method: "post",
+            const result = await node_fetch_1.default('https://cct.demo-education.cloud.sap/measurement', {
+                method: 'post',
                 body: body,
-                headers: { "Content-Type": "application/json" },
+                headers: { 'Content-Type': 'application/json' },
             }).then((res) => res.json());
-            return result.status === "OK";
+            return result.status === 'OK';
         }
         catch (error) {
             return false;

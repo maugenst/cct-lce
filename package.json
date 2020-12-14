@@ -1,6 +1,6 @@
 {
   "name": "cct-lce",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "CCT Latency Check Engine",
   "main": "dist/app/CCT.js",
   "files": [
@@ -12,7 +12,8 @@
     "build": "tsc && webpack",
     "start": "node dist/index.js",
     "watch": "tsc --watch",
-    "clean": "rimraf dist/"
+    "clean": "rimraf dist/",
+    "lint": "eslint . --ext .ts"
   },
   "repository": {
     "type": "git",
@@ -28,13 +29,14 @@
   },
   "homepage": "https://github.com/maugenst/cct-lce#readme",
   "dependencies": {
-    "@types/node-fetch": "^2.5.7",
-    "@types/uuid": "^8.3.0",
     "abort-controller": "^3.0.0",
     "node-fetch": "^2.6.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.5.7",
+    "@types/uuid": "^8.3.0",
+    "@types/googlemaps": "^3.40.5",
     "@typescript-eslint/eslint-plugin": "^4.9.1",
     "@typescript-eslint/parser": "^4.9.1",
     "dotenv": "^8.2.0",

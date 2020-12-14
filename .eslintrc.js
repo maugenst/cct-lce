@@ -1,18 +1,14 @@
 module.exports = {
-  extends: ["prettier"],
-  plugins: ["prettier"],
-  rules: {
-    // let git (.gitattributes) handle this
-    "linebreak-style": "off",
-    // allow unused function arguments for convenience and documentary purposes
-    "prettier/prettier": "error",
-  },
-  overrides: [
-    {
-      files: ["**/*.test.js"],
-      env: {
-        jest: true,
-      },
-    },
+  root: true,
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
   ],
+  plugins: ["@typescript-eslint"],
+  parser: "@typescript-eslint/parser",
+  rules: {
+    "no-inferrable-types": 0,
+    "no-explicit-any": 0,
+  }
 };

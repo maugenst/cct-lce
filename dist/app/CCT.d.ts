@@ -1,6 +1,6 @@
-import { Datacenter, Location, Speed } from "../@types/Datacenter";
-import { LCE } from "./LCE";
-import { BandwidthMode, BandwithPerSecond } from "../@types/Bandwidth";
+import { Datacenter, Location, Speed } from '../@types/Datacenter';
+import { LCE } from './LCE';
+import { BandwidthMode, BandwithPerSecond } from '../@types/Bandwidth';
 export declare class CCT {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];

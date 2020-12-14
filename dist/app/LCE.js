@@ -5,9 +5,8 @@ const node_fetch_1 = require("node-fetch");
 const Bandwidth_1 = require("../@types/Bandwidth");
 const abort_controller_1 = require("abort-controller");
 class LCE {
-    constructor({ datacenters, agent, }) {
+    constructor(datacenters) {
         this.datacenters = datacenters;
-        this.agent = agent;
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
         this.terminateAllCalls = false;
@@ -17,31 +16,25 @@ class LCE {
         this.datacenters.forEach((datacenter) => {
             results.push(this.getLatencyFor(datacenter));
         });
-        const pResults = await results;
-        const data = await Promise.all(pResults);
+        const data = await Promise.all(results);
         const filteredData = data.filter((d) => d !== null);
         filteredData.sort(this.compare);
         this.cancelableLatencyRequests = [];
         return filteredData;
     }
     async runBandwidthCheckForAll() {
-        try {
-            const results = [];
-            for (const datacenter of this.datacenters) {
-                if (this.terminateAllCalls) {
-                    break;
-                }
-                const bandwidth = await this.getBandwidthFor(datacenter);
+        const results = [];
+        for (const datacenter of this.datacenters) {
+            if (this.terminateAllCalls) {
+                break;
+            }
+            const bandwidth = await this.getBandwidthFor(datacenter);
+            if (bandwidth) {
                 results.push(bandwidth);
             }
-            const filteredData = results.filter((d) => d !== null);
-            filteredData.sort(this.compare);
-            this.cancelableBandwidthRequests = [];
-            return filteredData;
         }
-        catch (err) {
-            return null;
-        }
+        this.cancelableBandwidthRequests = [];
+        return results;
     }
     getBandwidthForId(id, options) {
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);

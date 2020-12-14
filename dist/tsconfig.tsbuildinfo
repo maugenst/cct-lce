@@ -167,23 +167,18 @@
         "affectsGlobalScope": false
       },
       "../@types/bandwidth.ts": {
-        "version": "233230b884101e08b98606fd2f42c9590e348dafeea38989981287ab8acd42e5",
+        "version": "d9839de3be760a5a2f1b0c0a0eaa7df8ff2f3fd12bc5323ef28756171fcd95bb",
         "signature": "77a6e656599d5eaaae8b0b8d09121c4f97211d76eb91c1ea5ff8f5e46dc3e3dc",
         "affectsGlobalScope": false
       },
       "../@types/datacenter.ts": {
-        "version": "a0c82f50b92f0d5f00bcefe9e7ccd5916f296b56c6063beb7be8ee1021cbd7b4",
-        "signature": "f03c34094ec8db050634e56c548c15a56bf7e3d9c2176199ddbfba7bdd3e2f4d",
+        "version": "67f7a411841fb829573dd725017ceeec1e940c51794614e81eb3550320b032f5",
+        "signature": "0791992581055804f89f6e64344c2e60ad5cf9c2e4c53a416b9e8db49f630ddb",
         "affectsGlobalScope": false
       },
       "../@types/latency.ts": {
-        "version": "87c191a0e059ed90a43c5c1087b98911a03a575a6a8364897431ba7f31e47601",
+        "version": "f5e6b989405fc20a766776640d9d05b9952a1a4442b4c42b3c12ab24d2563a9c",
         "signature": "a094f12418d8da22824b99be856a4fba2e7ddc6eecaf5b0012265f480fb46c94",
-        "affectsGlobalScope": false
-      },
-      "../@types/result.ts": {
-        "version": "c01acb494d6e27ebf86183ae3f5e6df031af708cfb5da26cd18f4243b6db7dfc",
-        "signature": "39b36ec12145670fa6bbc80375cc3c86c2e7fc7e9d33359e6577c11bf98f74a9",
         "affectsGlobalScope": false
       },
       "../node_modules/@types/uuid/index.d.ts": {
@@ -452,18 +447,18 @@
         "affectsGlobalScope": false
       },
       "../app/lce.ts": {
-        "version": "c84b835f177daea7ddf0bfbbcc1ecec249e7bf1563955ec52462ed3b5939ed37",
-        "signature": "9025276c2a8e616e869f3c72ae5300abd9ecba816fafa741ae108c2249431ba5",
+        "version": "9a1fbe62e5f078ae0c378decef164b85c3714ac1d7a9fa0e30c6029e98413999",
+        "signature": "bc1256da14ab856d7bc84a3bfbde8784ecf521fe24df3fd556d4aba7a8fca44e",
         "affectsGlobalScope": false
       },
       "../app/util.ts": {
-        "version": "f5949000a4be846ae83ad040d0644ff8e53c9295c1c87d80e2ee1c486ff4b067",
-        "signature": "df180de0d88fd434b8abdba1de5e567fa7af86ed97c740fca17d5a90590914a3",
+        "version": "ab451c36241c1cee4fa05d7742701e4ba1aee85192a532c30e371fa24c5ea377",
+        "signature": "2f1ffce4e3bf0ab7957618bbc8afd4247d8d5a7afb764fe622063d2c28933b36",
         "affectsGlobalScope": false
       },
       "../app/cct.ts": {
-        "version": "06658be101d422a331acaae1e6acd272ebab56f01a6c629c8d5339ecf4f11746",
-        "signature": "72c36905b385b032c96774281eb81026c5aa8fa7ef283a861e9dc744fd18d005",
+        "version": "134b6b822e6cde45373d29225ce6345c02c3eb8cfa9e29b7d1b74d600b97534c",
+        "signature": "4f45d94c88ed863927fdf7cb45c34bba62803fcc968e58cd9c08eb9b91d8285a",
         "affectsGlobalScope": false
       },
       "../node_modules/dotenv/types/index.d.ts": {
@@ -472,12 +467,12 @@
         "affectsGlobalScope": false
       },
       "../test/cct.test.ts": {
-        "version": "6d065a94dc465c0594b0f07729dda3e9b86175c604243b3f62826683259b7645",
+        "version": "ff6aab60bd2f7b1f205a8cc44960c72eb9c7b8baf3aeed1fac6ece6070f2732d",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
       "../test/lce.test.ts": {
-        "version": "2a389cee15c1a1f7a7dba00580bb52a4aa681d5995376d20ba4c4cccc1e8b2eb",
+        "version": "023997e044c9c7230a0de3d8b4309dee1dfcb7166191ba40ef984c09e6d7d4bf",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -535,6 +530,136 @@
         "version": "274bda283ef15f4205603ca9967313fc013aa77ae89f2cbeab5fbd51439e96ed",
         "signature": "274bda283ef15f4205603ca9967313fc013aa77ae89f2cbeab5fbd51439e96ed",
         "affectsGlobalScope": false
+      },
+      "../node_modules/@types/googlemaps/style-reference.d.ts": {
+        "version": "d71666cec33cc3064f416a42525311e1492fb8d2e5d4b3b55d6549b8fb14a4c8",
+        "signature": "d71666cec33cc3064f416a42525311e1492fb8d2e5d4b3b55d6549b8fb14a4c8",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/map.d.ts": {
+        "version": "66a144981ab5388e381ae41e89b131b5dc19aa739891c4a70defe3d296d62d5b",
+        "signature": "66a144981ab5388e381ae41e89b131b5dc19aa739891c4a70defe3d296d62d5b",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/coordinates.d.ts": {
+        "version": "3c6c93910866e1a3564e76a484388be11ea3ce3ae6bad06df09cea00218cf106",
+        "signature": "3c6c93910866e1a3564e76a484388be11ea3ce3ae6bad06df09cea00218cf106",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/event.d.ts": {
+        "version": "878d6562d4c54379317c708b364bbeb9a5508ce8574db1f484d0d6a0d43b8cdb",
+        "signature": "878d6562d4c54379317c708b364bbeb9a5508ce8574db1f484d0d6a0d43b8cdb",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/control.d.ts": {
+        "version": "a06bdd6c54f4ef8be4456c97c0376f8cc5b1fe5e1b18224ff400bd3d74a44c41",
+        "signature": "a06bdd6c54f4ef8be4456c97c0376f8cc5b1fe5e1b18224ff400bd3d74a44c41",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/geometry.d.ts": {
+        "version": "b611f55c940fc9378507f3be5267a7d8f6345db5dd751d84ff06a810b6857592",
+        "signature": "b611f55c940fc9378507f3be5267a7d8f6345db5dd751d84ff06a810b6857592",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/marker.d.ts": {
+        "version": "b53381265223e909eacc72f0e3e2fb186651524bf9f46e7e54b40ce7f41e5216",
+        "signature": "b53381265223e909eacc72f0e3e2fb186651524bf9f46e7e54b40ce7f41e5216",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/info-window.d.ts": {
+        "version": "a424f9740946e7a58997924edaa6c1eb84da174217c88924cd515559bb156a19",
+        "signature": "a424f9740946e7a58997924edaa6c1eb84da174217c88924cd515559bb156a19",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/polygon.d.ts": {
+        "version": "c6fe4fd32165139c164fb184af4dc4b21e80fa8968c45e9550ccb38683d71041",
+        "signature": "c6fe4fd32165139c164fb184af4dc4b21e80fa8968c45e9550ccb38683d71041",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/data.d.ts": {
+        "version": "a2d5d062ecfbff7aaaba6c0965fcb4a2a5309e9a069a63cc7debed797e726af2",
+        "signature": "a2d5d062ecfbff7aaaba6c0965fcb4a2a5309e9a069a63cc7debed797e726af2",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/overlay-view.d.ts": {
+        "version": "3783422fa957b07b9e396113fbe9d56c2369189ffd742abd7386f118983d1d3a",
+        "signature": "3783422fa957b07b9e396113fbe9d56c2369189ffd742abd7386f118983d1d3a",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/kml.d.ts": {
+        "version": "e0be32a9c5c42ff3c1412340ce1cd93573f759078e64ff8e79e370d269c2812c",
+        "signature": "e0be32a9c5c42ff3c1412340ce1cd93573f759078e64ff8e79e370d269c2812c",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/image-overlay.d.ts": {
+        "version": "5ae6c86b886ed3eb32d085974a8f2e54e4d817e16e57215b5f8d793a95566711",
+        "signature": "5ae6c86b886ed3eb32d085974a8f2e54e4d817e16e57215b5f8d793a95566711",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/drawing.d.ts": {
+        "version": "7b36f6f3526fcf9bb9bec49343f91e8b863dea677d19f69a03d5104959d08bd2",
+        "signature": "7b36f6f3526fcf9bb9bec49343f91e8b863dea677d19f69a03d5104959d08bd2",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/visualization.d.ts": {
+        "version": "39b474e803393bf130ef2e1aef1bedad3222823e0ddbc8254170a9e97bd9f27d",
+        "signature": "39b474e803393bf130ef2e1aef1bedad3222823e0ddbc8254170a9e97bd9f27d",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/max-zoom.d.ts": {
+        "version": "e127f251a0ec444ad6742ee3248d5b49594acb70f1b387fd39adf7561027f35a",
+        "signature": "e127f251a0ec444ad6742ee3248d5b49594acb70f1b387fd39adf7561027f35a",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/street-view.d.ts": {
+        "version": "1f7369a15a2cd1435f6a701f79e4deae6b6ca226744b5ab92b51962d6998f7c4",
+        "signature": "1f7369a15a2cd1435f6a701f79e4deae6b6ca226744b5ab92b51962d6998f7c4",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/street-view-service.d.ts": {
+        "version": "b010a408fc193fd8438c7df32e5fa3eecdc8f0e8983ed469d066b0971500ad6f",
+        "signature": "b010a408fc193fd8438c7df32e5fa3eecdc8f0e8983ed469d066b0971500ad6f",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/places-widget.d.ts": {
+        "version": "b56ee16152836323779fb45fcbf8018968c03ea5b1cba0cd4f449b5b7e70676b",
+        "signature": "b56ee16152836323779fb45fcbf8018968c03ea5b1cba0cd4f449b5b7e70676b",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/places-service.d.ts": {
+        "version": "3239117c14159055a72c8f6ed374c8fb656265262261b5b963d14dc07cb2bc63",
+        "signature": "3239117c14159055a72c8f6ed374c8fb656265262261b5b963d14dc07cb2bc63",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/places-autocomplete-service.d.ts": {
+        "version": "120de417659ec12c957c167ad6825686fb354a69772381d9fbb36784628a8d72",
+        "signature": "120de417659ec12c957c167ad6825686fb354a69772381d9fbb36784628a8d72",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/geocoder.d.ts": {
+        "version": "a64b788498f72bb31f01da1fabdca6c72fd08daaf8537d2e9393fb3d3608e668",
+        "signature": "a64b788498f72bb31f01da1fabdca6c72fd08daaf8537d2e9393fb3d3608e668",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/directions.d.ts": {
+        "version": "bed005e068c6cbd2bc22a4961434b91c393120a1d336b308e4c0dd2c2dcd43df",
+        "signature": "bed005e068c6cbd2bc22a4961434b91c393120a1d336b308e4c0dd2c2dcd43df",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/distance-matrix.d.ts": {
+        "version": "d11bece84ef9c124d6dc305018438a8dcc3e47ba8575ee4597b1c63ec86d7ed3",
+        "signature": "d11bece84ef9c124d6dc305018438a8dcc3e47ba8575ee4597b1c63ec86d7ed3",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/reference/elevation.d.ts": {
+        "version": "0cdc52e2c3766f000b79c2dece6426d66d02f33567dc1746b856d9d5dfa5332f",
+        "signature": "0cdc52e2c3766f000b79c2dece6426d66d02f33567dc1746b856d9d5dfa5332f",
+        "affectsGlobalScope": true
+      },
+      "../node_modules/@types/googlemaps/index.d.ts": {
+        "version": "06d9ac4885c68f04c926aac0dfd8798af5486a4ab6e375f1dc005cece9867711",
+        "signature": "06d9ac4885c68f04c926aac0dfd8798af5486a4ab6e375f1dc005cece9867711",
+        "affectsGlobalScope": true
       },
       "../node_modules/@types/graceful-fs/index.d.ts": {
         "version": "cb6cf0480ee1aa9f706db1f6f5add596a1aa10e8c4beb1817f2318384ba684dc",
@@ -630,7 +755,8 @@
     "options": {
       "typeRoots": [
         "../node_modules/@types",
-        "../@types"
+        "../@types",
+        "../googlemaps"
       ],
       "outDir": "./",
       "module": 1,
@@ -667,9 +793,6 @@
       "../@types/latency.ts": [
         "../node_modules/tslib/tslib.d.ts"
       ],
-      "../@types/result.ts": [
-        "../node_modules/tslib/tslib.d.ts"
-      ],
       "../app/cct.ts": [
         "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
@@ -683,7 +806,6 @@
         "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
         "../@types/latency.ts",
-        "../@types/result.ts",
         "../node_modules/@types/node-fetch/index.d.ts",
         "../node_modules/abort-controller/dist/abort-controller.d.ts",
         "../node_modules/tslib/tslib.d.ts"
@@ -721,6 +843,33 @@
         "../node_modules/@types/eslint/helpers.d.ts",
         "../node_modules/@types/estree/index.d.ts",
         "../node_modules/@types/json-schema/index.d.ts"
+      ],
+      "../node_modules/@types/googlemaps/index.d.ts": [
+        "../node_modules/@types/googlemaps/reference/control.d.ts",
+        "../node_modules/@types/googlemaps/reference/coordinates.d.ts",
+        "../node_modules/@types/googlemaps/reference/data.d.ts",
+        "../node_modules/@types/googlemaps/reference/directions.d.ts",
+        "../node_modules/@types/googlemaps/reference/distance-matrix.d.ts",
+        "../node_modules/@types/googlemaps/reference/drawing.d.ts",
+        "../node_modules/@types/googlemaps/reference/elevation.d.ts",
+        "../node_modules/@types/googlemaps/reference/event.d.ts",
+        "../node_modules/@types/googlemaps/reference/geocoder.d.ts",
+        "../node_modules/@types/googlemaps/reference/geometry.d.ts",
+        "../node_modules/@types/googlemaps/reference/image-overlay.d.ts",
+        "../node_modules/@types/googlemaps/reference/info-window.d.ts",
+        "../node_modules/@types/googlemaps/reference/kml.d.ts",
+        "../node_modules/@types/googlemaps/reference/map.d.ts",
+        "../node_modules/@types/googlemaps/reference/marker.d.ts",
+        "../node_modules/@types/googlemaps/reference/max-zoom.d.ts",
+        "../node_modules/@types/googlemaps/reference/overlay-view.d.ts",
+        "../node_modules/@types/googlemaps/reference/places-autocomplete-service.d.ts",
+        "../node_modules/@types/googlemaps/reference/places-service.d.ts",
+        "../node_modules/@types/googlemaps/reference/places-widget.d.ts",
+        "../node_modules/@types/googlemaps/reference/polygon.d.ts",
+        "../node_modules/@types/googlemaps/reference/street-view-service.d.ts",
+        "../node_modules/@types/googlemaps/reference/street-view.d.ts",
+        "../node_modules/@types/googlemaps/reference/visualization.d.ts",
+        "../node_modules/@types/googlemaps/style-reference.d.ts"
       ],
       "../node_modules/@types/graceful-fs/index.d.ts": [
         "../node_modules/@types/node/fs.d.ts",
@@ -966,8 +1115,8 @@
         "../@types/bandwidth.ts",
         "../@types/datacenter.ts",
         "../@types/latency.ts",
-        "../@types/result.ts",
-        "../node_modules/@types/node-fetch/index.d.ts"
+        "../node_modules/@types/node-fetch/index.d.ts",
+        "../node_modules/abort-controller/dist/abort-controller.d.ts"
       ],
       "../app/util.ts": [
         "../@types/bandwidth.ts",
@@ -1001,6 +1150,33 @@
         "../node_modules/@types/eslint/helpers.d.ts",
         "../node_modules/@types/estree/index.d.ts",
         "../node_modules/@types/json-schema/index.d.ts"
+      ],
+      "../node_modules/@types/googlemaps/index.d.ts": [
+        "../node_modules/@types/googlemaps/reference/control.d.ts",
+        "../node_modules/@types/googlemaps/reference/coordinates.d.ts",
+        "../node_modules/@types/googlemaps/reference/data.d.ts",
+        "../node_modules/@types/googlemaps/reference/directions.d.ts",
+        "../node_modules/@types/googlemaps/reference/distance-matrix.d.ts",
+        "../node_modules/@types/googlemaps/reference/drawing.d.ts",
+        "../node_modules/@types/googlemaps/reference/elevation.d.ts",
+        "../node_modules/@types/googlemaps/reference/event.d.ts",
+        "../node_modules/@types/googlemaps/reference/geocoder.d.ts",
+        "../node_modules/@types/googlemaps/reference/geometry.d.ts",
+        "../node_modules/@types/googlemaps/reference/image-overlay.d.ts",
+        "../node_modules/@types/googlemaps/reference/info-window.d.ts",
+        "../node_modules/@types/googlemaps/reference/kml.d.ts",
+        "../node_modules/@types/googlemaps/reference/map.d.ts",
+        "../node_modules/@types/googlemaps/reference/marker.d.ts",
+        "../node_modules/@types/googlemaps/reference/max-zoom.d.ts",
+        "../node_modules/@types/googlemaps/reference/overlay-view.d.ts",
+        "../node_modules/@types/googlemaps/reference/places-autocomplete-service.d.ts",
+        "../node_modules/@types/googlemaps/reference/places-service.d.ts",
+        "../node_modules/@types/googlemaps/reference/places-widget.d.ts",
+        "../node_modules/@types/googlemaps/reference/polygon.d.ts",
+        "../node_modules/@types/googlemaps/reference/street-view-service.d.ts",
+        "../node_modules/@types/googlemaps/reference/street-view.d.ts",
+        "../node_modules/@types/googlemaps/reference/visualization.d.ts",
+        "../node_modules/@types/googlemaps/style-reference.d.ts"
       ],
       "../node_modules/@types/graceful-fs/index.d.ts": [
         "../node_modules/@types/node/fs.d.ts",
@@ -1224,7 +1400,6 @@
       "../@types/bandwidth.ts",
       "../@types/datacenter.ts",
       "../@types/latency.ts",
-      "../@types/result.ts",
       "../app/cct.ts",
       "../app/lce.ts",
       "../app/util.ts",
@@ -1238,6 +1413,32 @@
       "../node_modules/@types/eslint/helpers.d.ts",
       "../node_modules/@types/eslint/index.d.ts",
       "../node_modules/@types/estree/index.d.ts",
+      "../node_modules/@types/googlemaps/index.d.ts",
+      "../node_modules/@types/googlemaps/reference/control.d.ts",
+      "../node_modules/@types/googlemaps/reference/coordinates.d.ts",
+      "../node_modules/@types/googlemaps/reference/data.d.ts",
+      "../node_modules/@types/googlemaps/reference/directions.d.ts",
+      "../node_modules/@types/googlemaps/reference/distance-matrix.d.ts",
+      "../node_modules/@types/googlemaps/reference/drawing.d.ts",
+      "../node_modules/@types/googlemaps/reference/elevation.d.ts",
+      "../node_modules/@types/googlemaps/reference/event.d.ts",
+      "../node_modules/@types/googlemaps/reference/geocoder.d.ts",
+      "../node_modules/@types/googlemaps/reference/geometry.d.ts",
+      "../node_modules/@types/googlemaps/reference/image-overlay.d.ts",
+      "../node_modules/@types/googlemaps/reference/info-window.d.ts",
+      "../node_modules/@types/googlemaps/reference/kml.d.ts",
+      "../node_modules/@types/googlemaps/reference/map.d.ts",
+      "../node_modules/@types/googlemaps/reference/marker.d.ts",
+      "../node_modules/@types/googlemaps/reference/max-zoom.d.ts",
+      "../node_modules/@types/googlemaps/reference/overlay-view.d.ts",
+      "../node_modules/@types/googlemaps/reference/places-autocomplete-service.d.ts",
+      "../node_modules/@types/googlemaps/reference/places-service.d.ts",
+      "../node_modules/@types/googlemaps/reference/places-widget.d.ts",
+      "../node_modules/@types/googlemaps/reference/polygon.d.ts",
+      "../node_modules/@types/googlemaps/reference/street-view-service.d.ts",
+      "../node_modules/@types/googlemaps/reference/street-view.d.ts",
+      "../node_modules/@types/googlemaps/reference/visualization.d.ts",
+      "../node_modules/@types/googlemaps/style-reference.d.ts",
       "../node_modules/@types/graceful-fs/index.d.ts",
       "../node_modules/@types/istanbul-lib-coverage/index.d.ts",
       "../node_modules/@types/istanbul-lib-report/index.d.ts",
