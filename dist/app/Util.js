@@ -2,13 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Util = void 0;
 class Util {
-    static deepCopy(object) {
-        return JSON.parse(JSON.stringify(object));
-    }
     static getAverageLatency(data) {
-        return data
-            ? data.reduce((prev, cur) => prev + cur, 0) / data.length
-            : -1;
+        return data ? data.reduce((prev, cur) => prev + cur, 0) / data.length : -1;
     }
     static getAverageBandwidth(data) {
         if (data) {

@@ -1,20 +1,16 @@
-import { Response } from "node-fetch";
-import { Datacenter } from "../@types/Datacenter";
-import { Result } from "../@types/Result";
-import { Bandwith, BandwithPerSecond, BandwidthMode } from "../@types/Bandwidth";
-import { Latency } from "../@types/Latency";
+import { Response } from 'node-fetch';
+import { Datacenter } from '../@types/Datacenter';
+import { BandwidthMode, Bandwith, BandwithPerSecond } from '../@types/Bandwidth';
+import { Latency } from '../@types/Latency';
+import AbortController from 'abort-controller';
 export declare class LCE {
     datacenters: Datacenter[];
-    agent: any;
-    cancelableLatencyRequests: any[];
-    cancelableBandwidthRequests: any[];
+    cancelableLatencyRequests: AbortController[];
+    cancelableBandwidthRequests: AbortController[];
     terminateAllCalls: boolean;
-    constructor({ datacenters, agent, }: {
-        datacenters: Datacenter[];
-        agent?: any;
-    });
+    constructor(datacenters: Datacenter[]);
     runLatencyCheckForAll(): Promise<Latency[]>;
-    runBandwidthCheckForAll(): Promise<Result[] | null>;
+    runBandwidthCheckForAll(): Promise<Bandwith[]>;
     getBandwidthForId(id: string, options?: {
         bandwidthMode: BandwidthMode;
     }): Promise<Bandwith | null> | null;
@@ -26,7 +22,11 @@ export declare class LCE {
     bandwidthFetch(url: string): Promise<Response | null>;
     latencyFetch(url: string): Promise<Response | null>;
     abortableFetch(url: string, signal: any): Promise<Response | null>;
-    compare(a: any, b: any): 1 | -1 | 0;
+    compare(a: {
+        latency: number | Bandwith;
+    }, b: {
+        latency: number | Bandwith;
+    }): number;
     terminate(): void;
     static calcBandwidth(downloadSize: number, latency: number): BandwithPerSecond;
 }

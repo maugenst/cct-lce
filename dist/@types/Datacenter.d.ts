@@ -1,4 +1,4 @@
-import { BandwithPerSecond } from "./Bandwidth";
+import { BandwithPerSecond } from './Bandwidth';
 export declare type Datacenter = {
     id: string;
     position: number;

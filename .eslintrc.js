@@ -7,8 +7,4 @@ module.exports = {
   ],
   plugins: ["@typescript-eslint"],
   parser: "@typescript-eslint/parser",
-  rules: {
-    "no-inferrable-types": 0,
-    "no-explicit-any": 0,
-  }
 };

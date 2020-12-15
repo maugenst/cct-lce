@@ -177,6 +177,8 @@ class CCT {
             dc.latencies = [];
             dc.bandwidths = [];
         });
+        this.finishedLatency = false;
+        this.finishedBandwidth = false;
     }
 }
 exports.CCT = CCT;

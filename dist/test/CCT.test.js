@@ -58,6 +58,8 @@ describe('CCT tests', () => {
             kiloBitsPerSecond: 0,
             megaBitsPerSecond: 0,
         });
+        expect(cct.finishedBandwidth).toBeFalsy();
+        expect(cct.finishedLatency).toBeFalsy();
     });
     test('check latency', async () => {
         const cct = new CCT_1.CCT();
