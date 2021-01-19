@@ -142,26 +142,41 @@ export class CCT {
             longitude: 0,
         };
 
-        if (navigator && navigator?.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (position: GeolocationPosition) => {
-                location.latitude = position.coords.latitude;
-                location.longitude = position.coords.longitude;
+        return new Promise((resolve) => {
+            if (navigator && navigator?.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position: GeolocationPosition) => {
+                        location.latitude = position.coords.latitude;
+                        location.longitude = position.coords.longitude;
 
-                const geocoder = new google.maps.Geocoder();
+                        const geocoder = new google.maps.Geocoder();
 
-                geocoder.geocode(
-                    {
-                        location: new google.maps.LatLng(location.latitude, location.longitude),
+                        await geocoder.geocode(
+                            {
+                                location: new google.maps.LatLng(location.latitude, location.longitude),
+                            },
+                            (results: GeocoderResult[], status: string) => {
+                                if (status === 'OK') {
+                                    location.address = results[0].formatted_address;
+                                    resolve(location);
+                                } else {
+                                    // Clear up returned object
+                                    location.address = '';
+                                    location.latitude = 0;
+                                    location.longitude = 0;
+                                    resolve(location);
+                                }
+                            }
+                        );
                     },
-                    (results: GeocoderResult[], status: string) => {
-                        if (status === 'OK') {
-                            location.address = results[0].formatted_address;
-                        }
+                    () => {
+                        resolve(location);
                     }
                 );
-            });
-        }
-        return location;
+            } else {
+                resolve(location);
+            }
+        });
     }
 
     async store(
