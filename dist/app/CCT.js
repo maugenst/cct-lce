@@ -117,21 +117,34 @@ class CCT {
             latitude: 0,
             longitude: 0,
         };
-        if (navigator && (navigator === null || navigator === void 0 ? void 0 : navigator.geolocation)) {
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                location.latitude = position.coords.latitude;
-                location.longitude = position.coords.longitude;
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({
-                    location: new google.maps.LatLng(location.latitude, location.longitude),
-                }, (results, status) => {
-                    if (status === 'OK') {
-                        location.address = results[0].formatted_address;
-                    }
+        return new Promise((resolve) => {
+            if (navigator && (navigator === null || navigator === void 0 ? void 0 : navigator.geolocation)) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    location.latitude = position.coords.latitude;
+                    location.longitude = position.coords.longitude;
+                    const geocoder = new google.maps.Geocoder();
+                    await geocoder.geocode({
+                        location: new google.maps.LatLng(location.latitude, location.longitude),
+                    }, (results, status) => {
+                        if (status === 'OK') {
+                            location.address = results[0].formatted_address;
+                            resolve(location);
+                        }
+                        else {
+                            location.address = '';
+                            location.latitude = 0;
+                            location.longitude = 0;
+                            resolve(location);
+                        }
+                    });
+                }, () => {
+                    resolve(location);
                 });
-            });
-        }
-        return location;
+            }
+            else {
+                resolve(location);
+            }
+        });
     }
     async store(location = {
         address: 'Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany',
