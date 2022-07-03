@@ -14,12 +14,16 @@ export class CCT {
     finishedLatency = false;
     finishedBandwidth = false;
 
-    async fetchDatacenterInformation(dictionaryUrl: string | undefined): Promise<void> {
-        if (!dictionaryUrl) {
-            throw new Error('Datacenter URL missing.');
+    async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
+        try {
+            return await fetch(dictionaryUrl).then((res: Response) => res.json());
+        } catch {
+            return [];
         }
+    }
 
-        this.allDatacenters = await fetch(dictionaryUrl).then((res: Response) => res.json());
+    async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
+        this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
 
         this.datacenters = this.allDatacenters;
 
@@ -92,6 +96,7 @@ export class CCT {
             });
         }
     }
+
     private async startMeasurementForBandwidth(
         dc: Datacenter,
         iterations: number,
@@ -179,6 +184,14 @@ export class CCT {
         });
     }
 
+    async storeRequest(body: any) {
+        return await fetch('https://cct.demo-education.cloud.sap/measurement', {
+            method: 'post',
+            body: body,
+            headers: {'Content-Type': 'application/json'},
+        }).then((res: Response) => res.json());
+    }
+
     async store(
         location: Location = {
             address: 'Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany',
@@ -207,13 +220,8 @@ export class CCT {
             4
         );
 
-        // console.log(body);
         try {
-            const result = await fetch('https://cct.demo-education.cloud.sap/measurement', {
-                method: 'post',
-                body: body,
-                headers: {'Content-Type': 'application/json'},
-            }).then((res: Response) => res.json());
+            const result = await this.storeRequest(body);
             return result.status === 'OK';
         } catch (error) {
             return false;

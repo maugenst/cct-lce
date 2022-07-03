@@ -12,13 +12,13 @@ export declare class CCT {
     setRegions(regions: string[]): void;
     private mapDatacentersOnRegions;
     stopMeasurements(): void;
-    startLatencyChecks(iterations: number): void;
+    startLatencyChecks(iterations: number): Promise<void>;
     private startMeasurementForLatency;
     startBandwidthChecks({ datacenter, iterations, bandwidthMode, }: {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
-    }): void;
+    }): Promise<void>;
     private startMeasurementForBandwidth;
     judgeLatency(averageLatency: number): Speed;
     judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed;

@@ -35,10 +35,9 @@ class CCT {
     stopMeasurements() {
         this.lce.terminate();
     }
-    startLatencyChecks(iterations) {
-        this.startMeasurementForLatency(iterations).then(() => {
-            this.finishedLatency = true;
-        });
+    async startLatencyChecks(iterations) {
+        await this.startMeasurementForLatency(iterations);
+        this.finishedLatency = true;
     }
     async startMeasurementForLatency(iterations) {
         var _a;
@@ -56,7 +55,7 @@ class CCT {
             }
         }
     }
-    startBandwidthChecks({ datacenter, iterations, bandwidthMode, }) {
+    async startBandwidthChecks({ datacenter, iterations, bandwidthMode, }) {
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises = [];
             datacenter.forEach((dc) => {
@@ -67,9 +66,8 @@ class CCT {
             });
         }
         else {
-            this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode).then(() => {
-                this.finishedBandwidth = true;
-            });
+            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
+            this.finishedBandwidth = true;
         }
     }
     async startMeasurementForBandwidth(dc, iterations, bandwidthMode = Bandwidth_1.BandwidthMode.big) {

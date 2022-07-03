@@ -1,34 +1,84 @@
 import {CCT} from '../app/CCT';
 import {Util} from '../app/Util';
-import * as dotenv from 'dotenv';
 import {Speed} from '../@types/Datacenter';
 import {BandwidthMode} from '../@types/Bandwidth';
 
-dotenv.config();
-
 describe('CCT tests', () => {
+    const cct = new CCT();
+
+    jest.spyOn(cct, 'fetchDatacenterInformationRequest').mockImplementation(() => {
+        return Promise.resolve([
+            {
+                id: '2c59733c-5eb5-4e28-8eb5-a66f553adc1e',
+                cloud: 'gcp',
+                name: 'europe-west3',
+                town: 'Frankfurt',
+                country: 'Germany',
+                latitude: '50.121127700000',
+                longitude: '8.496482000000',
+                ip: 'cct-drone-gcp-europe-west3.demo-education.cloud.sap',
+                tags: 'gcp, Europe, gla',
+                lastUpdate: '2021-03-03T08:45:55.000Z',
+                position: 0,
+                averageLatency: 0,
+                averageBandwidth: {bitsPerSecond: 0, kiloBitsPerSecond: 0, megaBitsPerSecond: 0},
+                latencies: [],
+                bandwidths: [],
+            },
+            {
+                id: 'b6fda8a6-e8d5-48e6-8223-edcd2ea20054',
+                cloud: 'gcp',
+                name: 'europe-west4',
+                town: 'Eemshaven',
+                country: 'Netherlands',
+                latitude: '53.435730500000',
+                longitude: '6.763058200000',
+                ip: 'cct-drone-gcp-europe-west4.demo-education.cloud.sap',
+                tags: 'gcp, Europe, Amsterdam, SDE',
+                lastUpdate: '2021-03-03T08:45:56.000Z',
+                position: 0,
+                averageLatency: 0,
+                averageBandwidth: {bitsPerSecond: 0, kiloBitsPerSecond: 0, megaBitsPerSecond: 0},
+                latencies: [],
+                bandwidths: [],
+            },
+            {
+                id: '1764db7a-7827-4c68-aba2-6031cdd11503',
+                cloud: 'gcp',
+                name: 'us-west2',
+                town: 'Los Angeles, CA',
+                country: 'USA',
+                latitude: '34.020346400000',
+                longitude: '-118.972172000000',
+                ip: 'cct-drone-gcp-us-west2.demo-education.cloud.sap',
+                tags: 'gcp, North America',
+                lastUpdate: '2021-03-03T08:45:56.000Z',
+                position: 0,
+                averageLatency: 0,
+                averageBandwidth: {bitsPerSecond: 0, kiloBitsPerSecond: 0, megaBitsPerSecond: 0},
+                latencies: [],
+                bandwidths: [],
+            },
+        ]);
+    });
+
+    jest.spyOn(cct, 'storeRequest').mockImplementation(() =>
+        Promise.resolve({
+            status: 'OK',
+        })
+    );
+
     test('test initialization', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4', 'europe-west3']);
 
-        cct.setRegions(['europe-west5', 'europe-west3']);
-
-        expect(cct.datacenters.length).toEqual(2);
-        expect(cct.datacenters[0].position).toEqual(0);
-        expect(cct.datacenters[0].latencies.length).toEqual(0);
-        expect(cct.datacenters[0].bandwidths.length).toEqual(0);
-        expect(cct.datacenters[0].averageLatency).toEqual(0);
-        expect(cct.datacenters[0].averageBandwidth).toEqual({
-            bitsPerSecond: 0,
-            kiloBitsPerSecond: 0,
-            megaBitsPerSecond: 0,
-        });
-        expect(cct.datacenters[1].position).toEqual(0);
-        expect(cct.datacenters[1].latencies.length).toEqual(0);
-        expect(cct.datacenters[1].bandwidths.length).toEqual(0);
-        expect(cct.datacenters[1].averageLatency).toEqual(0);
-        expect(cct.datacenters[1].averageBandwidth).toEqual({
+        expect(cct.datacenters.length).toBe(2);
+        expect(cct.datacenters[0].position).toBe(0);
+        expect(cct.datacenters[0].latencies.length).toBe(0);
+        expect(cct.datacenters[0].bandwidths.length).toBe(0);
+        expect(cct.datacenters[0].averageLatency).toBe(0);
+        expect(cct.datacenters[0].averageBandwidth).toStrictEqual({
             bitsPerSecond: 0,
             kiloBitsPerSecond: 0,
             megaBitsPerSecond: 0,
@@ -36,11 +86,9 @@ describe('CCT tests', () => {
     });
 
     test('test cleanup', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
-
-        cct.setRegions(['europe-west5', 'europe-west3']);
+        cct.setRegions(['europe-west4', 'europe-west3']);
         cct.startLatencyChecks(1);
 
         while (!cct.finishedLatency) {
@@ -49,20 +97,11 @@ describe('CCT tests', () => {
 
         cct.clean();
 
-        expect(cct.datacenters[0].position).toEqual(0);
-        expect(cct.datacenters[0].latencies.length).toEqual(0);
-        expect(cct.datacenters[0].bandwidths.length).toEqual(0);
-        expect(cct.datacenters[0].averageLatency).toEqual(0);
-        expect(cct.datacenters[0].averageBandwidth).toEqual({
-            bitsPerSecond: 0,
-            kiloBitsPerSecond: 0,
-            megaBitsPerSecond: 0,
-        });
-        expect(cct.datacenters[1].position).toEqual(0);
-        expect(cct.datacenters[1].latencies.length).toEqual(0);
-        expect(cct.datacenters[1].bandwidths.length).toEqual(0);
-        expect(cct.datacenters[1].averageLatency).toEqual(0);
-        expect(cct.datacenters[1].averageBandwidth).toEqual({
+        expect(cct.datacenters[0].position).toBe(0);
+        expect(cct.datacenters[0].latencies.length).toBe(0);
+        expect(cct.datacenters[0].bandwidths.length).toBe(0);
+        expect(cct.datacenters[0].averageLatency).toBe(0);
+        expect(cct.datacenters[0].averageBandwidth).toStrictEqual({
             bitsPerSecond: 0,
             kiloBitsPerSecond: 0,
             megaBitsPerSecond: 0,
@@ -72,13 +111,11 @@ describe('CCT tests', () => {
     });
 
     test('check latency', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4', 'europe-west3']);
 
-        cct.setRegions(['europe-west5', 'europe-west3']);
-
-        expect(cct.datacenters.length).toEqual(2);
+        expect(cct.datacenters.length).toBe(2);
 
         cct.startLatencyChecks(3);
 
@@ -88,18 +125,15 @@ describe('CCT tests', () => {
 
         expect(cct.finishedLatency).toBeTruthy();
         expect(cct.finishedBandwidth).toBeFalsy();
-        expect(cct.datacenters[0].latencies.length).toEqual(3);
-        expect(cct.datacenters[1].latencies.length).toEqual(3);
+        expect(cct.datacenters[0].latencies.length).toBe(3);
     });
 
     test('check bandwidth', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4']);
 
-        cct.setRegions(['europe-west5']);
-
-        expect(cct.datacenters.length).toEqual(1);
+        expect(cct.datacenters.length).toBe(1);
 
         cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
 
@@ -109,17 +143,15 @@ describe('CCT tests', () => {
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
-        expect(cct.datacenters[0].bandwidths.length).toEqual(3);
+        expect(cct.datacenters[0].bandwidths.length).toBe(3);
     });
 
     test('check bandwidth [mode=small]', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4']);
 
-        cct.setRegions(['europe-west5']);
-
-        expect(cct.datacenters.length).toEqual(1);
+        expect(cct.datacenters.length).toBe(1);
 
         cct.startBandwidthChecks({
             datacenter: cct.datacenters[0],
@@ -137,13 +169,11 @@ describe('CCT tests', () => {
     });
 
     test('check bandwidth [mode=small] on more than one datacenter', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['us-west2', 'europe-west3', 'europe-west4']);
 
-        cct.setRegions(['europe-west5', 'europe-west3', 'europe-west4']);
-
-        expect(cct.datacenters.length).toEqual(3);
+        expect(cct.datacenters.length).toBe(3);
 
         cct.startBandwidthChecks({
             datacenter: cct.datacenters,
@@ -157,15 +187,11 @@ describe('CCT tests', () => {
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
-        expect(cct.datacenters[0].bandwidths.length).toEqual(3);
-        expect(cct.datacenters[1].bandwidths.length).toEqual(3);
-        expect(cct.datacenters[2].bandwidths.length).toEqual(3);
+        expect(cct.datacenters[0].bandwidths.length).toBe(3);
     });
 
     test('check bandwidth [mode=small] without setting regions = all known datacenters', async () => {
-        const cct = new CCT();
-
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        await cct.fetchDatacenterInformation('');
 
         cct.startBandwidthChecks({
             datacenter: cct.datacenters,
@@ -182,13 +208,11 @@ describe('CCT tests', () => {
     });
 
     test('latency judgement', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4']);
 
-        cct.setRegions(['europe-west5']);
-
-        expect(cct.datacenters.length).toEqual(1);
+        expect(cct.datacenters.length).toBe(1);
 
         cct.startLatencyChecks(3);
 
@@ -198,19 +222,17 @@ describe('CCT tests', () => {
 
         expect(cct.finishedLatency).toBeTruthy();
         expect(cct.finishedBandwidth).toBeFalsy();
-        expect(cct.datacenters[0].latencies.length).toEqual(3);
+        expect(cct.datacenters[0].latencies.length).toBe(3);
         const judgement = cct.datacenters[0].latencyJudgement;
         expect(judgement === Speed.good || judgement === Speed.ok || judgement === Speed.bad).toBeTruthy();
     });
 
     test('bandwidth judgement', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4']);
 
-        cct.setRegions(['europe-west5']);
-
-        expect(cct.datacenters.length).toEqual(1);
+        expect(cct.datacenters.length).toBe(1);
 
         cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
 
@@ -220,19 +242,17 @@ describe('CCT tests', () => {
 
         expect(cct.finishedBandwidth).toBeTruthy();
         expect(cct.finishedLatency).toBeFalsy();
-        expect(cct.datacenters[0].bandwidths.length).toEqual(3);
+        expect(cct.datacenters[0].bandwidths.length).toBe(3);
         const judgement = cct.datacenters[0].bandwidthJudgement;
         expect(judgement === Speed.good || judgement === Speed.ok || judgement === Speed.bad).toBeTruthy();
     });
 
     test('abort running measurement', async () => {
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
+        cct.setRegions(['europe-west4']);
 
-        cct.setRegions(['europe-west5']);
-
-        expect(cct.datacenters.length).toEqual(1);
+        expect(cct.datacenters.length).toBe(1);
 
         cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
 
@@ -243,19 +263,15 @@ describe('CCT tests', () => {
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
-        expect(cct.datacenters[0].bandwidths.length).not.toEqual(3);
+        expect(cct.datacenters[0].bandwidths.length).not.toBe(3);
     });
 
     test('run latency and bandwidth checks and store them in database', async () => {
         jest.setTimeout(60000);
 
-        const cct = new CCT();
+        await cct.fetchDatacenterInformation('');
 
-        await cct.fetchDatacenterInformation(process.env.CCT_DICTIONARY_URL);
-
-        cct.setRegions(['europe-west5', 'us-central1', 'asia-southeast1', 'australia-southeast1']);
-
-        cct.startLatencyChecks(10);
+        cct.startLatencyChecks(1);
 
         while (!cct.finishedLatency) {
             await Util.sleep(50);
@@ -263,7 +279,7 @@ describe('CCT tests', () => {
 
         cct.startBandwidthChecks({
             datacenter: cct.datacenters,
-            iterations: 3,
+            iterations: 1,
             bandwidthMode: BandwidthMode.small,
         });
 
