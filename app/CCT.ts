@@ -1,6 +1,6 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
-import {Datacenter, Location, Speed, StoreData} from '../@types/Datacenter';
+import {Datacenter, filterKeys, Location, Speed, StoreData} from '../@types/Datacenter';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
@@ -9,7 +9,6 @@ import GeocoderResult = google.maps.GeocoderResult;
 export class CCT {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
-    regions: string[];
     lce: LCE;
     finishedLatency = false;
     finishedBandwidth = false;
@@ -32,18 +31,17 @@ export class CCT {
         this.lce = new LCE(this.datacenters);
     }
 
-    setRegions(regions: string[]): void {
-        this.regions = regions || [];
-        this.datacenters =
-            this.regions.length > 0
-                ? this.allDatacenters.filter((dc) => this.mapDatacentersOnRegions(dc))
-                : this.allDatacenters;
+    setFilters(filters: filterKeys | undefined) {
+        this.datacenters = filters
+            ? this.allDatacenters.filter((dc) =>
+                  Object.keys(filters).every((key) => {
+                      // @ts-ignore
+                      return filters[key].includes(dc[key]);
+                  })
+              )
+            : this.allDatacenters;
 
         this.lce = new LCE(this.datacenters);
-    }
-
-    private mapDatacentersOnRegions(dc: Datacenter): boolean {
-        return this.regions.map((region) => dc.name.toLowerCase() === region.toLowerCase()).reduce((a, b) => a || b);
     }
 
     stopMeasurements(): void {

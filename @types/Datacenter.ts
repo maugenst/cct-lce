@@ -20,6 +20,13 @@ export type Datacenter = {
     bandwidths: BandwithPerSecond[];
 };
 
+export type filterKeys = {
+    name?: string[];
+    cloud?: string[];
+    town?: string[];
+    country?: string[];
+};
+
 export type StoreData = {
     latency: string;
     averageBandwidth: string;

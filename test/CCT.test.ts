@@ -70,9 +70,7 @@ describe('CCT tests', () => {
     test('test initialization', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4', 'europe-west3']);
-
-        expect(cct.datacenters.length).toBe(2);
+        expect(cct.datacenters.length).toBe(3);
         expect(cct.datacenters[0].position).toBe(0);
         expect(cct.datacenters[0].latencies.length).toBe(0);
         expect(cct.datacenters[0].bandwidths.length).toBe(0);
@@ -84,10 +82,18 @@ describe('CCT tests', () => {
         });
     });
 
+    test('should filter datacenters by passed criteria', async () => {
+        await cct.fetchDatacenterInformation('');
+
+        cct.setFilters({country: ['Netherlands']});
+
+        expect(cct.datacenters[0].country).toBe('Netherlands');
+    });
+
     test('test cleanup', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4', 'europe-west3']);
+        cct.setFilters({name: ['europe-west4']});
 
         await cct.startLatencyChecks(1);
 
@@ -109,7 +115,7 @@ describe('CCT tests', () => {
     test('check latency', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4', 'europe-west3']);
+        cct.setFilters({name: ['europe-west4', 'europe-west3']});
 
         expect(cct.datacenters.length).toBe(2);
 
@@ -123,7 +129,7 @@ describe('CCT tests', () => {
     test('check bandwidth', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4']);
+        cct.setFilters({name: ['europe-west4']});
 
         expect(cct.datacenters.length).toBe(1);
 
@@ -137,7 +143,7 @@ describe('CCT tests', () => {
     test('check bandwidth [mode=small]', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4']);
+        cct.setFilters({name: ['europe-west4']});
 
         expect(cct.datacenters.length).toBe(1);
 
@@ -155,7 +161,7 @@ describe('CCT tests', () => {
     test('check bandwidth [mode=small] on more than one datacenter', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['us-west2', 'europe-west3', 'europe-west4']);
+        cct.setFilters({name: ['us-west2', 'europe-west3', 'europe-west4']});
 
         expect(cct.datacenters.length).toBe(3);
 
@@ -186,7 +192,7 @@ describe('CCT tests', () => {
     test('latency judgement', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4']);
+        cct.setFilters({name: ['europe-west4']});
 
         expect(cct.datacenters.length).toBe(1);
 
@@ -200,9 +206,11 @@ describe('CCT tests', () => {
     });
 
     test('bandwidth judgement', async () => {
+        jest.setTimeout(10000);
+
         await cct.fetchDatacenterInformation('');
 
-        cct.setRegions(['europe-west4']);
+        cct.setFilters({name: ['europe-west4']});
 
         expect(cct.datacenters.length).toBe(1);
 
