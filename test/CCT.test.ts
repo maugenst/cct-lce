@@ -1,5 +1,4 @@
 import {CCT} from '../app/CCT';
-import {Util} from '../app/Util';
 import {Speed} from '../@types/Datacenter';
 import {BandwidthMode} from '../@types/Bandwidth';
 
@@ -89,11 +88,8 @@ describe('CCT tests', () => {
         await cct.fetchDatacenterInformation('');
 
         cct.setRegions(['europe-west4', 'europe-west3']);
-        cct.startLatencyChecks(1);
 
-        while (!cct.finishedLatency) {
-            await Util.sleep(50);
-        }
+        await cct.startLatencyChecks(1);
 
         cct.clean();
 
@@ -117,11 +113,7 @@ describe('CCT tests', () => {
 
         expect(cct.datacenters.length).toBe(2);
 
-        cct.startLatencyChecks(3);
-
-        while (!cct.finishedLatency) {
-            await Util.sleep(50);
-        }
+        await cct.startLatencyChecks(3);
 
         expect(cct.finishedLatency).toBeTruthy();
         expect(cct.finishedBandwidth).toBeFalsy();
@@ -135,11 +127,7 @@ describe('CCT tests', () => {
 
         expect(cct.datacenters.length).toBe(1);
 
-        cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-        }
+        await cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
@@ -153,15 +141,11 @@ describe('CCT tests', () => {
 
         expect(cct.datacenters.length).toBe(1);
 
-        cct.startBandwidthChecks({
+        await cct.startBandwidthChecks({
             datacenter: cct.datacenters[0],
             iterations: 3,
             bandwidthMode: BandwidthMode.small,
         });
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-        }
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
@@ -175,15 +159,11 @@ describe('CCT tests', () => {
 
         expect(cct.datacenters.length).toBe(3);
 
-        cct.startBandwidthChecks({
+        await cct.startBandwidthChecks({
             datacenter: cct.datacenters,
             iterations: 3,
             bandwidthMode: BandwidthMode.small,
         });
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-        }
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
@@ -193,15 +173,11 @@ describe('CCT tests', () => {
     test('check bandwidth [mode=small] without setting regions = all known datacenters', async () => {
         await cct.fetchDatacenterInformation('');
 
-        cct.startBandwidthChecks({
+        await cct.startBandwidthChecks({
             datacenter: cct.datacenters,
             iterations: 1,
             bandwidthMode: BandwidthMode.small,
         });
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-        }
 
         expect(cct.finishedLatency).toBeFalsy();
         expect(cct.finishedBandwidth).toBeTruthy();
@@ -214,11 +190,7 @@ describe('CCT tests', () => {
 
         expect(cct.datacenters.length).toBe(1);
 
-        cct.startLatencyChecks(3);
-
-        while (!cct.finishedLatency) {
-            await Util.sleep(50);
-        }
+        await cct.startLatencyChecks(3);
 
         expect(cct.finishedLatency).toBeTruthy();
         expect(cct.finishedBandwidth).toBeFalsy();
@@ -234,11 +206,7 @@ describe('CCT tests', () => {
 
         expect(cct.datacenters.length).toBe(1);
 
-        cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-        }
+        await cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
 
         expect(cct.finishedBandwidth).toBeTruthy();
         expect(cct.finishedLatency).toBeFalsy();
@@ -247,45 +215,18 @@ describe('CCT tests', () => {
         expect(judgement === Speed.good || judgement === Speed.ok || judgement === Speed.bad).toBeTruthy();
     });
 
-    test('abort running measurement', async () => {
-        await cct.fetchDatacenterInformation('');
-
-        cct.setRegions(['europe-west4']);
-
-        expect(cct.datacenters.length).toBe(1);
-
-        cct.startBandwidthChecks({datacenter: cct.datacenters[0], iterations: 3});
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-            cct.stopMeasurements();
-        }
-
-        expect(cct.finishedLatency).toBeFalsy();
-        expect(cct.finishedBandwidth).toBeTruthy();
-        expect(cct.datacenters[0].bandwidths.length).not.toBe(3);
-    });
-
     test('run latency and bandwidth checks and store them in database', async () => {
         jest.setTimeout(60000);
 
         await cct.fetchDatacenterInformation('');
 
-        cct.startLatencyChecks(1);
+        await cct.startLatencyChecks(1);
 
-        while (!cct.finishedLatency) {
-            await Util.sleep(50);
-        }
-
-        cct.startBandwidthChecks({
+        await cct.startBandwidthChecks({
             datacenter: cct.datacenters,
             iterations: 1,
             bandwidthMode: BandwidthMode.small,
         });
-
-        while (!cct.finishedBandwidth) {
-            await Util.sleep(50);
-        }
 
         const storeSucceeded = await cct.store();
 

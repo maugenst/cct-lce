@@ -50,10 +50,9 @@ export class CCT {
         this.lce.terminate();
     }
 
-    startLatencyChecks(iterations: number): void {
-        this.startMeasurementForLatency(iterations).then(() => {
-            this.finishedLatency = true;
-        });
+    async startLatencyChecks(iterations: number): Promise<void> {
+        await this.startMeasurementForLatency(iterations);
+        this.finishedLatency = true;
     }
 
     private async startMeasurementForLatency(iterations: number): Promise<void> {
@@ -73,7 +72,7 @@ export class CCT {
         }
     }
 
-    startBandwidthChecks({
+    async startBandwidthChecks({
         datacenter,
         iterations,
         bandwidthMode,
@@ -81,19 +80,17 @@ export class CCT {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
-    }): void {
+    }): Promise<void> {
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
             });
-            Promise.all(bandwidthMeasurementPromises).then(() => {
-                this.finishedBandwidth = true;
-            });
+            await Promise.all(bandwidthMeasurementPromises);
+            this.finishedBandwidth = true;
         } else {
-            this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode).then(() => {
-                this.finishedBandwidth = true;
-            });
+            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
+            this.finishedBandwidth = true;
         }
     }
 
