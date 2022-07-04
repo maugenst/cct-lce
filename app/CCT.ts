@@ -15,7 +15,7 @@ export class CCT {
 
     async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
         try {
-            return await fetch(dictionaryUrl).then((res: Response) => res.json());
+            return (await fetch(dictionaryUrl).then((res: Response) => res.json())) as Datacenter[];
         } catch {
             return [];
         }
@@ -179,7 +179,7 @@ export class CCT {
         });
     }
 
-    async storeRequest(body: any) {
+    async storeRequest(body: any): Promise<any> {
         return await fetch('https://cct.demo-education.cloud.sap/measurement', {
             method: 'post',
             body: body,

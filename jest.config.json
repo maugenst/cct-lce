@@ -5,6 +5,7 @@
             "tsconfig": "tsconfig.json"
         }
     },
+    "testTimeout": 15000,
     "testEnvironment": "node",
     "setupFilesAfterEnv": ["jest-extended"],
     "testRegex": "test/.+test.ts",

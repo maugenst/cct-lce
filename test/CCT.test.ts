@@ -206,8 +206,6 @@ describe('CCT tests', () => {
     });
 
     test('bandwidth judgement', async () => {
-        jest.setTimeout(10000);
-
         await cct.fetchDatacenterInformation('');
 
         cct.setFilters({name: ['europe-west4']});
@@ -224,8 +222,6 @@ describe('CCT tests', () => {
     });
 
     test('run latency and bandwidth checks and store them in database', async () => {
-        jest.setTimeout(60000);
-
         await cct.fetchDatacenterInformation('');
 
         await cct.startLatencyChecks(1);

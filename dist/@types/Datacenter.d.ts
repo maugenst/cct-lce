@@ -18,6 +18,12 @@ export declare type Datacenter = {
     latencies: number[];
     bandwidths: BandwithPerSecond[];
 };
+export declare type filterKeys = {
+    name?: string[];
+    cloud?: string[];
+    town?: string[];
+    country?: string[];
+};
 export declare type StoreData = {
     latency: string;
     averageBandwidth: string;

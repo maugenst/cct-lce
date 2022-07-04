@@ -22,7 +22,7 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "esModuleInterop": false,
+    "esModuleInterop": false
   },
   "exclude": ["node_modules", "dist"]
 }

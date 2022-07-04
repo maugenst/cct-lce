@@ -12,25 +12,27 @@ class CCT {
         this.finishedLatency = false;
         this.finishedBandwidth = false;
     }
-    async fetchDatacenterInformation(dictionaryUrl) {
-        if (!dictionaryUrl) {
-            throw new Error('Datacenter URL missing.');
+    async fetchDatacenterInformationRequest(dictionaryUrl) {
+        try {
+            return (await (0, node_fetch_1.default)(dictionaryUrl).then((res) => res.json()));
         }
-        this.allDatacenters = await node_fetch_1.default(dictionaryUrl).then((res) => res.json());
+        catch (_a) {
+            return [];
+        }
+    }
+    async fetchDatacenterInformation(dictionaryUrl) {
+        this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
         this.datacenters = this.allDatacenters;
         this.clean();
         this.lce = new LCE_1.LCE(this.datacenters);
     }
-    setRegions(regions) {
-        this.regions = regions || [];
-        this.datacenters =
-            this.regions.length > 0
-                ? this.allDatacenters.filter((dc) => this.mapDatacentersOnRegions(dc))
-                : this.allDatacenters;
+    setFilters(filters) {
+        this.datacenters = filters
+            ? this.allDatacenters.filter((dc) => Object.keys(filters).every((key) => {
+                return filters[key].includes(dc[key]);
+            }))
+            : this.allDatacenters;
         this.lce = new LCE_1.LCE(this.datacenters);
-    }
-    mapDatacentersOnRegions(dc) {
-        return this.regions.map((region) => dc.name.toLowerCase() === region.toLowerCase()).reduce((a, b) => a || b);
     }
     stopMeasurements() {
         this.lce.terminate();
@@ -61,9 +63,8 @@ class CCT {
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
             });
-            Promise.all(bandwidthMeasurementPromises).then(() => {
-                this.finishedBandwidth = true;
-            });
+            await Promise.all(bandwidthMeasurementPromises);
+            this.finishedBandwidth = true;
         }
         else {
             await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
@@ -144,6 +145,13 @@ class CCT {
             }
         });
     }
+    async storeRequest(body) {
+        return await (0, node_fetch_1.default)('https://cct.demo-education.cloud.sap/measurement', {
+            method: 'post',
+            body: body,
+            headers: { 'Content-Type': 'application/json' },
+        }).then((res) => res.json());
+    }
     async store(location = {
         address: 'Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany',
         latitude: 49.2933756,
@@ -158,18 +166,14 @@ class CCT {
             });
         });
         const body = JSON.stringify({
-            uid: uuid_1.v4(),
+            uid: (0, uuid_1.v4)(),
             address: location.address,
             latitude: location.latitude,
             longitude: location.longitude,
             data,
         }, null, 4);
         try {
-            const result = await node_fetch_1.default('https://cct.demo-education.cloud.sap/measurement', {
-                method: 'post',
-                body: body,
-                headers: { 'Content-Type': 'application/json' },
-            }).then((res) => res.json());
+            const result = await this.storeRequest(body);
             return result.status === 'OK';
         }
         catch (error) {

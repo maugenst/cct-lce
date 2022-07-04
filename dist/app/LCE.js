@@ -109,7 +109,7 @@ class LCE {
     }
     async abortableFetch(url, signal) {
         try {
-            return await node_fetch_1.default(url, {
+            return await (0, node_fetch_1.default)(url, {
                 signal,
             });
         }
