@@ -10,8 +10,8 @@ export class CCT {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
     lce: LCE;
-    finishedLatency = false;
-    finishedBandwidth = false;
+    runningLatency = false;
+    runningBandwidth = false;
 
     async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
         try {
@@ -45,12 +45,14 @@ export class CCT {
     }
 
     stopMeasurements(): void {
+        this.runningBandwidth = false;
+        this.runningLatency = false;
         this.lce.terminate();
     }
 
     async startLatencyChecks(iterations: number): Promise<void> {
+        this.runningLatency = true;
         await this.startMeasurementForLatency(iterations);
-        this.finishedLatency = true;
     }
 
     private async startMeasurementForLatency(iterations: number): Promise<void> {
@@ -66,8 +68,13 @@ export class CCT {
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
                 }
+
+                if (!this.runningLatency) {
+                    return;
+                }
             }
         }
+        this.runningLatency = false;
     }
 
     async startBandwidthChecks({
@@ -79,16 +86,15 @@ export class CCT {
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
     }): Promise<void> {
+        this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
             });
             await Promise.all(bandwidthMeasurementPromises);
-            this.finishedBandwidth = true;
         } else {
             await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
-            this.finishedBandwidth = true;
         }
     }
 
@@ -107,7 +113,12 @@ export class CCT {
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
             }
+
+            if (!this.runningBandwidth) {
+                return;
+            }
         }
+        this.runningBandwidth = false;
     }
 
     judgeLatency(averageLatency: number): Speed {
@@ -235,7 +246,5 @@ export class CCT {
             dc.latencies = [];
             dc.bandwidths = [];
         });
-        this.finishedLatency = false;
-        this.finishedBandwidth = false;
     }
 }
