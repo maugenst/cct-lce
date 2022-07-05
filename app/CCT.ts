@@ -1,6 +1,6 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
-import {Datacenter, filterKeys, Location, Speed, StoreData} from '../@types/Datacenter';
+import {Datacenter, FilterKeys, Location, Speed, StoreData} from '../@types/Datacenter';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
@@ -31,7 +31,7 @@ export class CCT {
         this.lce = new LCE(this.datacenters);
     }
 
-    setFilters(filters: filterKeys | undefined) {
+    setFilters(filters: FilterKeys | undefined) {
         this.datacenters = filters
             ? this.allDatacenters.filter((dc) =>
                   Object.keys(filters).every((key) => {

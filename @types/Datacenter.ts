@@ -20,7 +20,7 @@ export type Datacenter = {
     bandwidths: BandwithPerSecond[];
 };
 
-export type filterKeys = {
+export type FilterKeys = {
     name?: string[];
     cloud?: string[];
     town?: string[];
