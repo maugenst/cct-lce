@@ -44,15 +44,22 @@ export class CCT {
         this.lce = new LCE(this.datacenters);
     }
 
-    stopMeasurements(): void {
-        this.runningBandwidth = false;
+    async stopMeasurements(): Promise<void> {
         this.runningLatency = false;
+        this.runningBandwidth = false;
         this.lce.terminate();
     }
 
     async startLatencyChecks(iterations: number): Promise<void> {
         this.runningLatency = true;
+        this.datacenters.forEach((dc) => {
+            dc.position = 0;
+            dc.averageLatency = 0;
+            dc.latencies = [];
+        });
+
         await this.startMeasurementForLatency(iterations);
+        this.runningLatency = false;
     }
 
     private async startMeasurementForLatency(iterations: number): Promise<void> {
@@ -60,6 +67,11 @@ export class CCT {
             for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
                 const dc = this.datacenters[dcLength];
                 const result = await this.lce.getLatencyForId(dc.id);
+
+                if (!this.runningLatency) {
+                    return;
+                }
+
                 if (result && result.latency) {
                     const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
@@ -68,13 +80,8 @@ export class CCT {
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
                 }
-
-                if (!this.runningLatency) {
-                    return;
-                }
             }
         }
-        this.runningLatency = false;
     }
 
     async startBandwidthChecks({
@@ -87,15 +94,28 @@ export class CCT {
         bandwidthMode?: BandwidthMode | undefined;
     }): Promise<void> {
         this.runningBandwidth = true;
+        this.datacenters.forEach((dc) => {
+            dc.position = 0;
+            dc.averageBandwidth = {
+                bitsPerSecond: 0,
+                kiloBitsPerSecond: 0,
+                megaBitsPerSecond: 0,
+            };
+            dc.bandwidths = [];
+        });
+
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
             });
+
             await Promise.all(bandwidthMeasurementPromises);
         } else {
             await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
         }
+
+        this.runningBandwidth = false;
     }
 
     private async startMeasurementForBandwidth(
@@ -105,6 +125,11 @@ export class CCT {
     ): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
+
+            if (!this.runningBandwidth) {
+                return;
+            }
+
             if (result && result.bandwidth) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
@@ -113,12 +138,7 @@ export class CCT {
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
             }
-
-            if (!this.runningBandwidth) {
-                return;
-            }
         }
-        this.runningBandwidth = false;
     }
 
     judgeLatency(averageLatency: number): Speed {
