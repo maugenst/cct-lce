@@ -18,7 +18,7 @@ export declare type Datacenter = {
     latencies: number[];
     bandwidths: BandwithPerSecond[];
 };
-export declare type filterKeys = {
+export declare type FilterKeys = {
     name?: string[];
     cloud?: string[];
     town?: string[];

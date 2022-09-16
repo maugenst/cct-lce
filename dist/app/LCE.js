@@ -37,6 +37,7 @@ class LCE {
         return results;
     }
     getBandwidthForId(id, options) {
+        console.log('getBandwidthForId');
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
         if (!dc) {
             return null;
@@ -79,7 +80,14 @@ class LCE {
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
         if (response !== null) {
             const end = Date.now();
-            const rawBody = await response.text();
+            let rawBody;
+            try {
+                rawBody = await response.text();
+            }
+            catch (e) {
+                console.log(e);
+                return null;
+            }
             const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
             return {
                 id: datacenter.id,
@@ -130,6 +138,7 @@ class LCE {
         this.cancelableLatencyRequests.forEach((controller) => {
             controller.abort();
         });
+        console.log(this.cancelableBandwidthRequests);
         this.cancelableBandwidthRequests.forEach((controller) => {
             controller.abort();
         });

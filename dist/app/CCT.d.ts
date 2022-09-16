@@ -1,16 +1,16 @@
-import { Datacenter, filterKeys, Location, Speed } from '../@types/Datacenter';
+import { Datacenter, FilterKeys, Location, Speed } from '../@types/Datacenter';
 import { LCE } from './LCE';
 import { BandwidthMode, BandwithPerSecond } from '../@types/Bandwidth';
 export declare class CCT {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
     lce: LCE;
-    finishedLatency: boolean;
-    finishedBandwidth: boolean;
+    runningLatency: boolean;
+    runningBandwidth: boolean;
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
-    setFilters(filters: filterKeys | undefined): void;
-    stopMeasurements(): void;
+    setFilters(filters: FilterKeys | undefined): void;
+    stopMeasurements(): Promise<void>;
     startLatencyChecks(iterations: number): Promise<void>;
     private startMeasurementForLatency;
     startBandwidthChecks({ datacenter, iterations, bandwidthMode, }: {

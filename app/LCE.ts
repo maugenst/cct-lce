@@ -104,7 +104,13 @@ export class LCE {
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
         if (response !== null) {
             const end = Date.now();
-            const rawBody = await response.text();
+            let rawBody;
+            try {
+                rawBody = await response.text();
+            } catch (error) {
+                console.log(error);
+                return null;
+            }
             const bandwidth: BandwithPerSecond = LCE.calcBandwidth(rawBody.length, end - start);
 
             return {

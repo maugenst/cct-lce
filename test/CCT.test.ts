@@ -60,6 +60,10 @@ describe('CCT tests', () => {
         await cct.fetchDatacenterInformation(urlToFetchDatacenters);
     });
 
+    beforeEach(() => {
+        cct.clean();
+    });
+
     test('should fetch datacenter information', async () => {
         expect(fetchDatacenterInformationRequestSpy).toHaveBeenCalledTimes(1);
         expect(fetchDatacenterInformationRequestSpy).toHaveBeenCalledWith(urlToFetchDatacenters);
@@ -152,17 +156,19 @@ describe('CCT tests', () => {
     test('abort running measurement', async () => {
         cct.setFilters();
 
-        cct.startBandwidthChecks({datacenter: cct.datacenters[2], iterations: 30});
+        cct.startBandwidthChecks({datacenter: cct.datacenters, iterations: 30});
 
         expect(cct.runningBandwidth).toBeTruthy();
 
+        await Util.sleep(2000);
+
         await cct.stopMeasurements();
 
-        await Util.sleep(1000);
+        await Util.sleep(2000);
 
         expect(cct.runningBandwidth).toBeFalsy();
         expect(cct.runningLatency).toBeFalsy();
-        expect(cct.datacenters[0].latencies.length).not.toBe(30);
+        expect(cct.datacenters[0].bandwidths.length).not.toBe(30);
     });
 
     test('run latency and bandwidth checks and store them in database', async () => {

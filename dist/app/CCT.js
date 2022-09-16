@@ -9,8 +9,8 @@ const Util_1 = require("./Util");
 const Bandwidth_1 = require("../@types/Bandwidth");
 class CCT {
     constructor() {
-        this.finishedLatency = false;
-        this.finishedBandwidth = false;
+        this.runningLatency = false;
+        this.runningBandwidth = false;
     }
     async fetchDatacenterInformationRequest(dictionaryUrl) {
         try {
@@ -34,12 +34,15 @@ class CCT {
             : this.allDatacenters;
         this.lce = new LCE_1.LCE(this.datacenters);
     }
-    stopMeasurements() {
+    async stopMeasurements() {
+        this.runningLatency = false;
+        this.runningBandwidth = false;
         this.lce.terminate();
     }
     async startLatencyChecks(iterations) {
+        this.runningLatency = true;
         await this.startMeasurementForLatency(iterations);
-        this.finishedLatency = true;
+        this.runningLatency = false;
     }
     async startMeasurementForLatency(iterations) {
         var _a;
@@ -47,6 +50,9 @@ class CCT {
             for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
                 const dc = this.datacenters[dcLength];
                 const result = await this.lce.getLatencyForId(dc.id);
+                if (!this.runningLatency) {
+                    return;
+                }
                 if (result && result.latency) {
                     const index = this.datacenters.findIndex((e) => e.id === dc.id);
                     (_a = this.datacenters[index].latencies) === null || _a === void 0 ? void 0 : _a.push(result.latency);
@@ -58,24 +64,31 @@ class CCT {
         }
     }
     async startBandwidthChecks({ datacenter, iterations, bandwidthMode, }) {
+        this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises = [];
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
             });
-            await Promise.all(bandwidthMeasurementPromises);
-            this.finishedBandwidth = true;
+            await Promise.all(bandwidthMeasurementPromises).catch((e) => console.log(e, 'erro111r'));
+            console.log('promiseAllEnded');
         }
         else {
             await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
-            this.finishedBandwidth = true;
         }
+        this.runningBandwidth = false;
     }
     async startMeasurementForBandwidth(dc, iterations, bandwidthMode = Bandwidth_1.BandwidthMode.big) {
         var _a;
+        console.log('start');
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, { bandwidthMode });
+            if (!this.runningBandwidth) {
+                console.log('stop');
+                return;
+            }
             if (result && result.bandwidth) {
+                console.log('push');
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
                 (_a = this.datacenters[index].bandwidths) === null || _a === void 0 ? void 0 : _a.push(result.bandwidth);
                 const averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
@@ -192,8 +205,6 @@ class CCT {
             dc.latencies = [];
             dc.bandwidths = [];
         });
-        this.finishedLatency = false;
-        this.finishedBandwidth = false;
     }
 }
 exports.CCT = CCT;

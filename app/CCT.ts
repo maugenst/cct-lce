@@ -52,12 +52,6 @@ export class CCT {
 
     async startLatencyChecks(iterations: number): Promise<void> {
         this.runningLatency = true;
-        this.datacenters.forEach((dc) => {
-            dc.position = 0;
-            dc.averageLatency = 0;
-            dc.latencies = [];
-        });
-
         await this.startMeasurementForLatency(iterations);
         this.runningLatency = false;
     }
@@ -94,16 +88,6 @@ export class CCT {
         bandwidthMode?: BandwidthMode | undefined;
     }): Promise<void> {
         this.runningBandwidth = true;
-        this.datacenters.forEach((dc) => {
-            dc.position = 0;
-            dc.averageBandwidth = {
-                bitsPerSecond: 0,
-                kiloBitsPerSecond: 0,
-                megaBitsPerSecond: 0,
-            };
-            dc.bandwidths = [];
-        });
-
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
