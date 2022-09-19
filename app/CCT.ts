@@ -1,6 +1,6 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
-import {Datacenter, FilterKeys, Location, Speed, StoreData} from '../@types/Datacenter';
+import {Datacenter, FilterKeys, Location, Speed, Storage, StoreData} from '../@types/Datacenter';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
@@ -10,6 +10,7 @@ export class CCT {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
     lce: LCE;
+    storage: Storage[] = [];
     runningLatency = false;
     runningBandwidth = false;
 
@@ -25,6 +26,14 @@ export class CCT {
         this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
 
         this.datacenters = this.allDatacenters;
+        this.storage = this.allDatacenters.map((dc) => {
+            return {
+                id: dc.id,
+                latencies: [],
+                bandwidths: [],
+                shouldSave: false,
+            };
+        });
 
         this.clean();
 
@@ -73,6 +82,7 @@ export class CCT {
                     const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
+                    this.addDataToStorage(dc.id, result.latency);
                 }
             }
         }
@@ -121,6 +131,7 @@ export class CCT {
                 const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
+                this.addDataToStorage(dc.id, result.bandwidth);
             }
         }
     }
@@ -209,13 +220,26 @@ export class CCT {
             longitude: 8.6421212,
         }
     ): Promise<boolean> {
-        const data: StoreData[] = [];
-        this.datacenters.forEach((dc) => {
-            data.push({
-                id: dc.id,
-                latency: `${dc.averageLatency.toFixed(2)}`,
-                averageBandwidth: dc.averageBandwidth.megaBitsPerSecond.toFixed(2),
+        const data: StoreData[] = this.storage
+            .filter((item) => item.shouldSave)
+            .map((item) => {
+                return {
+                    id: item.id,
+                    latency: `${Util.getAverageLatency(item.latencies).toFixed(2)}`,
+                    averageBandwidth: Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
+                };
             });
+
+        this.storage = this.storage.map((item) => {
+            if (item.shouldSave) {
+                return {
+                    id: item.id,
+                    latencies: [],
+                    bandwidths: [],
+                    shouldSave: false,
+                };
+            }
+            return item;
         });
 
         const body = JSON.stringify(
@@ -236,6 +260,25 @@ export class CCT {
         } catch (error) {
             return false;
         }
+    }
+
+    addDataToStorage(id: string, data: number | BandwithPerSecond) {
+        this.storage = this.storage.map((item: Storage) => {
+            if (item.id === id) {
+                const isDataNumber = typeof data === 'number';
+                const latencies = isDataNumber ? [...item.latencies, data] : item.latencies;
+                const bandwidths = isDataNumber ? item.bandwidths : [...item.bandwidths, data];
+
+                return {
+                    id: item.id,
+                    latencies,
+                    bandwidths,
+                    shouldSave: latencies.length >= 16,
+                };
+            }
+
+            return item;
+        });
     }
 
     clean(): void {

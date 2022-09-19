@@ -9,6 +9,7 @@ const Util_1 = require("./Util");
 const Bandwidth_1 = require("../@types/Bandwidth");
 class CCT {
     constructor() {
+        this.storage = [];
         this.runningLatency = false;
         this.runningBandwidth = false;
     }
@@ -23,6 +24,14 @@ class CCT {
     async fetchDatacenterInformation(dictionaryUrl) {
         this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
         this.datacenters = this.allDatacenters;
+        this.storage = this.allDatacenters.map((dc) => {
+            return {
+                id: dc.id,
+                latencies: [],
+                bandwidths: [],
+                shouldSave: false,
+            };
+        });
         this.clean();
         this.lce = new LCE_1.LCE(this.datacenters);
     }
@@ -59,6 +68,7 @@ class CCT {
                     const averageLatency = Util_1.Util.getAverageLatency(this.datacenters[index].latencies);
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
+                    this.addDataToStorage(dc.id, result.latency);
                 }
             }
         }
@@ -70,8 +80,7 @@ class CCT {
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
             });
-            await Promise.all(bandwidthMeasurementPromises).catch((e) => console.log(e, 'erro111r'));
-            console.log('promiseAllEnded');
+            await Promise.all(bandwidthMeasurementPromises);
         }
         else {
             await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
@@ -80,20 +89,18 @@ class CCT {
     }
     async startMeasurementForBandwidth(dc, iterations, bandwidthMode = Bandwidth_1.BandwidthMode.big) {
         var _a;
-        console.log('start');
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, { bandwidthMode });
             if (!this.runningBandwidth) {
-                console.log('stop');
                 return;
             }
             if (result && result.bandwidth) {
-                console.log('push');
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
                 (_a = this.datacenters[index].bandwidths) === null || _a === void 0 ? void 0 : _a.push(result.bandwidth);
                 const averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
+                this.addDataToStorage(dc.id, result.bandwidth);
             }
         }
     }
@@ -170,13 +177,25 @@ class CCT {
         latitude: 49.2933756,
         longitude: 8.6421212,
     }) {
-        const data = [];
-        this.datacenters.forEach((dc) => {
-            data.push({
-                id: dc.id,
-                latency: `${dc.averageLatency.toFixed(2)}`,
-                averageBandwidth: dc.averageBandwidth.megaBitsPerSecond.toFixed(2),
-            });
+        const data = this.storage
+            .filter((item) => item.shouldSave)
+            .map((item) => {
+            return {
+                id: item.id,
+                latency: `${Util_1.Util.getAverageLatency(item.latencies).toFixed(2)}`,
+                averageBandwidth: Util_1.Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
+            };
+        });
+        this.storage = this.storage.map((item) => {
+            if (item.shouldSave) {
+                return {
+                    id: item.id,
+                    latencies: [],
+                    bandwidths: [],
+                    shouldSave: false,
+                };
+            }
+            return item;
         });
         const body = JSON.stringify({
             uid: (0, uuid_1.v4)(),
@@ -192,6 +211,22 @@ class CCT {
         catch (error) {
             return false;
         }
+    }
+    addDataToStorage(id, data) {
+        this.storage = this.storage.map((item) => {
+            if (item.id === id) {
+                const isDataNumber = typeof data === 'number';
+                const latencies = isDataNumber ? [...item.latencies, data] : item.latencies;
+                const bandwidths = isDataNumber ? item.bandwidths : [...item.bandwidths, data];
+                return {
+                    id: item.id,
+                    latencies,
+                    bandwidths,
+                    shouldSave: latencies.length >= 16,
+                };
+            }
+            return item;
+        });
     }
     clean() {
         this.datacenters.forEach((dc) => {

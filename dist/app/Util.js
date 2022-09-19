@@ -6,7 +6,7 @@ class Util {
         return data ? data.reduce((prev, cur) => prev + cur, 0) / data.length : -1;
     }
     static getAverageBandwidth(data) {
-        if (data) {
+        if (data && data.length) {
             const bandwidthAverage = data.reduce((prev, cur) => {
                 return {
                     bitsPerSecond: prev.bitsPerSecond + cur.bitsPerSecond,

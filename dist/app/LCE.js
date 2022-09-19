@@ -37,7 +37,6 @@ class LCE {
         return results;
     }
     getBandwidthForId(id, options) {
-        console.log('getBandwidthForId');
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
         if (!dc) {
             return null;
@@ -84,8 +83,8 @@ class LCE {
             try {
                 rawBody = await response.text();
             }
-            catch (e) {
-                console.log(e);
+            catch (error) {
+                console.log(error);
                 return null;
             }
             const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
@@ -138,7 +137,6 @@ class LCE {
         this.cancelableLatencyRequests.forEach((controller) => {
             controller.abort();
         });
-        console.log(this.cancelableBandwidthRequests);
         this.cancelableBandwidthRequests.forEach((controller) => {
             controller.abort();
         });

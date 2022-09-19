@@ -126,10 +126,9 @@ describe('CCT tests', () => {
         cct.setFilters();
         cct.startBandwidthChecks({ datacenter: cct.datacenters, iterations: 30 });
         expect(cct.runningBandwidth).toBeTruthy();
-        await Util_1.Util.sleep(6000);
+        await Util_1.Util.sleep(2000);
         await cct.stopMeasurements();
-        console.log(cct.getCurrentDatacentersSorted());
-        await Util_1.Util.sleep(3000);
+        await Util_1.Util.sleep(2000);
         expect(cct.runningBandwidth).toBeFalsy();
         expect(cct.runningLatency).toBeFalsy();
         expect(cct.datacenters[0].bandwidths.length).not.toBe(30);

@@ -27,6 +27,13 @@ export type FilterKeys = {
     country?: string[];
 };
 
+export type Storage = {
+    id: string;
+    latencies: number[];
+    bandwidths: BandwithPerSecond[];
+    shouldSave: boolean;
+};
+
 export type StoreData = {
     latency: string;
     averageBandwidth: string;
