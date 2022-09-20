@@ -26,6 +26,8 @@ export declare class CCT {
     getAddress(): Promise<Location>;
     storeRequest(body: any): Promise<any>;
     store(location?: Location): Promise<boolean>;
-    addDataToStorage(id: string, data: number | BandwithPerSecond): void;
+    private addDataToStorage;
+    setLocalStorage(): void;
+    private readLocalStorage;
     clean(): void;
 }

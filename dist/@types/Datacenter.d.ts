@@ -24,6 +24,15 @@ export declare type FilterKeys = {
     town?: string[];
     country?: string[];
 };
+export declare type LocalStorage = {
+    id: string;
+    averageLatency: number;
+    latencyJudgement?: Speed;
+    averageBandwidth: BandwithPerSecond;
+    bandwidthJudgement?: Speed;
+    latencies: number[];
+    bandwidths: BandwithPerSecond[];
+};
 export declare type Storage = {
     id: string;
     latencies: number[];

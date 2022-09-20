@@ -7,6 +7,7 @@ const Datacenter_1 = require("../@types/Datacenter");
 const LCE_1 = require("./LCE");
 const Util_1 = require("./Util");
 const Bandwidth_1 = require("../@types/Bandwidth");
+const localStorageName = 'CCT_DATA';
 class CCT {
     constructor() {
         this.storage = [];
@@ -33,6 +34,7 @@ class CCT {
             };
         });
         this.clean();
+        this.readLocalStorage();
         this.lce = new LCE_1.LCE(this.datacenters);
     }
     setFilters(filters) {
@@ -166,7 +168,7 @@ class CCT {
         });
     }
     async storeRequest(body) {
-        return await (0, node_fetch_1.default)('https://cct.demo-education.cloud.sap/measurement', {
+        return await (0, node_fetch_1.default)('https://localhost/measurement', {
             method: 'post',
             body: body,
             headers: { 'Content-Type': 'application/json' },
@@ -177,17 +179,14 @@ class CCT {
         latitude: 49.2933756,
         longitude: 8.6421212,
     }) {
-        const data = this.storage
-            .filter((item) => item.shouldSave)
-            .map((item) => {
-            return {
-                id: item.id,
-                latency: `${Util_1.Util.getAverageLatency(item.latencies).toFixed(2)}`,
-                averageBandwidth: Util_1.Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
-            };
-        });
+        const data = [];
         this.storage = this.storage.map((item) => {
             if (item.shouldSave) {
+                data.push({
+                    id: item.id,
+                    latency: `${Util_1.Util.getAverageLatency(item.latencies).toFixed(2)}`,
+                    averageBandwidth: Util_1.Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
+                });
                 return {
                     id: item.id,
                     latencies: [],
@@ -227,6 +226,47 @@ class CCT {
             }
             return item;
         });
+    }
+    setLocalStorage() {
+        window.localStorage.clear();
+        const data = this.allDatacenters.map((dc) => {
+            return {
+                id: dc.id,
+                latencies: dc.latencies,
+                averageLatency: dc.averageLatency,
+                latencyJudgement: dc.latencyJudgement,
+                bandwidths: dc.bandwidths,
+                averageBandwidth: dc.averageBandwidth,
+                bandwidthJudgement: dc.bandwidthJudgement,
+            };
+        });
+        window.localStorage.setItem(localStorageName, JSON.stringify(data));
+    }
+    readLocalStorage() {
+        if (!window.localStorage) {
+            return;
+        }
+        const data = window.localStorage.getItem(localStorageName);
+        if (!data) {
+            return;
+        }
+        const parsedData = JSON.parse(data);
+        this.allDatacenters = this.allDatacenters.map((dc) => {
+            const foundItem = parsedData.find((item) => item.id === dc.id);
+            if (foundItem) {
+                return {
+                    ...dc,
+                    averageLatency: foundItem.averageLatency,
+                    latencyJudgement: foundItem.latencyJudgement,
+                    averageBandwidth: foundItem.averageBandwidth,
+                    bandwidthJudgement: foundItem.bandwidthJudgement,
+                    latencies: foundItem.latencies,
+                    bandwidths: foundItem.bandwidths,
+                };
+            }
+            return dc;
+        });
+        window.localStorage.clear();
     }
     clean() {
         this.datacenters.forEach((dc) => {

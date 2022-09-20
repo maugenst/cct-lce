@@ -27,6 +27,16 @@ export type FilterKeys = {
     country?: string[];
 };
 
+export type LocalStorage = {
+    id: string;
+    averageLatency: number;
+    latencyJudgement?: Speed;
+    averageBandwidth: BandwithPerSecond;
+    bandwidthJudgement?: Speed;
+    latencies: number[];
+    bandwidths: BandwithPerSecond[];
+};
+
 export type Storage = {
     id: string;
     latencies: number[];

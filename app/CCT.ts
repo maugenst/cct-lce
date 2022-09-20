@@ -1,10 +1,12 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
-import {Datacenter, FilterKeys, Location, Speed, Storage, StoreData} from '../@types/Datacenter';
+import {Datacenter, FilterKeys, LocalStorage, Location, Speed, Storage, StoreData} from '../@types/Datacenter';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
 import GeocoderResult = google.maps.GeocoderResult;
+
+const localStorageName = 'CCT_DATA';
 
 export class CCT {
     allDatacenters: Datacenter[];
@@ -36,6 +38,7 @@ export class CCT {
         });
 
         this.clean();
+        this.readLocalStorage();
 
         this.lce = new LCE(this.datacenters);
     }
@@ -220,18 +223,16 @@ export class CCT {
             longitude: 8.6421212,
         }
     ): Promise<boolean> {
-        const data: StoreData[] = this.storage
-            .filter((item) => item.shouldSave)
-            .map((item) => {
-                return {
-                    id: item.id,
-                    latency: `${Util.getAverageLatency(item.latencies).toFixed(2)}`,
-                    averageBandwidth: Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
-                };
-            });
+        const data: StoreData[] = [];
 
         this.storage = this.storage.map((item) => {
             if (item.shouldSave) {
+                data.push({
+                    id: item.id,
+                    latency: `${Util.getAverageLatency(item.latencies).toFixed(2)}`,
+                    averageBandwidth: Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
+                });
+
                 return {
                     id: item.id,
                     latencies: [],
@@ -262,7 +263,7 @@ export class CCT {
         }
     }
 
-    addDataToStorage(id: string, data: number | BandwithPerSecond) {
+    private addDataToStorage(id: string, data: number | BandwithPerSecond) {
         this.storage = this.storage.map((item: Storage) => {
             if (item.id === id) {
                 const isDataNumber = typeof data === 'number';
@@ -279,6 +280,54 @@ export class CCT {
 
             return item;
         });
+    }
+
+    setLocalStorage() {
+        window.localStorage.clear();
+
+        const data: LocalStorage[] = this.allDatacenters.map((dc) => {
+            return {
+                id: dc.id,
+                latencies: dc.latencies,
+                averageLatency: dc.averageLatency,
+                latencyJudgement: dc.latencyJudgement,
+                bandwidths: dc.bandwidths,
+                averageBandwidth: dc.averageBandwidth,
+                bandwidthJudgement: dc.bandwidthJudgement,
+            };
+        });
+
+        window.localStorage.setItem(localStorageName, JSON.stringify(data));
+    }
+
+    private readLocalStorage(): void {
+        if (!window.localStorage) {
+            return;
+        }
+
+        const data: string | null = window.localStorage.getItem(localStorageName);
+
+        if (!data) {
+            return;
+        }
+        const parsedData: LocalStorage[] = JSON.parse(data);
+        this.allDatacenters = this.allDatacenters.map((dc) => {
+            const foundItem = parsedData.find((item) => item.id === dc.id);
+            if (foundItem) {
+                return {
+                    ...dc,
+                    averageLatency: foundItem.averageLatency,
+                    latencyJudgement: foundItem.latencyJudgement,
+                    averageBandwidth: foundItem.averageBandwidth,
+                    bandwidthJudgement: foundItem.bandwidthJudgement,
+                    latencies: foundItem.latencies,
+                    bandwidths: foundItem.bandwidths,
+                };
+            }
+            return dc;
+        });
+
+        window.localStorage.clear();
     }
 
     clean(): void {
