@@ -128,7 +128,6 @@ describe('CCT tests', () => {
         expect(cct.runningBandwidth).toBeTruthy();
         await Util_1.Util.sleep(2000);
         await cct.stopMeasurements();
-        await Util_1.Util.sleep(2000);
         expect(cct.runningBandwidth).toBeFalsy();
         expect(cct.runningLatency).toBeFalsy();
         expect(cct.datacenters[0].bandwidths.length).not.toBe(30);

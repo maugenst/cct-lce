@@ -257,20 +257,15 @@ describe('lce-tests', () => {
     test('test - drone bandwidth and cancel download', async () => {
         const lce = new LCE_1.LCE(datacenters);
         if (lce !== null) {
-            lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e')
-                .then((data) => data)
-                .catch((err) => err);
+            await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
             lce.terminate();
             expect(lce.cancelableBandwidthRequests.length).toEqual(0);
-            lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e')
-                .then((bandwidth) => {
-                expect(bandwidth).toBeDefined();
-                expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth).toBeDefined();
-                expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.bitsPerSecond).toBeDefined();
-                expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.kiloBitsPerSecond).toBeDefined();
-                expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.megaBitsPerSecond).toBeDefined();
-            })
-                .catch((err) => err);
+            const bandwidth = await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
+            expect(bandwidth).toBeDefined();
+            expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth).toBeDefined();
+            expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.bitsPerSecond).toBeDefined();
+            expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.kiloBitsPerSecond).toBeDefined();
+            expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.megaBitsPerSecond).toBeDefined();
         }
     });
     test('test - drone all latencies', async () => {
@@ -279,7 +274,7 @@ describe('lce-tests', () => {
         expect(latencies && latencies.length > 0).toBeTruthy();
     });
     test('test - drone all bandwidths', async () => {
-        const lce = new LCE_1.LCE(datacenters);
+        const lce = new LCE_1.LCE([datacenters[0]]);
         const bandwidth = await lce.runBandwidthCheckForAll();
         expect(bandwidth && bandwidth.length > 0).toBeTruthy();
     });

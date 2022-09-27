@@ -12,13 +12,13 @@ export declare class CCT {
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
     setFilters(filters: FilterKeys | undefined): void;
     stopMeasurements(): Promise<void>;
-    startLatencyChecks(iterations: number): Promise<void>;
+    startLatencyChecks(iterations: number, saveToLocalStorage?: boolean): Promise<void>;
     private startMeasurementForLatency;
     startBandwidthChecks({ datacenter, iterations, bandwidthMode, }: {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
-    }): Promise<void>;
+    }, saveToLocalStorage?: boolean): Promise<void>;
     private startMeasurementForBandwidth;
     judgeLatency(averageLatency: number): Speed;
     judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed;
@@ -27,7 +27,7 @@ export declare class CCT {
     storeRequest(body: any): Promise<any>;
     store(location?: Location): Promise<boolean>;
     private addDataToStorage;
-    setLocalStorage(): void;
+    private setLocalStorage;
     private readLocalStorage;
     clean(): void;
 }

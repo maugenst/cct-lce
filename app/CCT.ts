@@ -62,13 +62,13 @@ export class CCT {
         this.lce.terminate();
     }
 
-    async startLatencyChecks(iterations: number): Promise<void> {
+    async startLatencyChecks(iterations: number, saveToLocalStorage = false): Promise<void> {
         this.runningLatency = true;
-        await this.startMeasurementForLatency(iterations);
+        await this.startMeasurementForLatency(iterations, saveToLocalStorage);
         this.runningLatency = false;
     }
 
-    private async startMeasurementForLatency(iterations: number): Promise<void> {
+    private async startMeasurementForLatency(iterations: number, saveToLocalStorage: boolean): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
                 const dc = this.datacenters[dcLength];
@@ -86,30 +86,39 @@ export class CCT {
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
                     this.addDataToStorage(dc.id, result.latency);
+
+                    if (saveToLocalStorage) {
+                        this.setLocalStorage();
+                    }
                 }
             }
         }
     }
 
-    async startBandwidthChecks({
-        datacenter,
-        iterations,
-        bandwidthMode,
-    }: {
-        datacenter: Datacenter | Datacenter[];
-        iterations: number;
-        bandwidthMode?: BandwidthMode | undefined;
-    }): Promise<void> {
+    async startBandwidthChecks(
+        {
+            datacenter,
+            iterations,
+            bandwidthMode,
+        }: {
+            datacenter: Datacenter | Datacenter[];
+            iterations: number;
+            bandwidthMode?: BandwidthMode | undefined;
+        },
+        saveToLocalStorage = false
+    ): Promise<void> {
         this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
-                bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
+                bandwidthMeasurementPromises.push(
+                    this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage)
+                );
             });
 
             await Promise.all(bandwidthMeasurementPromises);
         } else {
-            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode);
+            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage);
         }
 
         this.runningBandwidth = false;
@@ -118,7 +127,8 @@ export class CCT {
     private async startMeasurementForBandwidth(
         dc: Datacenter,
         iterations: number,
-        bandwidthMode: BandwidthMode = BandwidthMode.big
+        bandwidthMode: BandwidthMode = BandwidthMode.big,
+        saveToLocalStorage: boolean
     ): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
@@ -135,6 +145,10 @@ export class CCT {
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
                 this.addDataToStorage(dc.id, result.bandwidth);
+
+                if (saveToLocalStorage) {
+                    this.setLocalStorage();
+                }
             }
         }
     }
@@ -229,7 +243,7 @@ export class CCT {
             if (item.shouldSave) {
                 data.push({
                     id: item.id,
-                    latency: `${Util.getAverageLatency(item.latencies).toFixed(2)}`,
+                    latency: `${Util.getAverageLatency(item.latencies)?.toFixed(2)}`,
                     averageBandwidth: Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
                 });
 
@@ -282,7 +296,11 @@ export class CCT {
         });
     }
 
-    setLocalStorage() {
+    private setLocalStorage() {
+        if (!window.localStorage) {
+            return;
+        }
+
         window.localStorage.clear();
 
         const data: LocalStorage[] = this.allDatacenters.map((dc) => {
