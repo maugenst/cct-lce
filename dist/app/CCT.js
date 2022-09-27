@@ -174,7 +174,7 @@ class CCT {
         });
     }
     async storeRequest(body) {
-        return await (0, node_fetch_1.default)('https://localhost/measurement', {
+        return await (0, node_fetch_1.default)('https://cct.demo-education.cloud.sap/measurement', {
             method: 'post',
             body: body,
             headers: { 'Content-Type': 'application/json' },
@@ -250,7 +250,6 @@ class CCT {
                 bandwidthJudgement: dc.bandwidthJudgement,
             };
         });
-        console.log(data, 'save');
         window.localStorage.setItem(localStorageName, JSON.stringify(data));
     }
     readLocalStorage() {
@@ -277,7 +276,6 @@ class CCT {
             }
             return dc;
         });
-        console.log(this.allDatacenters, 'readLocalStorage');
         window.localStorage.clear();
     }
     clean() {
