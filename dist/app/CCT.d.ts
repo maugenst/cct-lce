@@ -11,14 +11,15 @@ export declare class CCT {
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
     setFilters(filters: FilterKeys | undefined): void;
-    stopMeasurements(): Promise<void>;
+    stopMeasurements(): void;
     startLatencyChecks(iterations: number, saveToLocalStorage?: boolean): Promise<void>;
     private startMeasurementForLatency;
-    startBandwidthChecks({ datacenter, iterations, bandwidthMode, }: {
+    startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage, }: {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
-    }, saveToLocalStorage?: boolean): Promise<void>;
+        saveToLocalStorage: boolean;
+    }): Promise<void>;
     private startMeasurementForBandwidth;
     judgeLatency(averageLatency: number): Speed;
     judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed;

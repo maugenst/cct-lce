@@ -45,7 +45,7 @@ class CCT {
             : this.allDatacenters;
         this.lce = new LCE_1.LCE(this.datacenters);
     }
-    async stopMeasurements() {
+    stopMeasurements() {
         this.runningLatency = false;
         this.runningBandwidth = false;
         this.lce.terminate();
@@ -78,7 +78,7 @@ class CCT {
             }
         }
     }
-    async startBandwidthChecks({ datacenter, iterations, bandwidthMode, }, saveToLocalStorage = false) {
+    async startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage = false, }) {
         this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises = [];

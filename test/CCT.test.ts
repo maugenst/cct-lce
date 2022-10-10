@@ -162,7 +162,7 @@ describe('CCT tests', () => {
 
         await Util.sleep(2000);
 
-        await cct.stopMeasurements();
+        cct.stopMeasurements();
 
         expect(cct.runningBandwidth).toBeFalsy();
         expect(cct.runningLatency).toBeFalsy();
