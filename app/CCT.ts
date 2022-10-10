@@ -104,7 +104,7 @@ export class CCT {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
-        saveToLocalStorage: boolean;
+        saveToLocalStorage?: boolean;
     }): Promise<void> {
         this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
