@@ -7,7 +7,7 @@ export class Util {
     }
 
     static getAverageBandwidth(data: BandwithPerSecond[] | undefined): BandwithPerSecond {
-        if (data) {
+        if (data && data.length) {
             const bandwidthAverage: BandwithPerSecond = data.reduce(
                 (prev: BandwithPerSecond, cur: BandwithPerSecond) => {
                     return {

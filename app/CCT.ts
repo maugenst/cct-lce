@@ -1,62 +1,83 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
-import {Datacenter, Location, Speed, StoreData} from '../@types/Datacenter';
+import {Datacenter, FilterKeys, LocalStorage, Location, Speed, Storage, StoreData} from '../@types/Datacenter';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
 import GeocoderResult = google.maps.GeocoderResult;
 
+const localStorageName = 'CCT_DATA';
+
 export class CCT {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
-    regions: string[];
     lce: LCE;
-    finishedLatency = false;
-    finishedBandwidth = false;
+    storage: Storage[] = [];
+    runningLatency = false;
+    runningBandwidth = false;
 
-    async fetchDatacenterInformation(dictionaryUrl: string | undefined): Promise<void> {
-        if (!dictionaryUrl) {
-            throw new Error('Datacenter URL missing.');
+    async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
+        try {
+            return (await fetch(dictionaryUrl).then((res: Response) => res.json())) as Datacenter[];
+        } catch {
+            return [];
         }
+    }
 
-        this.allDatacenters = await fetch(dictionaryUrl).then((res: Response) => res.json());
+    async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
+        this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
 
         this.datacenters = this.allDatacenters;
+        this.storage = this.allDatacenters.map((dc) => {
+            return {
+                id: dc.id,
+                latencies: [],
+                bandwidths: [],
+                shouldSave: false,
+            };
+        });
 
         this.clean();
+        this.readLocalStorage();
 
         this.lce = new LCE(this.datacenters);
     }
 
-    setRegions(regions: string[]): void {
-        this.regions = regions || [];
-        this.datacenters =
-            this.regions.length > 0
-                ? this.allDatacenters.filter((dc) => this.mapDatacentersOnRegions(dc))
-                : this.allDatacenters;
+    setFilters(filters: FilterKeys | undefined) {
+        this.datacenters = filters
+            ? this.allDatacenters.filter((dc) =>
+                  Object.keys(filters).every((key) => {
+                      // @ts-ignore
+                      return filters[key].includes(dc[key]);
+                  })
+              )
+            : this.allDatacenters;
 
         this.lce = new LCE(this.datacenters);
-    }
-
-    private mapDatacentersOnRegions(dc: Datacenter): boolean {
-        return this.regions.map((region) => dc.name.toLowerCase() === region.toLowerCase()).reduce((a, b) => a || b);
     }
 
     stopMeasurements(): void {
+        this.runningLatency = false;
+        this.runningBandwidth = false;
         this.lce.terminate();
     }
 
-    startLatencyChecks(iterations: number): void {
-        this.startMeasurementForLatency(iterations).then(() => {
-            this.finishedLatency = true;
-        });
+    async startLatencyChecks(iterations: number, saveToLocalStorage = false): Promise<void> {
+        this.runningLatency = true;
+        await this.startMeasurementForLatency(iterations, saveToLocalStorage);
+        this.runningLatency = false;
     }
 
-    private async startMeasurementForLatency(iterations: number): Promise<void> {
+    private async startMeasurementForLatency(iterations: number, saveToLocalStorage: boolean): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
                 const dc = this.datacenters[dcLength];
                 const result = await this.lce.getLatencyForId(dc.id);
+
+                if (!this.runningLatency) {
+                    return;
+                }
+
                 if (result && result.latency) {
                     const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
@@ -64,41 +85,57 @@ export class CCT {
                     const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
+                    this.addDataToStorage(dc.id, result.latency);
+
+                    if (saveToLocalStorage) {
+                        this.setLocalStorage();
+                    }
                 }
             }
         }
     }
 
-    startBandwidthChecks({
+    async startBandwidthChecks({
         datacenter,
         iterations,
         bandwidthMode,
+        saveToLocalStorage = false,
     }: {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
-    }): void {
+        saveToLocalStorage?: boolean;
+    }): Promise<void> {
+        this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
-                bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode));
+                bandwidthMeasurementPromises.push(
+                    this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage)
+                );
             });
-            Promise.all(bandwidthMeasurementPromises).then(() => {
-                this.finishedBandwidth = true;
-            });
+
+            await Promise.all(bandwidthMeasurementPromises);
         } else {
-            this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode).then(() => {
-                this.finishedBandwidth = true;
-            });
+            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage);
         }
+
+        this.runningBandwidth = false;
     }
+
     private async startMeasurementForBandwidth(
         dc: Datacenter,
         iterations: number,
-        bandwidthMode: BandwidthMode = BandwidthMode.big
+        bandwidthMode: BandwidthMode = BandwidthMode.big,
+        saveToLocalStorage: boolean
     ): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
+
+            if (!this.runningBandwidth) {
+                return;
+            }
+
             if (result && result.bandwidth) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
 
@@ -106,6 +143,11 @@ export class CCT {
                 const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
+                this.addDataToStorage(dc.id, result.bandwidth);
+
+                if (saveToLocalStorage) {
+                    this.setLocalStorage();
+                }
             }
         }
     }
@@ -179,6 +221,14 @@ export class CCT {
         });
     }
 
+    async storeRequest(body: any): Promise<any> {
+        return await fetch('https://cct.demo-education.cloud.sap/measurement', {
+            method: 'post',
+            body: body,
+            headers: {'Content-Type': 'application/json'},
+        }).then((res: Response) => res.json());
+    }
+
     async store(
         location: Location = {
             address: 'Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany',
@@ -187,12 +237,23 @@ export class CCT {
         }
     ): Promise<boolean> {
         const data: StoreData[] = [];
-        this.datacenters.forEach((dc) => {
-            data.push({
-                id: dc.id,
-                latency: `${dc.averageLatency.toFixed(2)}`,
-                averageBandwidth: dc.averageBandwidth.megaBitsPerSecond.toFixed(2),
-            });
+
+        this.storage = this.storage.map((item) => {
+            if (item.shouldSave) {
+                data.push({
+                    id: item.id,
+                    latency: `${Util.getAverageLatency(item.latencies)?.toFixed(2)}`,
+                    averageBandwidth: Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
+                });
+
+                return {
+                    id: item.id,
+                    latencies: [],
+                    bandwidths: [],
+                    shouldSave: false,
+                };
+            }
+            return item;
         });
 
         const body = JSON.stringify(
@@ -207,17 +268,83 @@ export class CCT {
             4
         );
 
-        // console.log(body);
         try {
-            const result = await fetch('https://cct.demo-education.cloud.sap/measurement', {
-                method: 'post',
-                body: body,
-                headers: {'Content-Type': 'application/json'},
-            }).then((res: Response) => res.json());
+            const result = await this.storeRequest(body);
             return result.status === 'OK';
         } catch (error) {
             return false;
         }
+    }
+
+    private addDataToStorage(id: string, data: number | BandwithPerSecond) {
+        this.storage = this.storage.map((item: Storage) => {
+            if (item.id === id) {
+                const isDataNumber = typeof data === 'number';
+                const latencies = isDataNumber ? [...item.latencies, data] : item.latencies;
+                const bandwidths = isDataNumber ? item.bandwidths : [...item.bandwidths, data];
+
+                return {
+                    id: item.id,
+                    latencies,
+                    bandwidths,
+                    shouldSave: latencies.length >= 16,
+                };
+            }
+
+            return item;
+        });
+    }
+
+    private setLocalStorage() {
+        if (!window.localStorage) {
+            return;
+        }
+
+        window.localStorage.clear();
+
+        const data: LocalStorage[] = this.allDatacenters.map((dc) => {
+            return {
+                id: dc.id,
+                latencies: dc.latencies,
+                averageLatency: dc.averageLatency,
+                latencyJudgement: dc.latencyJudgement,
+                bandwidths: dc.bandwidths,
+                averageBandwidth: dc.averageBandwidth,
+                bandwidthJudgement: dc.bandwidthJudgement,
+            };
+        });
+
+        window.localStorage.setItem(localStorageName, JSON.stringify(data));
+    }
+
+    private readLocalStorage(): void {
+        if (!window.localStorage) {
+            return;
+        }
+
+        const data: string | null = window.localStorage.getItem(localStorageName);
+
+        if (!data) {
+            return;
+        }
+        const parsedData: LocalStorage[] = JSON.parse(data);
+        this.allDatacenters = this.allDatacenters.map((dc) => {
+            const foundItem = parsedData.find((item) => item.id === dc.id);
+            if (foundItem) {
+                return {
+                    ...dc,
+                    averageLatency: foundItem.averageLatency,
+                    latencyJudgement: foundItem.latencyJudgement,
+                    averageBandwidth: foundItem.averageBandwidth,
+                    bandwidthJudgement: foundItem.bandwidthJudgement,
+                    latencies: foundItem.latencies,
+                    bandwidths: foundItem.bandwidths,
+                };
+            }
+            return dc;
+        });
+
+        window.localStorage.clear();
     }
 
     clean(): void {
@@ -232,7 +359,5 @@ export class CCT {
             dc.latencies = [];
             dc.bandwidths = [];
         });
-        this.finishedLatency = false;
-        this.finishedBandwidth = false;
     }
 }

@@ -79,7 +79,14 @@ class LCE {
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
         if (response !== null) {
             const end = Date.now();
-            const rawBody = await response.text();
+            let rawBody;
+            try {
+                rawBody = await response.text();
+            }
+            catch (error) {
+                console.log(error);
+                return null;
+            }
             const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
             return {
                 id: datacenter.id,
@@ -109,7 +116,7 @@ class LCE {
     }
     async abortableFetch(url, signal) {
         try {
-            return await node_fetch_1.default(url, {
+            return await (0, node_fetch_1.default)(url, {
                 signal,
             });
         }

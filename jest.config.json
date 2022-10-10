@@ -3,8 +3,10 @@
         "ts-jest": {
             "diagnostics": false,
             "tsconfig": "tsconfig.json"
-        }
+        },
+        "window": {}
     },
+    "testTimeout": 15000,
     "testEnvironment": "node",
     "setupFilesAfterEnv": ["jest-extended"],
     "testRegex": "test/.+test.ts",

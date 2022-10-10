@@ -154,7 +154,6 @@ const datacenters: Datacenter[] = [
 
 beforeAll(() => {
     jest.setTimeout(300000);
-
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 });
 
@@ -266,25 +265,17 @@ describe('lce-tests', () => {
     test('test - drone bandwidth and cancel download', async () => {
         const lce = new LCE(datacenters);
         if (lce !== null) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e')
-                .then((data) => data)
-                .catch((err) => err);
+            await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
+
             lce.terminate();
             expect(lce.cancelableBandwidthRequests.length).toEqual(0);
 
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e')
-                .then((bandwidth) => {
-                    expect(bandwidth).toBeDefined();
-                    expect(bandwidth?.bandwidth).toBeDefined();
-                    expect(bandwidth?.bandwidth.bitsPerSecond).toBeDefined();
-                    expect(bandwidth?.bandwidth.kiloBitsPerSecond).toBeDefined();
-                    expect(bandwidth?.bandwidth.megaBitsPerSecond).toBeDefined();
-                })
-                .catch((err) => err);
+            const bandwidth = await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
+            expect(bandwidth).toBeDefined();
+            expect(bandwidth?.bandwidth).toBeDefined();
+            expect(bandwidth?.bandwidth.bitsPerSecond).toBeDefined();
+            expect(bandwidth?.bandwidth.kiloBitsPerSecond).toBeDefined();
+            expect(bandwidth?.bandwidth.megaBitsPerSecond).toBeDefined();
         }
     });
 
@@ -295,7 +286,7 @@ describe('lce-tests', () => {
     });
 
     test('test - drone all bandwidths', async () => {
-        const lce = new LCE(datacenters);
+        const lce = new LCE([datacenters[0]]);
         const bandwidth = await lce.runBandwidthCheckForAll();
         expect(bandwidth && bandwidth.length > 0).toBeTruthy();
     });
