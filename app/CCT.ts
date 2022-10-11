@@ -26,7 +26,6 @@ export class CCT {
 
     async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
         this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
-
         this.datacenters = this.allDatacenters;
         this.storage = this.allDatacenters.map((dc) => {
             return {
@@ -296,10 +295,6 @@ export class CCT {
     }
 
     private setLocalStorage() {
-        if (!window.localStorage) {
-            return;
-        }
-
         window.localStorage.clear();
 
         const data: LocalStorage[] = this.allDatacenters.map((dc) => {
@@ -318,10 +313,6 @@ export class CCT {
     }
 
     private readLocalStorage(): void {
-        if (!window.localStorage) {
-            return;
-        }
-
         const data: string | null = window.localStorage.getItem(localStorageName);
 
         if (!data) {

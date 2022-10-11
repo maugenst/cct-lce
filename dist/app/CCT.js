@@ -235,9 +235,6 @@ class CCT {
         });
     }
     setLocalStorage() {
-        if (!window.localStorage) {
-            return;
-        }
         window.localStorage.clear();
         const data = this.allDatacenters.map((dc) => {
             return {
@@ -253,9 +250,6 @@ class CCT {
         window.localStorage.setItem(localStorageName, JSON.stringify(data));
     }
     readLocalStorage() {
-        if (!window.localStorage) {
-            return;
-        }
         const data = window.localStorage.getItem(localStorageName);
         if (!data) {
             return;

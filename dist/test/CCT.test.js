@@ -4,6 +4,7 @@ const CCT_1 = require("../app/CCT");
 const Datacenter_1 = require("../@types/Datacenter");
 const Bandwidth_1 = require("../@types/Bandwidth");
 const Util_1 = require("../app/Util");
+const localStorageName = 'CCT_DATA';
 const datacenters = [
     {
         id: '2c59733c-5eb5-4e28-8eb5-a66f553adc1e',
@@ -42,6 +43,23 @@ const datacenters = [
         lastUpdate: '2021-03-03T08:45:56.000Z',
     },
 ];
+const localStorageMock = (() => {
+    let store = {};
+    return {
+        getItem(key) {
+            return store[key];
+        },
+        setItem(key, value) {
+            store[key] = value.toString();
+        },
+        clear() {
+            store = {};
+        },
+    };
+})();
+Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+});
 describe('CCT tests', () => {
     let cct;
     let urlToFetchDatacenters;
@@ -58,6 +76,7 @@ describe('CCT tests', () => {
     });
     beforeEach(() => {
         cct.clean();
+        window.localStorage.clear();
     });
     test('should fetch datacenter information', async () => {
         expect(fetchDatacenterInformationRequestSpy).toHaveBeenCalledTimes(1);
@@ -86,6 +105,25 @@ describe('CCT tests', () => {
             kiloBitsPerSecond: 0,
             megaBitsPerSecond: 0,
         });
+    });
+    test('should store data to localStorage', async () => {
+        cct.setFilters();
+        await cct.startLatencyChecks(2, true);
+        const rawLocalStorageData = window.localStorage.getItem(localStorageName);
+        const localStorageData = JSON.parse(rawLocalStorageData);
+        expect(cct.datacenters[0].latencies.length).toBe(2);
+        expect(localStorageData[0].latencies.length).toBe(2);
+    });
+    test('should read data from localStorage', async () => {
+        const cctSecond = new CCT_1.CCT();
+        jest.spyOn(cctSecond, 'fetchDatacenterInformationRequest').mockImplementation(() => {
+            return Promise.resolve(datacenters);
+        });
+        cct.setFilters();
+        await cct.startLatencyChecks(2, true);
+        expect(cct.datacenters[0].latencies.length).toBe(2);
+        await cctSecond.fetchDatacenterInformation(urlToFetchDatacenters);
+        expect(cctSecond.allDatacenters[0].latencies.length).toBe(2);
     });
     test('check latency', async () => {
         cct.setFilters({ name: ['europe-west4'] });
