@@ -2,7 +2,7 @@
     "globals": {
         "window": {}
     },
-    "testTimeout": 15000,
+    "testTimeout": 30000,
     "testEnvironment": "node",
     "setupFilesAfterEnv": ["jest-extended"],
     "testRegex": "test/.+test.ts",
