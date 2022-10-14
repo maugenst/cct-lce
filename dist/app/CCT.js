@@ -235,7 +235,7 @@ class CCT {
         });
     }
     setLocalStorage() {
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
         const data = this.allDatacenters.map((dc) => {
             return {
                 id: dc.id,
@@ -270,7 +270,7 @@ class CCT {
             }
             return dc;
         });
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
     }
     clean() {
         this.datacenters.forEach((dc) => {

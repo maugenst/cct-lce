@@ -52,8 +52,8 @@ const localStorageMock = (() => {
         setItem(key, value) {
             store[key] = value.toString();
         },
-        clear() {
-            store = {};
+        removeItem: function (key) {
+            delete store[key];
         },
     };
 })();
@@ -76,7 +76,7 @@ describe('CCT tests', () => {
     });
     beforeEach(() => {
         cct.clean();
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
     });
     test('should fetch datacenter information', async () => {
         expect(fetchDatacenterInformationRequestSpy).toHaveBeenCalledTimes(1);
