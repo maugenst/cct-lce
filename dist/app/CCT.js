@@ -235,10 +235,7 @@ class CCT {
         });
     }
     setLocalStorage() {
-        if (!window.localStorage) {
-            return;
-        }
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
         const data = this.allDatacenters.map((dc) => {
             return {
                 id: dc.id,
@@ -253,9 +250,6 @@ class CCT {
         window.localStorage.setItem(localStorageName, JSON.stringify(data));
     }
     readLocalStorage() {
-        if (!window.localStorage) {
-            return;
-        }
         const data = window.localStorage.getItem(localStorageName);
         if (!data) {
             return;
@@ -276,7 +270,7 @@ class CCT {
             }
             return dc;
         });
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
     }
     clean() {
         this.datacenters.forEach((dc) => {

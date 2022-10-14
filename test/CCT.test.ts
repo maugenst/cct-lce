@@ -1,8 +1,9 @@
 import {CCT} from '../app/CCT';
-import {Speed} from '../@types/Datacenter';
+import {LocalStorage, Speed} from '../@types/Datacenter';
 import {BandwidthMode} from '../@types/Bandwidth';
 import {Util} from '../app/Util';
 
+const localStorageName = 'CCT_DATA';
 const datacenters = [
     {
         id: '2c59733c-5eb5-4e28-8eb5-a66f553adc1e',
@@ -42,6 +43,25 @@ const datacenters = [
     },
 ];
 
+const localStorageMock = (() => {
+    let store: any = {};
+    return {
+        getItem(key: any) {
+            return store[key];
+        },
+        setItem(key: any, value: any) {
+            store[key] = value.toString();
+        },
+        removeItem: function (key: any) {
+            delete store[key];
+        },
+    };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+});
+
 describe('CCT tests', () => {
     let cct: any;
     let urlToFetchDatacenters: string;
@@ -62,6 +82,7 @@ describe('CCT tests', () => {
 
     beforeEach(() => {
         cct.clean();
+        window.localStorage.removeItem(localStorageName);
     });
 
     test('should fetch datacenter information', async () => {
@@ -99,6 +120,34 @@ describe('CCT tests', () => {
             kiloBitsPerSecond: 0,
             megaBitsPerSecond: 0,
         });
+    });
+
+    test('should store data to localStorage', async () => {
+        cct.setFilters();
+
+        await cct.startLatencyChecks(2, true);
+
+        const rawLocalStorageData: string = window.localStorage.getItem(localStorageName)!;
+        const localStorageData: LocalStorage[] = JSON.parse(rawLocalStorageData);
+
+        expect(cct.datacenters[0].latencies.length).toBe(2);
+        expect(localStorageData[0].latencies.length).toBe(2);
+    });
+
+    test('should read data from localStorage', async () => {
+        const cctSecond = new CCT();
+        jest.spyOn(cctSecond, 'fetchDatacenterInformationRequest').mockImplementation((): any => {
+            return Promise.resolve(datacenters);
+        });
+
+        cct.setFilters();
+        await cct.startLatencyChecks(2, true);
+
+        expect(cct.datacenters[0].latencies.length).toBe(2);
+
+        await cctSecond.fetchDatacenterInformation(urlToFetchDatacenters);
+
+        expect(cctSecond.allDatacenters[0].latencies.length).toBe(2);
     });
 
     test('check latency', async () => {
