@@ -295,7 +295,7 @@ export class CCT {
     }
 
     private setLocalStorage() {
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
 
         const data: LocalStorage[] = this.allDatacenters.map((dc) => {
             return {
@@ -335,7 +335,7 @@ export class CCT {
             return dc;
         });
 
-        window.localStorage.clear();
+        window.localStorage.removeItem(localStorageName);
     }
 
     clean(): void {
