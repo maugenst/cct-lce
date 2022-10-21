@@ -1,6 +1,7 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
-import {Datacenter, FilterKeys, LocalStorage, Location, Speed, Storage, StoreData} from '../@types/Datacenter';
+import {Datacenter, Speed} from '../@types/Datacenter';
+import {Events, FilterKeys, LocalStorage, Location, Storage, StoreData} from '../@types/Shared';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
@@ -336,6 +337,18 @@ export class CCT {
         });
 
         window.localStorage.removeItem(localStorageName);
+    }
+
+    subscribe(event: Events, callback: () => void): void {
+        if (this.lce) {
+            this.lce.on(event, callback);
+        }
+    }
+
+    unsubscribe(event: Events, callback: () => void): void {
+        if (this.lce) {
+            this.lce.off(event, callback);
+        }
     }
 
     clean(): void {

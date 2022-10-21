@@ -2,10 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LCE = void 0;
 const node_fetch_1 = require("node-fetch");
+const events_1 = require("events");
 const Bandwidth_1 = require("../@types/Bandwidth");
 const abort_controller_1 = require("abort-controller");
-class LCE {
+class LCE extends events_1.EventEmitter {
     constructor(datacenters) {
+        super();
         this.datacenters = datacenters;
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
@@ -51,26 +53,25 @@ class LCE {
         return this.getLatencyFor(dc);
     }
     async getLatencyFor(datacenter) {
-        try {
-            const start = Date.now();
-            await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
-            const end = Date.now();
-            return {
-                id: datacenter.id,
-                latency: end - start,
-                cloud: datacenter.cloud,
-                name: datacenter.name,
-                town: datacenter.town,
-                country: datacenter.country,
-                latitude: datacenter.latitude,
-                longitude: datacenter.longitude,
-                ip: datacenter.ip,
-                timestamp: Date.now(),
-            };
-        }
-        catch (error) {
+        const start = Date.now();
+        const response = await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        const end = Date.now();
+        if (!response) {
             return null;
         }
+        this.emit("latency");
+        return {
+            id: datacenter.id,
+            latency: end - start,
+            cloud: datacenter.cloud,
+            name: datacenter.name,
+            town: datacenter.town,
+            country: datacenter.country,
+            latitude: datacenter.latitude,
+            longitude: datacenter.longitude,
+            ip: datacenter.ip,
+            timestamp: Date.now(),
+        };
     }
     async getBandwidthFor(datacenter, options = {
         bandwidthMode: Bandwidth_1.BandwidthMode.big,
@@ -78,6 +79,7 @@ class LCE {
         const start = Date.now();
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
         if (response !== null) {
+            this.emit("bandwidth");
             const end = Date.now();
             let rawBody;
             try {

@@ -1,5 +1,6 @@
 import {CCT} from '../app/CCT';
-import {LocalStorage, Speed} from '../@types/Datacenter';
+import {Speed} from '../@types/Datacenter';
+import {Events, LocalStorage} from '../@types/Shared';
 import {BandwidthMode} from '../@types/Bandwidth';
 import {Util} from '../app/Util';
 
@@ -44,7 +45,7 @@ const datacenters = [
 ];
 
 const localStorageMock = (() => {
-    let store: any = {};
+    const store: any = {};
     return {
         getItem(key: any) {
             return store[key];
@@ -148,6 +149,40 @@ describe('CCT tests', () => {
         await cctSecond.fetchDatacenterInformation(urlToFetchDatacenters);
 
         expect(cctSecond.allDatacenters[0].latencies.length).toBe(2);
+    });
+
+    test('should subscribe and unsubscribed from the event', async () => {
+        cct.setFilters();
+
+        let counter = 0;
+        const incrementor = () => counter++;
+
+        cct.subscribe(Events.LATENCY, incrementor);
+
+        await cct.startLatencyChecks(2);
+        expect(counter).toBe(2 * cct.datacenters.length);
+
+        cct.unsubscribe(Events.LATENCY, incrementor);
+
+        await cct.startLatencyChecks(2);
+
+        expect(counter).toBe(2 * cct.datacenters.length);
+    });
+
+    test('abort running measurement', async () => {
+        cct.setFilters();
+
+        cct.startBandwidthChecks({datacenter: cct.datacenters, iterations: 30});
+
+        expect(cct.runningBandwidth).toBeTruthy();
+
+        await Util.sleep(2000);
+
+        cct.stopMeasurements();
+
+        expect(cct.runningBandwidth).toBeFalsy();
+        expect(cct.runningLatency).toBeFalsy();
+        expect(cct.datacenters[0].bandwidths.length).not.toBe(30);
     });
 
     test('check latency', async () => {

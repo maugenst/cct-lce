@@ -1,4 +1,5 @@
-import { Datacenter, FilterKeys, Location, Speed, Storage } from '../@types/Datacenter';
+import { Datacenter, Speed } from '../@types/Datacenter';
+import { Events, FilterKeys, Location, Storage } from '../@types/Shared';
 import { LCE } from './LCE';
 import { BandwidthMode, BandwithPerSecond } from '../@types/Bandwidth';
 export declare class CCT {
@@ -30,5 +31,7 @@ export declare class CCT {
     private addDataToStorage;
     private setLocalStorage;
     private readLocalStorage;
+    subscribe(event: Events, callback: () => void): void;
+    unsubscribe(event: Events, callback: () => void): void;
     clean(): void;
 }

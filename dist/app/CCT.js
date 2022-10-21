@@ -272,6 +272,16 @@ class CCT {
         });
         window.localStorage.removeItem(localStorageName);
     }
+    subscribe(event, callback) {
+        if (this.lce) {
+            this.lce.on(event, callback);
+        }
+    }
+    unsubscribe(event, callback) {
+        if (this.lce) {
+            this.lce.off(event, callback);
+        }
+    }
     clean() {
         this.datacenters.forEach((dc) => {
             dc.position = 0;

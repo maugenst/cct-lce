@@ -44,7 +44,7 @@ const datacenters = [
     },
 ];
 const localStorageMock = (() => {
-    let store = {};
+    const store = {};
     return {
         getItem(key) {
             return store[key];
@@ -124,6 +124,27 @@ describe('CCT tests', () => {
         expect(cct.datacenters[0].latencies.length).toBe(2);
         await cctSecond.fetchDatacenterInformation(urlToFetchDatacenters);
         expect(cctSecond.allDatacenters[0].latencies.length).toBe(2);
+    });
+    test('should subscribe and unsubscribed from the event', async () => {
+        cct.setFilters();
+        let counter = 0;
+        const incrementor = () => counter++;
+        cct.subscribe("latency", incrementor);
+        await cct.startLatencyChecks(2);
+        expect(counter).toBe(2 * cct.datacenters.length);
+        cct.unsubscribe("latency", incrementor);
+        await cct.startLatencyChecks(2);
+        expect(counter).toBe(2 * cct.datacenters.length);
+    });
+    test('abort running measurement', async () => {
+        cct.setFilters();
+        cct.startBandwidthChecks({ datacenter: cct.datacenters, iterations: 30 });
+        expect(cct.runningBandwidth).toBeTruthy();
+        await Util_1.Util.sleep(2000);
+        cct.stopMeasurements();
+        expect(cct.runningBandwidth).toBeFalsy();
+        expect(cct.runningLatency).toBeFalsy();
+        expect(cct.datacenters[0].bandwidths.length).not.toBe(30);
     });
     test('check latency', async () => {
         cct.setFilters({ name: ['europe-west4'] });
