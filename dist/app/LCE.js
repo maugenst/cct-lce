@@ -104,7 +104,7 @@ class LCE extends events_1.EventEmitter {
     bandwidthFetch(url) {
         const controller = new abort_controller_1.default();
         this.cancelableBandwidthRequests.push(controller);
-        return this.abortableFetch(url, controller, 5000);
+        return this.abortableFetch(url, controller);
     }
     latencyFetch(url) {
         const controller = new abort_controller_1.default();

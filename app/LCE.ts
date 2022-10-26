@@ -135,7 +135,7 @@ export class LCE extends EventEmitter {
         const controller = new AbortController();
 
         this.cancelableBandwidthRequests.push(controller);
-        return this.abortableFetch(url, controller, 5000);
+        return this.abortableFetch(url, controller);
     }
 
     latencyFetch(url: string): Promise<Response | null> {

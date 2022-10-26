@@ -1,6 +1,6 @@
 {
   "name": "cct-lce",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "CCT Latency Check Engine",
   "main": "dist/app/CCT.js",
   "files": [
