@@ -74,12 +74,8 @@ export class LCE extends EventEmitter {
 
     async getLatencyFor(datacenter: Datacenter): Promise<Latency | null> {
         const start = Date.now();
-        const response = await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
-
-        if (!response) {
-            return null;
-        }
 
         this.emit(Events.LATENCY);
         return {
@@ -106,10 +102,11 @@ export class LCE extends EventEmitter {
     ): Promise<Bandwith | null> {
         const start = Date.now();
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const end = Date.now();
+
         if (response !== null) {
             this.emit(Events.BANDWIDTH);
 
-            const end = Date.now();
             let rawBody;
             try {
                 rawBody = await response.text();
@@ -136,24 +133,29 @@ export class LCE extends EventEmitter {
 
     bandwidthFetch(url: string): Promise<Response | null> {
         const controller = new AbortController();
-        const {signal} = controller;
+
         this.cancelableBandwidthRequests.push(controller);
-        return this.abortableFetch(url, signal);
+        return this.abortableFetch(url, controller, 5000);
     }
 
     latencyFetch(url: string): Promise<Response | null> {
         const controller: AbortController = new AbortController();
-        const {signal} = controller;
+
         this.cancelableLatencyRequests.push(controller);
-        return this.abortableFetch(url, signal);
+        return this.abortableFetch(url, controller);
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-    async abortableFetch(url: string, signal: any): Promise<Response | null> {
+    async abortableFetch(url: string, controller: any, timeout = 3000): Promise<Response | null> {
         try {
-            return await fetch(url, {
-                signal,
+            const timer = setTimeout(() => controller.abort(), timeout);
+
+            const result = await fetch(url, {
+                signal: controller.signal,
             });
+
+            clearTimeout(timer);
+            return result;
         } catch (error) {
             console.log(error);
             return null;

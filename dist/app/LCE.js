@@ -54,11 +54,8 @@ class LCE extends events_1.EventEmitter {
     }
     async getLatencyFor(datacenter) {
         const start = Date.now();
-        const response = await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
-        if (!response) {
-            return null;
-        }
         this.emit("latency");
         return {
             id: datacenter.id,
@@ -78,9 +75,9 @@ class LCE extends events_1.EventEmitter {
     }) {
         const start = Date.now();
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const end = Date.now();
         if (response !== null) {
             this.emit("bandwidth");
-            const end = Date.now();
             let rawBody;
             try {
                 rawBody = await response.text();
@@ -106,21 +103,22 @@ class LCE extends events_1.EventEmitter {
     }
     bandwidthFetch(url) {
         const controller = new abort_controller_1.default();
-        const { signal } = controller;
         this.cancelableBandwidthRequests.push(controller);
-        return this.abortableFetch(url, signal);
+        return this.abortableFetch(url, controller, 5000);
     }
     latencyFetch(url) {
         const controller = new abort_controller_1.default();
-        const { signal } = controller;
         this.cancelableLatencyRequests.push(controller);
-        return this.abortableFetch(url, signal);
+        return this.abortableFetch(url, controller);
     }
-    async abortableFetch(url, signal) {
+    async abortableFetch(url, controller, timeout = 3000) {
         try {
-            return await (0, node_fetch_1.default)(url, {
-                signal,
+            const timer = setTimeout(() => controller.abort(), timeout);
+            const result = await (0, node_fetch_1.default)(url, {
+                signal: controller.signal,
             });
+            clearTimeout(timer);
+            return result;
         }
         catch (error) {
             console.log(error);

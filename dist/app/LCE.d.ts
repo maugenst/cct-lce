@@ -23,7 +23,7 @@ export declare class LCE extends EventEmitter {
     }): Promise<Bandwith | null>;
     bandwidthFetch(url: string): Promise<Response | null>;
     latencyFetch(url: string): Promise<Response | null>;
-    abortableFetch(url: string, signal: any): Promise<Response | null>;
+    abortableFetch(url: string, controller: any, timeout?: number): Promise<Response | null>;
     compare(a: {
         latency: number | Bandwith;
     }, b: {

@@ -268,7 +268,7 @@ describe('lce-tests', () => {
             expect(bandwidth === null || bandwidth === void 0 ? void 0 : bandwidth.bandwidth.megaBitsPerSecond).toBeDefined();
         }
     });
-    test.skip('test - drone all latencies', async () => {
+    test('test - drone all latencies', async () => {
         const lce = new LCE_1.LCE(datacenters);
         const latencies = await lce.runLatencyCheckForAll();
         expect(latencies && latencies.length > 0).toBeTruthy();
