@@ -27,6 +27,7 @@ export class CCT {
 
     async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
         this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
+
         this.datacenters = this.allDatacenters;
         this.storage = this.allDatacenters.map((dc) => {
             return {
