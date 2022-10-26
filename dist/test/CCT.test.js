@@ -44,7 +44,7 @@ const datacenters = [
     },
 ];
 const localStorageMock = (() => {
-    let store = {};
+    const store = {};
     return {
         getItem(key) {
             return store[key];
@@ -93,7 +93,7 @@ describe('CCT tests', () => {
     });
     test('should clean datacenters from recorded measurements', async () => {
         cct.setFilters({ name: ['europe-west4'] });
-        await cct.startLatencyChecks(1);
+        await cct.startLatencyChecks({ iterations: 1 });
         expect(cct.datacenters[0].latencies.length).toBe(1);
         cct.clean();
         expect(cct.datacenters[0].position).toBe(0);
@@ -108,7 +108,7 @@ describe('CCT tests', () => {
     });
     test('should store data to localStorage', async () => {
         cct.setFilters();
-        await cct.startLatencyChecks(2, true);
+        await cct.startLatencyChecks({ iterations: 2, saveToLocalStorage: true });
         const rawLocalStorageData = window.localStorage.getItem(localStorageName);
         const localStorageData = JSON.parse(rawLocalStorageData);
         expect(cct.datacenters[0].latencies.length).toBe(2);
@@ -120,15 +120,39 @@ describe('CCT tests', () => {
             return Promise.resolve(datacenters);
         });
         cct.setFilters();
-        await cct.startLatencyChecks(2, true);
+        await cct.startLatencyChecks({ iterations: 2, saveToLocalStorage: true });
         expect(cct.datacenters[0].latencies.length).toBe(2);
         await cctSecond.fetchDatacenterInformation(urlToFetchDatacenters);
         expect(cctSecond.allDatacenters[0].latencies.length).toBe(2);
     });
+    test('should subscribe and unsubscribed from the event', async () => {
+        cct.setFilters();
+        let counter = 0;
+        const incrementor = () => counter++;
+        cct.subscribe("latency", incrementor);
+        await cct.startLatencyChecks({ iterations: 2 });
+        expect(counter).toBe(2 * cct.datacenters.length);
+        cct.unsubscribe("latency", incrementor);
+        await cct.startLatencyChecks({ iterations: 2 });
+        expect(counter).toBe(2 * cct.datacenters.length);
+    });
     test('check latency', async () => {
         cct.setFilters({ name: ['europe-west4'] });
-        await cct.startLatencyChecks(3);
+        await cct.startLatencyChecks({ iterations: 3 });
         expect(cct.datacenters[0].latencies.length).toBe(3);
+    });
+    test('should not remember measurements to save', async () => {
+        const cct1 = new CCT_1.CCT();
+        fetchDatacenterInformationRequestSpy = jest
+            .spyOn(cct1, 'fetchDatacenterInformationRequest')
+            .mockImplementation(() => {
+            return Promise.resolve(datacenters);
+        });
+        const url = 'someUrl';
+        await cct1.fetchDatacenterInformation(url);
+        cct1.setFilters();
+        await cct1.startLatencyChecks({ iterations: 2, save: false });
+        expect(cct1.storage[0].latencies.length).toBe(0);
     });
     test('check bandwidth on one datacenter', async () => {
         cct.setFilters();
@@ -147,7 +171,7 @@ describe('CCT tests', () => {
     test('latency judgement', async () => {
         cct.setFilters({ name: ['europe-west4'] });
         expect(cct.datacenters.length).toBe(1);
-        await cct.startLatencyChecks(3);
+        await cct.startLatencyChecks({ iterations: 3 });
         expect(cct.datacenters[0].latencies.length).toBe(3);
         const judgement = cct.datacenters[0].latencyJudgement;
         expect(judgement === Datacenter_1.Speed.good || judgement === Datacenter_1.Speed.ok || judgement === Datacenter_1.Speed.bad).toBeTruthy();

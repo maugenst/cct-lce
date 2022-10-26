@@ -1,9 +1,11 @@
+/// <reference types="node" />
 import { Response } from 'node-fetch';
+import { EventEmitter } from 'events';
 import { Datacenter } from '../@types/Datacenter';
 import { BandwidthMode, Bandwith, BandwithPerSecond } from '../@types/Bandwidth';
 import { Latency } from '../@types/Latency';
 import AbortController from 'abort-controller';
-export declare class LCE {
+export declare class LCE extends EventEmitter {
     datacenters: Datacenter[];
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
@@ -21,7 +23,7 @@ export declare class LCE {
     }): Promise<Bandwith | null>;
     bandwidthFetch(url: string): Promise<Response | null>;
     latencyFetch(url: string): Promise<Response | null>;
-    abortableFetch(url: string, signal: any): Promise<Response | null>;
+    abortableFetch(url: string, controller: any, timeout?: number): Promise<Response | null>;
     compare(a: {
         latency: number | Bandwith;
     }, b: {

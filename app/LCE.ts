@@ -1,16 +1,19 @@
 import fetch, {Response} from 'node-fetch';
+import {EventEmitter} from 'events';
 import {Datacenter} from '../@types/Datacenter';
 import {BandwidthMode, Bandwith, BandwithPerSecond} from '../@types/Bandwidth';
 import {Latency} from '../@types/Latency';
 import AbortController from 'abort-controller';
+import {Events} from '../@types/Shared';
 
-export class LCE {
+export class LCE extends EventEmitter {
     datacenters: Datacenter[];
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
     terminateAllCalls: boolean;
 
     constructor(datacenters: Datacenter[]) {
+        super();
         this.datacenters = datacenters;
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
@@ -70,26 +73,23 @@ export class LCE {
     }
 
     async getLatencyFor(datacenter: Datacenter): Promise<Latency | null> {
-        try {
-            const start = Date.now();
-            await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
-            const end = Date.now();
+        const start = Date.now();
+        await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        const end = Date.now();
 
-            return {
-                id: datacenter.id,
-                latency: end - start,
-                cloud: datacenter.cloud,
-                name: datacenter.name,
-                town: datacenter.town,
-                country: datacenter.country,
-                latitude: datacenter.latitude,
-                longitude: datacenter.longitude,
-                ip: datacenter.ip,
-                timestamp: Date.now(),
-            };
-        } catch (error) {
-            return null;
-        }
+        this.emit(Events.LATENCY);
+        return {
+            id: datacenter.id,
+            latency: end - start,
+            cloud: datacenter.cloud,
+            name: datacenter.name,
+            town: datacenter.town,
+            country: datacenter.country,
+            latitude: datacenter.latitude,
+            longitude: datacenter.longitude,
+            ip: datacenter.ip,
+            timestamp: Date.now(),
+        };
     }
 
     async getBandwidthFor(
@@ -102,8 +102,11 @@ export class LCE {
     ): Promise<Bandwith | null> {
         const start = Date.now();
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const end = Date.now();
+
         if (response !== null) {
-            const end = Date.now();
+            this.emit(Events.BANDWIDTH);
+
             let rawBody;
             try {
                 rawBody = await response.text();
@@ -130,24 +133,29 @@ export class LCE {
 
     bandwidthFetch(url: string): Promise<Response | null> {
         const controller = new AbortController();
-        const {signal} = controller;
+
         this.cancelableBandwidthRequests.push(controller);
-        return this.abortableFetch(url, signal);
+        return this.abortableFetch(url, controller);
     }
 
     latencyFetch(url: string): Promise<Response | null> {
         const controller: AbortController = new AbortController();
-        const {signal} = controller;
+
         this.cancelableLatencyRequests.push(controller);
-        return this.abortableFetch(url, signal);
+        return this.abortableFetch(url, controller);
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-    async abortableFetch(url: string, signal: any): Promise<Response | null> {
+    async abortableFetch(url: string, controller: any, timeout = 3000): Promise<Response | null> {
         try {
-            return await fetch(url, {
-                signal,
+            const timer = setTimeout(() => controller.abort(), timeout);
+
+            const result = await fetch(url, {
+                signal: controller.signal,
             });
+
+            clearTimeout(timer);
+            return result;
         } catch (error) {
             console.log(error);
             return null;
