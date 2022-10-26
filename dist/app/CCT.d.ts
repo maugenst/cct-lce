@@ -11,15 +11,20 @@ export declare class CCT {
     runningBandwidth: boolean;
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
-    setFilters(filters: FilterKeys | undefined): void;
+    setFilters(filters?: FilterKeys): void;
     stopMeasurements(): void;
-    startLatencyChecks(iterations: number, saveToLocalStorage?: boolean): Promise<void>;
+    startLatencyChecks({ iterations, saveToLocalStorage, save, }: {
+        iterations: number;
+        saveToLocalStorage?: boolean;
+        save?: boolean;
+    }): Promise<void>;
     private startMeasurementForLatency;
-    startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage, }: {
+    startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage, save, }: {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
         saveToLocalStorage?: boolean;
+        save?: boolean;
     }): Promise<void>;
     private startMeasurementForBandwidth;
     judgeLatency(averageLatency: number): Speed;

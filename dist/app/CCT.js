@@ -50,12 +50,12 @@ class CCT {
         this.runningBandwidth = false;
         this.lce.terminate();
     }
-    async startLatencyChecks(iterations, saveToLocalStorage = false) {
+    async startLatencyChecks({ iterations, saveToLocalStorage = false, save = true, }) {
         this.runningLatency = true;
-        await this.startMeasurementForLatency(iterations, saveToLocalStorage);
+        await this.startMeasurementForLatency({ iterations, saveToLocalStorage, save });
         this.runningLatency = false;
     }
-    async startMeasurementForLatency(iterations, saveToLocalStorage) {
+    async startMeasurementForLatency({ iterations, saveToLocalStorage = false, save = false, }) {
         var _a;
         for (let i = 0; i < iterations; i++) {
             for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
@@ -70,7 +70,9 @@ class CCT {
                     const averageLatency = Util_1.Util.getAverageLatency(this.datacenters[index].latencies);
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-                    this.addDataToStorage(dc.id, result.latency);
+                    if (save) {
+                        this.addDataToStorage(dc.id, result.latency);
+                    }
                     if (saveToLocalStorage) {
                         this.setLocalStorage();
                     }
@@ -78,21 +80,21 @@ class CCT {
             }
         }
     }
-    async startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage = false, }) {
+    async startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage = false, save = true, }) {
         this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises = [];
             datacenter.forEach((dc) => {
-                bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage));
+                bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage, save));
             });
             await Promise.all(bandwidthMeasurementPromises);
         }
         else {
-            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage);
+            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage, save);
         }
         this.runningBandwidth = false;
     }
-    async startMeasurementForBandwidth(dc, iterations, bandwidthMode = Bandwidth_1.BandwidthMode.big, saveToLocalStorage) {
+    async startMeasurementForBandwidth(dc, iterations, bandwidthMode = Bandwidth_1.BandwidthMode.big, saveToLocalStorage, save) {
         var _a;
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, { bandwidthMode });
@@ -105,7 +107,9 @@ class CCT {
                 const averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                this.addDataToStorage(dc.id, result.bandwidth);
+                if (save) {
+                    this.addDataToStorage(dc.id, result.bandwidth);
+                }
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
                 }

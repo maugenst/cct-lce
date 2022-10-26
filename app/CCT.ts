@@ -43,7 +43,7 @@ export class CCT {
         this.lce = new LCE(this.datacenters);
     }
 
-    setFilters(filters: FilterKeys | undefined) {
+    setFilters(filters?: FilterKeys) {
         this.datacenters = filters
             ? this.allDatacenters.filter((dc) =>
                   Object.keys(filters).every((key) => {
@@ -62,13 +62,29 @@ export class CCT {
         this.lce.terminate();
     }
 
-    async startLatencyChecks(iterations: number, saveToLocalStorage = false): Promise<void> {
+    async startLatencyChecks({
+        iterations,
+        saveToLocalStorage = false,
+        save = true,
+    }: {
+        iterations: number;
+        saveToLocalStorage?: boolean;
+        save?: boolean;
+    }): Promise<void> {
         this.runningLatency = true;
-        await this.startMeasurementForLatency(iterations, saveToLocalStorage);
+        await this.startMeasurementForLatency({iterations, saveToLocalStorage, save});
         this.runningLatency = false;
     }
 
-    private async startMeasurementForLatency(iterations: number, saveToLocalStorage: boolean): Promise<void> {
+    private async startMeasurementForLatency({
+        iterations,
+        saveToLocalStorage = false,
+        save = false,
+    }: {
+        iterations: number;
+        saveToLocalStorage?: boolean;
+        save?: boolean;
+    }): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
                 const dc = this.datacenters[dcLength];
@@ -85,7 +101,10 @@ export class CCT {
                     const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
                     this.datacenters[index].averageLatency = averageLatency;
                     this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-                    this.addDataToStorage(dc.id, result.latency);
+
+                    if (save) {
+                        this.addDataToStorage(dc.id, result.latency);
+                    }
 
                     if (saveToLocalStorage) {
                         this.setLocalStorage();
@@ -100,24 +119,26 @@ export class CCT {
         iterations,
         bandwidthMode,
         saveToLocalStorage = false,
+        save = true,
     }: {
         datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
         saveToLocalStorage?: boolean;
+        save?: boolean;
     }): Promise<void> {
         this.runningBandwidth = true;
         if (Array.isArray(datacenter)) {
             const bandwidthMeasurementPromises: Promise<void>[] = [];
             datacenter.forEach((dc) => {
                 bandwidthMeasurementPromises.push(
-                    this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage)
+                    this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage, save)
                 );
             });
 
             await Promise.all(bandwidthMeasurementPromises);
         } else {
-            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage);
+            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage, save);
         }
 
         this.runningBandwidth = false;
@@ -127,7 +148,8 @@ export class CCT {
         dc: Datacenter,
         iterations: number,
         bandwidthMode: BandwidthMode = BandwidthMode.big,
-        saveToLocalStorage: boolean
+        saveToLocalStorage: boolean,
+        save: boolean
     ): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
@@ -143,7 +165,10 @@ export class CCT {
                 const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                this.addDataToStorage(dc.id, result.bandwidth);
+
+                if (save) {
+                    this.addDataToStorage(dc.id, result.bandwidth);
+                }
 
                 if (saveToLocalStorage) {
                     this.setLocalStorage();

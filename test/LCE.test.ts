@@ -279,7 +279,7 @@ describe('lce-tests', () => {
         }
     });
 
-    test('test - drone all latencies', async () => {
+    test.skip('test - drone all latencies', async () => {
         const lce = new LCE(datacenters);
         const latencies = await lce.runLatencyCheckForAll();
         expect(latencies && latencies.length > 0).toBeTruthy();
