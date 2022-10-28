@@ -11,6 +11,7 @@ export declare class LCE extends EventEmitter {
     cancelableBandwidthRequests: AbortController[];
     terminateAllCalls: boolean;
     constructor(datacenters: Datacenter[]);
+    updateDatacenters(datacenters: Datacenter[]): void;
     runLatencyCheckForAll(): Promise<Latency[]>;
     runBandwidthCheckForAll(): Promise<Bandwith[]>;
     getBandwidthForId(id: string, options?: {
@@ -23,7 +24,7 @@ export declare class LCE extends EventEmitter {
     }): Promise<Bandwith | null>;
     bandwidthFetch(url: string): Promise<Response | null>;
     latencyFetch(url: string): Promise<Response | null>;
-    abortableFetch(url: string, controller: any, timeout?: number): Promise<Response | null>;
+    abortableFetch(url: string, controller: AbortController, timeout?: number): Promise<Response | null>;
     compare(a: {
         latency: number | Bandwith;
     }, b: {

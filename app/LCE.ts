@@ -20,6 +20,10 @@ export class LCE extends EventEmitter {
         this.terminateAllCalls = false;
     }
 
+    updateDatacenters(datacenters: Datacenter[]): void {
+        this.datacenters = datacenters;
+    }
+
     async runLatencyCheckForAll(): Promise<Latency[]> {
         const results: Promise<Latency | null>[] = [];
         this.datacenters.forEach((datacenter) => {
@@ -74,8 +78,12 @@ export class LCE extends EventEmitter {
 
     async getLatencyFor(datacenter: Datacenter): Promise<Latency | null> {
         const start = Date.now();
-        await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        const response = await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
+
+        if (!response) {
+            return null;
+        }
 
         this.emit(Events.LATENCY);
         return {
@@ -146,7 +154,7 @@ export class LCE extends EventEmitter {
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-    async abortableFetch(url: string, controller: any, timeout = 3000): Promise<Response | null> {
+    async abortableFetch(url: string, controller: AbortController, timeout = 3000): Promise<Response | null> {
         try {
             const timer = setTimeout(() => controller.abort(), timeout);
 

@@ -13,6 +13,9 @@ class LCE extends events_1.EventEmitter {
         this.cancelableBandwidthRequests = [];
         this.terminateAllCalls = false;
     }
+    updateDatacenters(datacenters) {
+        this.datacenters = datacenters;
+    }
     async runLatencyCheckForAll() {
         const results = [];
         this.datacenters.forEach((datacenter) => {
@@ -54,8 +57,11 @@ class LCE extends events_1.EventEmitter {
     }
     async getLatencyFor(datacenter) {
         const start = Date.now();
-        await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        const response = await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
+        if (!response) {
+            return null;
+        }
         this.emit("latency");
         return {
             id: datacenter.id,
