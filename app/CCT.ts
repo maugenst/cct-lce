@@ -54,7 +54,7 @@ export class CCT {
               )
             : this.allDatacenters;
 
-        this.lce = new LCE(this.datacenters);
+        this.lce.updateDatacenters(this.datacenters);
     }
 
     stopMeasurements(): void {

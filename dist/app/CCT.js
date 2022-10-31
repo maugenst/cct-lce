@@ -43,7 +43,7 @@ class CCT {
                 return filters[key].includes(dc[key]);
             }))
             : this.allDatacenters;
-        this.lce = new LCE_1.LCE(this.datacenters);
+        this.lce.updateDatacenters(this.datacenters);
     }
     stopMeasurements() {
         this.runningLatency = false;
