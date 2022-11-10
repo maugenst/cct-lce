@@ -73,43 +73,51 @@ export class CCT {
         save?: boolean;
     }): Promise<void> {
         this.runningLatency = true;
-        await this.startMeasurementForLatency({iterations, saveToLocalStorage, save});
+
+        const latencyMeasurementPromises: Promise<void>[] = [];
+        for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
+            const dc = this.datacenters[dcLength];
+            latencyMeasurementPromises.push(
+                this.startMeasurementForLatency({iterations, dc, saveToLocalStorage, save})
+            );
+        }
+
+        await Promise.all(latencyMeasurementPromises);
         this.runningLatency = false;
     }
 
     private async startMeasurementForLatency({
         iterations,
+        dc,
         saveToLocalStorage = false,
         save = false,
     }: {
         iterations: number;
+        dc: Datacenter;
         saveToLocalStorage?: boolean;
         save?: boolean;
     }): Promise<void> {
         for (let i = 0; i < iterations; i++) {
-            for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
-                const dc = this.datacenters[dcLength];
-                const result = await this.lce.getLatencyForId(dc.id);
+            const result = await this.lce.getLatencyForId(dc.id);
 
-                if (!this.runningLatency) {
-                    return;
+            if (!this.runningLatency) {
+                return;
+            }
+
+            if (result && result.latency) {
+                const index = this.datacenters.findIndex((e) => e.id === dc.id);
+
+                this.datacenters[index].latencies?.push(result.latency);
+                const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
+                this.datacenters[index].averageLatency = averageLatency;
+                this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
+
+                if (save) {
+                    this.addDataToStorage(dc.id, result.latency);
                 }
 
-                if (result && result.latency) {
-                    const index = this.datacenters.findIndex((e) => e.id === dc.id);
-
-                    this.datacenters[index].latencies?.push(result.latency);
-                    const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
-                    this.datacenters[index].averageLatency = averageLatency;
-                    this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-
-                    if (save) {
-                        this.addDataToStorage(dc.id, result.latency);
-                    }
-
-                    if (saveToLocalStorage) {
-                        this.setLocalStorage();
-                    }
+                if (saveToLocalStorage) {
+                    this.setLocalStorage();
                 }
             }
         }
