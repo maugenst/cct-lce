@@ -48,8 +48,13 @@ export class CCT {
         this.datacenters = filters
             ? this.allDatacenters.filter((dc) =>
                   Object.keys(filters).every((key) => {
-                      // @ts-ignore
-                      return filters[key].includes(dc[key]);
+                      if (key === 'tags') {
+                          return filters[key as keyof FilterKeys]!.some((tag) => {
+                              return dc[key].includes(tag);
+                          });
+                      }
+
+                      return filters[key as keyof FilterKeys]!.includes(dc[key as keyof FilterKeys]);
                   })
               )
             : this.allDatacenters;

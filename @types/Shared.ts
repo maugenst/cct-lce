@@ -6,6 +6,7 @@ export type FilterKeys = {
     cloud?: string[];
     town?: string[];
     country?: string[];
+    tags?: string[];
 };
 
 export type LocalStorage = {
