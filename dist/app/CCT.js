@@ -40,7 +40,6 @@ class CCT {
     setFilters(filters) {
         this.datacenters = filters
             ? this.allDatacenters.filter((dc) => Object.keys(filters).every((key) => {
-                console.log(key);
                 if (key === 'tags') {
                     return filters[key].some((tag) => {
                         return dc[key].includes(tag);
