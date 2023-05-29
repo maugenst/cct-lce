@@ -68,7 +68,7 @@ export class LCE extends EventEmitter {
         return this.getBandwidthFor(dc, options);
     }
 
-    getLatencyForId(id: string): Promise<Latency | null> | null {
+    getLatencyForId(id: string): Promise<Latency> | null {
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
         if (!dc) {
             return null;
