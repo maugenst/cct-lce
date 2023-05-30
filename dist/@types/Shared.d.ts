@@ -5,6 +5,7 @@ export declare type FilterKeys = {
     cloud?: string[];
     town?: string[];
     country?: string[];
+    tags?: string[];
 };
 export declare type LocalStorage = {
     id: string;
