@@ -72,15 +72,13 @@ class CCT {
             if (!this.runningLatency) {
                 return;
             }
-            if (result && result.latency) {
+            if (result && result.latency && save) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
                 (_a = this.datacenters[index].latencies) === null || _a === void 0 ? void 0 : _a.push(result.latency);
                 const averageLatency = Util_1.Util.getAverageLatency(this.datacenters[index].latencies);
                 this.datacenters[index].averageLatency = averageLatency;
                 this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-                if (save) {
-                    this.addDataToStorage(dc.id, result.latency);
-                }
+                this.addDataToStorage(dc.id, result.latency);
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
                 }
@@ -108,15 +106,13 @@ class CCT {
             if (!this.runningBandwidth) {
                 return;
             }
-            if (result && result.bandwidth) {
+            if (result && result.bandwidth && save) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
                 (_a = this.datacenters[index].bandwidths) === null || _a === void 0 ? void 0 : _a.push(result.bandwidth);
                 const averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                if (save) {
-                    this.addDataToStorage(dc.id, result.bandwidth);
-                }
+                this.addDataToStorage(dc.id, result.bandwidth);
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
                 }

@@ -17,8 +17,8 @@ export declare class LCE extends EventEmitter {
     getBandwidthForId(id: string, options?: {
         bandwidthMode: BandwidthMode;
     }): Promise<Bandwith | null> | null;
-    getLatencyForId(id: string): Promise<Latency | null> | null;
-    getLatencyFor(datacenter: Datacenter): Promise<Latency | null>;
+    getLatencyForId(id: string): Promise<Latency> | null;
+    getLatencyFor(datacenter: Datacenter): Promise<Latency>;
     getBandwidthFor(datacenter: Datacenter, options?: {
         bandwidthMode: BandwidthMode;
     }): Promise<Bandwith | null>;

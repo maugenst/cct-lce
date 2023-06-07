@@ -68,7 +68,7 @@ export class LCE extends EventEmitter {
         return this.getBandwidthFor(dc, options);
     }
 
-    getLatencyForId(id: string): Promise<Latency | null> | null {
+    getLatencyForId(id: string): Promise<Latency> | null {
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
         if (!dc) {
             return null;
@@ -76,14 +76,10 @@ export class LCE extends EventEmitter {
         return this.getLatencyFor(dc);
     }
 
-    async getLatencyFor(datacenter: Datacenter): Promise<Latency | null> {
+    async getLatencyFor(datacenter: Datacenter): Promise<Latency> {
         const start = Date.now();
-        const response = await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
+        await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
-
-        if (!response) {
-            return null;
-        }
 
         this.emit(Events.LATENCY);
         return {
@@ -153,7 +149,6 @@ export class LCE extends EventEmitter {
         return this.abortableFetch(url, controller);
     }
 
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
     async abortableFetch(url: string, controller: AbortController, timeout = 3000): Promise<Response | null> {
         try {
             const timer = setTimeout(() => controller.abort(), timeout);
