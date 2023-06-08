@@ -154,6 +154,10 @@ export class LCE extends EventEmitter {
             const timer = setTimeout(() => controller.abort(), timeout);
 
             const result = await fetch(url, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    Pragma: 'no-cache',
+                },
                 signal: controller.signal,
             });
 

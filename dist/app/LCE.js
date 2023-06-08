@@ -118,6 +118,10 @@ class LCE extends events_1.EventEmitter {
         try {
             const timer = setTimeout(() => controller.abort(), timeout);
             const result = await (0, node_fetch_1.default)(url, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    Pragma: 'no-cache',
+                },
                 signal: controller.signal,
             });
             clearTimeout(timer);
