@@ -130,6 +130,7 @@ export class LCE extends EventEmitter {
                 latitude: datacenter.latitude,
                 longitude: datacenter.longitude,
                 ip: datacenter.ip,
+                timestamp: Date.now(),
             };
         }
         return null;

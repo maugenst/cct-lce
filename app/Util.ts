@@ -1,26 +1,40 @@
 import {Datacenter} from '../@types/Datacenter';
 import {BandwithPerSecond} from '../@types/Bandwidth';
+import {LatencyDataPoint, BandwidthDataPoint} from '../@types/Shared';
 
 export class Util {
-    static getAverageLatency(data: number[] | undefined): number {
-        return data ? data.reduce((prev: number, cur: number) => prev + cur, 0) / data.length : -1;
+    static getAverageLatency(data: LatencyDataPoint[] | undefined): number {
+        if (!data || data.length === 0) {
+            return -1;
+        }
+
+        const totalValue = data.reduce((prev, cur) => prev + cur.value, 0);
+        return totalValue / data.length;
     }
 
-    static getAverageBandwidth(data: BandwithPerSecond[] | undefined): BandwithPerSecond {
+    static getAverageBandwidth(data: BandwidthDataPoint[] | undefined): BandwithPerSecond {
         if (data && data.length) {
-            const bandwidthAverage: BandwithPerSecond = data.reduce(
-                (prev: BandwithPerSecond, cur: BandwithPerSecond) => {
+            const bandwidthTotal: BandwithPerSecond = data.reduce(
+                (prev: BandwithPerSecond, cur: BandwidthDataPoint) => {
                     return {
-                        bitsPerSecond: prev.bitsPerSecond + cur.bitsPerSecond,
-                        kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.kiloBitsPerSecond,
-                        megaBitsPerSecond: prev.megaBitsPerSecond + cur.megaBitsPerSecond,
+                        bitsPerSecond: prev.bitsPerSecond + cur.value.bitsPerSecond,
+                        kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.value.kiloBitsPerSecond,
+                        megaBitsPerSecond: prev.megaBitsPerSecond + cur.value.megaBitsPerSecond,
                     };
+                },
+                {
+                    bitsPerSecond: 0,
+                    kiloBitsPerSecond: 0,
+                    megaBitsPerSecond: 0,
                 }
             );
+
+            const averageCount = data.length;
+
             return {
-                bitsPerSecond: bandwidthAverage.bitsPerSecond / data.length,
-                kiloBitsPerSecond: bandwidthAverage.kiloBitsPerSecond / data.length,
-                megaBitsPerSecond: bandwidthAverage.megaBitsPerSecond / data.length,
+                bitsPerSecond: bandwidthTotal.bitsPerSecond / averageCount,
+                kiloBitsPerSecond: bandwidthTotal.kiloBitsPerSecond / averageCount,
+                megaBitsPerSecond: bandwidthTotal.megaBitsPerSecond / averageCount,
             };
         } else {
             return {
