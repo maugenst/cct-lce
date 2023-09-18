@@ -3,21 +3,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Util = void 0;
 class Util {
     static getAverageLatency(data) {
-        return data ? data.reduce((prev, cur) => prev + cur, 0) / data.length : -1;
+        if (!data || data.length === 0) {
+            return -1;
+        }
+        const totalValue = data.reduce((prev, cur) => prev + cur.value, 0);
+        return totalValue / data.length;
     }
     static getAverageBandwidth(data) {
         if (data && data.length) {
-            const bandwidthAverage = data.reduce((prev, cur) => {
+            const bandwidthTotal = data.reduce((prev, cur) => {
                 return {
-                    bitsPerSecond: prev.bitsPerSecond + cur.bitsPerSecond,
-                    kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.kiloBitsPerSecond,
-                    megaBitsPerSecond: prev.megaBitsPerSecond + cur.megaBitsPerSecond,
+                    bitsPerSecond: prev.bitsPerSecond + cur.value.bitsPerSecond,
+                    kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.value.kiloBitsPerSecond,
+                    megaBitsPerSecond: prev.megaBitsPerSecond + cur.value.megaBitsPerSecond,
                 };
+            }, {
+                bitsPerSecond: 0,
+                kiloBitsPerSecond: 0,
+                megaBitsPerSecond: 0,
             });
+            const averageCount = data.length;
             return {
-                bitsPerSecond: bandwidthAverage.bitsPerSecond / data.length,
-                kiloBitsPerSecond: bandwidthAverage.kiloBitsPerSecond / data.length,
-                megaBitsPerSecond: bandwidthAverage.megaBitsPerSecond / data.length,
+                bitsPerSecond: bandwidthTotal.bitsPerSecond / averageCount,
+                kiloBitsPerSecond: bandwidthTotal.kiloBitsPerSecond / averageCount,
+                megaBitsPerSecond: bandwidthTotal.megaBitsPerSecond / averageCount,
             };
         }
         else {

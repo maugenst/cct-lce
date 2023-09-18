@@ -8,6 +8,7 @@ export declare type Bandwith = {
     latitude: string;
     longitude: string;
     ip: string;
+    timestamp: number;
 };
 export declare type BandwithPerSecond = {
     bitsPerSecond: number;

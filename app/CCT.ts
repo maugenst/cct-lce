@@ -1,7 +1,16 @@
 import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
 import {Datacenter, Speed} from '../@types/Datacenter';
-import {Events, FilterKeys, LocalStorage, Location, Storage, StoreData} from '../@types/Shared';
+import {
+    BandwidthDataPoint,
+    Events,
+    FilterKeys,
+    LatencyDataPoint,
+    LocalStorage,
+    Location,
+    Storage,
+    StoreData,
+} from '../@types/Shared';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
@@ -111,12 +120,13 @@ export class CCT {
 
             if (result && result.latency && save) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
+                const dataPoint: LatencyDataPoint = {value: result.latency, timestamp: result.timestamp};
 
-                this.datacenters[index].latencies?.push(result.latency);
+                this.datacenters[index].latencies?.push(dataPoint);
                 const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
                 this.datacenters[index].averageLatency = averageLatency;
                 this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-                this.addDataToStorage(dc.id, result.latency);
+                this.addDataToStorage(dc.id, dataPoint);
 
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
@@ -171,12 +181,13 @@ export class CCT {
 
             if (result && result.bandwidth && save) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
+                const dataPoint: BandwidthDataPoint = {value: result.bandwidth, timestamp: result.timestamp};
 
-                this.datacenters[index].bandwidths?.push(result.bandwidth);
+                this.datacenters[index].bandwidths?.push(dataPoint);
                 const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                this.addDataToStorage(dc.id, result.bandwidth);
+                this.addDataToStorage(dc.id, dataPoint);
 
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
@@ -309,12 +320,14 @@ export class CCT {
         }
     }
 
-    private addDataToStorage(id: string, data: number | BandwithPerSecond) {
+    private addDataToStorage(id: string, data: LatencyDataPoint | BandwidthDataPoint) {
         this.storage = this.storage.map((item: Storage) => {
             if (item.id === id) {
-                const isDataNumber = typeof data === 'number';
-                const latencies = isDataNumber ? [...item.latencies, data] : item.latencies;
-                const bandwidths = isDataNumber ? item.bandwidths : [...item.bandwidths, data];
+                const isLatencyData = 'value' in data && typeof data.value === 'number';
+
+                const latencies = isLatencyData ? [...item.latencies, data as LatencyDataPoint] : item.latencies;
+
+                const bandwidths = isLatencyData ? item.bandwidths : [...item.bandwidths, data as BandwidthDataPoint];
 
                 return {
                     id: item.id,

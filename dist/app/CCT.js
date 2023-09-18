@@ -74,11 +74,12 @@ class CCT {
             }
             if (result && result.latency && save) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
-                (_a = this.datacenters[index].latencies) === null || _a === void 0 ? void 0 : _a.push(result.latency);
+                const dataPoint = { value: result.latency, timestamp: result.timestamp };
+                (_a = this.datacenters[index].latencies) === null || _a === void 0 ? void 0 : _a.push(dataPoint);
                 const averageLatency = Util_1.Util.getAverageLatency(this.datacenters[index].latencies);
                 this.datacenters[index].averageLatency = averageLatency;
                 this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-                this.addDataToStorage(dc.id, result.latency);
+                this.addDataToStorage(dc.id, dataPoint);
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
                 }
@@ -108,11 +109,12 @@ class CCT {
             }
             if (result && result.bandwidth && save) {
                 const index = this.datacenters.findIndex((e) => e.id === dc.id);
-                (_a = this.datacenters[index].bandwidths) === null || _a === void 0 ? void 0 : _a.push(result.bandwidth);
+                const dataPoint = { value: result.bandwidth, timestamp: result.timestamp };
+                (_a = this.datacenters[index].bandwidths) === null || _a === void 0 ? void 0 : _a.push(dataPoint);
                 const averageBandwidth = Util_1.Util.getAverageBandwidth(this.datacenters[index].bandwidths);
                 this.datacenters[index].averageBandwidth = averageBandwidth;
                 this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                this.addDataToStorage(dc.id, result.bandwidth);
+                this.addDataToStorage(dc.id, dataPoint);
                 if (saveToLocalStorage) {
                     this.setLocalStorage();
                 }
@@ -228,9 +230,9 @@ class CCT {
     addDataToStorage(id, data) {
         this.storage = this.storage.map((item) => {
             if (item.id === id) {
-                const isDataNumber = typeof data === 'number';
-                const latencies = isDataNumber ? [...item.latencies, data] : item.latencies;
-                const bandwidths = isDataNumber ? item.bandwidths : [...item.bandwidths, data];
+                const isLatencyData = 'value' in data && typeof data.value === 'number';
+                const latencies = isLatencyData ? [...item.latencies, data] : item.latencies;
+                const bandwidths = isLatencyData ? item.bandwidths : [...item.bandwidths, data];
                 return {
                     id: item.id,
                     latencies,

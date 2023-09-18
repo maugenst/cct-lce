@@ -8,6 +8,7 @@ export type Bandwith = {
     latitude: string;
     longitude: string;
     ip: string;
+    timestamp: number;
 };
 
 export type BandwithPerSecond = {

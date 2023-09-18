@@ -100,6 +100,7 @@ class LCE extends events_1.EventEmitter {
                 latitude: datacenter.latitude,
                 longitude: datacenter.longitude,
                 ip: datacenter.ip,
+                timestamp: Date.now(),
             };
         }
         return null;
