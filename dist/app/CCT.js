@@ -42,10 +42,10 @@ class CCT {
             ? this.allDatacenters.filter((dc) => Object.keys(filters).every((key) => {
                 if (key === 'tags') {
                     return filters[key].some((tag) => {
-                        return dc[key].includes(tag);
+                        return dc[key].toLowerCase().includes(tag.toLowerCase());
                     });
                 }
-                return filters[key].includes(dc[key]);
+                return filters[key].map((filterVal) => filterVal.toLowerCase()).includes(dc[key].toLowerCase());
             }))
             : this.allDatacenters;
         this.lce.updateDatacenters(this.datacenters);
