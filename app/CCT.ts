@@ -59,11 +59,13 @@ export class CCT {
                   Object.keys(filters).every((key) => {
                       if (key === 'tags') {
                           return filters[key as keyof FilterKeys]!.some((tag) => {
-                              return dc[key].includes(tag);
+                              return dc[key].toLowerCase().includes(tag.toLowerCase());
                           });
                       }
 
-                      return filters[key as keyof FilterKeys]!.includes(dc[key as keyof FilterKeys]);
+                      return filters[key as keyof FilterKeys]!.map((filterVal) => filterVal.toLowerCase()).includes(
+                          dc[key as keyof FilterKeys]!.toLowerCase()
+                      );
                   })
               )
             : this.allDatacenters;
