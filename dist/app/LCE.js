@@ -118,11 +118,10 @@ class LCE extends events_1.EventEmitter {
     async abortableFetch(url, controller, timeout = 3000) {
         try {
             const timer = setTimeout(() => controller.abort(), timeout);
-            const result = await (0, node_fetch_1.default)(url, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    Pragma: 'no-cache',
-                },
+            const query = new URLSearchParams({
+                t: `${Date.now()}`,
+            }).toString();
+            const result = await (0, node_fetch_1.default)(`${url}?${query}`, {
                 signal: controller.signal,
             });
             clearTimeout(timer);

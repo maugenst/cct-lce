@@ -154,11 +154,11 @@ export class LCE extends EventEmitter {
         try {
             const timer = setTimeout(() => controller.abort(), timeout);
 
-            const result = await fetch(url, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    Pragma: 'no-cache',
-                },
+            const query = new URLSearchParams({
+                t: `${Date.now()}`,
+            }).toString();
+
+            const result = await fetch(`${url}?${query}`, {
                 signal: controller.signal,
             });
 
