@@ -138,42 +138,44 @@ export class CCT {
     }
 
     async startBandwidthChecks({
-        datacenter,
         iterations,
         bandwidthMode,
         saveToLocalStorage = false,
         save = true,
     }: {
-        datacenter: Datacenter | Datacenter[];
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
         saveToLocalStorage?: boolean;
         save?: boolean;
     }): Promise<void> {
         this.runningBandwidth = true;
-        if (Array.isArray(datacenter)) {
-            const bandwidthMeasurementPromises: Promise<void>[] = [];
-            datacenter.forEach((dc) => {
-                bandwidthMeasurementPromises.push(
-                    this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage, save)
-                );
-            });
 
-            await Promise.all(bandwidthMeasurementPromises);
-        } else {
-            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage, save);
+        const bandwidthMeasurementPromises: Promise<void>[] = [];
+        for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
+            const dc = this.datacenters[dcLength];
+            bandwidthMeasurementPromises.push(
+                this.startMeasurementForBandwidth({iterations, dc, bandwidthMode, saveToLocalStorage, save})
+            );
         }
+
+        await Promise.all(bandwidthMeasurementPromises);
 
         this.runningBandwidth = false;
     }
 
-    private async startMeasurementForBandwidth(
-        dc: Datacenter,
-        iterations: number,
-        bandwidthMode: BandwidthMode = BandwidthMode.big,
-        saveToLocalStorage: boolean,
-        save: boolean
-    ): Promise<void> {
+    private async startMeasurementForBandwidth({
+        iterations,
+        dc,
+        bandwidthMode = BandwidthMode.big,
+        saveToLocalStorage = false,
+        save = false,
+    }: {
+        iterations: number;
+        dc: Datacenter;
+        bandwidthMode?: BandwidthMode;
+        saveToLocalStorage?: boolean;
+        save?: boolean;
+    }): Promise<void> {
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
 

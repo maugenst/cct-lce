@@ -19,8 +19,7 @@ export declare class CCT {
         save?: boolean;
     }): Promise<void>;
     private startMeasurementForLatency;
-    startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage, save, }: {
-        datacenter: Datacenter | Datacenter[];
+    startBandwidthChecks({ iterations, bandwidthMode, saveToLocalStorage, save, }: {
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;
         saveToLocalStorage?: boolean;

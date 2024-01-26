@@ -86,21 +86,17 @@ class CCT {
             }
         }
     }
-    async startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage = false, save = true, }) {
+    async startBandwidthChecks({ iterations, bandwidthMode, saveToLocalStorage = false, save = true, }) {
         this.runningBandwidth = true;
-        if (Array.isArray(datacenter)) {
-            const bandwidthMeasurementPromises = [];
-            datacenter.forEach((dc) => {
-                bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage, save));
-            });
-            await Promise.all(bandwidthMeasurementPromises);
+        const bandwidthMeasurementPromises = [];
+        for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
+            const dc = this.datacenters[dcLength];
+            bandwidthMeasurementPromises.push(this.startMeasurementForBandwidth({ iterations, dc, bandwidthMode, saveToLocalStorage, save }));
         }
-        else {
-            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage, save);
-        }
+        await Promise.all(bandwidthMeasurementPromises);
         this.runningBandwidth = false;
     }
-    async startMeasurementForBandwidth(dc, iterations, bandwidthMode = Bandwidth_1.BandwidthMode.big, saveToLocalStorage, save) {
+    async startMeasurementForBandwidth({ iterations, dc, bandwidthMode = Bandwidth_1.BandwidthMode.big, saveToLocalStorage = false, save = false, }) {
         var _a;
         for (let i = 0; i < iterations; i++) {
             const result = await this.lce.getBandwidthForId(dc.id, { bandwidthMode });
