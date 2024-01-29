@@ -9,6 +9,17 @@ class Util {
         const totalValue = data.reduce((prev, cur) => prev + cur.value, 0);
         return totalValue / data.length;
     }
+    static isBackEnd() {
+        try {
+            const a = Object.prototype.toString.call(global.process) === '[object process]';
+            console.log('true', a);
+            return a;
+        }
+        catch (e) {
+            console.log('false');
+            return false;
+        }
+    }
     static getAverageBandwidth(data) {
         if (data && data.length) {
             const bandwidthTotal = data.reduce((prev, cur) => {

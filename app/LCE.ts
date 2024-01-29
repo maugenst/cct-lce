@@ -151,9 +151,9 @@ export class LCE extends EventEmitter {
     }
 
     async abortableFetch(url: string, controller: AbortController, timeout = 3000): Promise<Response | null> {
-        try {
-            const timer = setTimeout(() => controller.abort(), timeout);
+        const timer = setTimeout(() => controller.abort(), timeout);
 
+        try {
             const query = new URLSearchParams({
                 t: `${Date.now()}`,
             }).toString();
@@ -166,6 +166,7 @@ export class LCE extends EventEmitter {
             return result;
         } catch (error) {
             console.log(error);
+            clearTimeout(timer);
             return null;
         }
     }

@@ -12,6 +12,17 @@ export class Util {
         return totalValue / data.length;
     }
 
+    static isBackEnd(): boolean {
+        try {
+            const a = Object.prototype.toString.call(global.process) === '[object process]';
+            console.log('true', a);
+            return a;
+        } catch (e) {
+            console.log('false');
+            return false;
+        }
+    }
+
     static getAverageBandwidth(data: BandwidthDataPoint[] | undefined): BandwithPerSecond {
         if (data && data.length) {
             const bandwidthTotal: BandwithPerSecond = data.reduce(

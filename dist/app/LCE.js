@@ -116,8 +116,8 @@ class LCE extends events_1.EventEmitter {
         return this.abortableFetch(url, controller);
     }
     async abortableFetch(url, controller, timeout = 3000) {
+        const timer = setTimeout(() => controller.abort(), timeout);
         try {
-            const timer = setTimeout(() => controller.abort(), timeout);
             const query = new URLSearchParams({
                 t: `${Date.now()}`,
             }).toString();
@@ -129,6 +129,7 @@ class LCE extends events_1.EventEmitter {
         }
         catch (error) {
             console.log(error);
+            clearTimeout(timer);
             return null;
         }
     }

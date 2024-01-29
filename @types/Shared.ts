@@ -50,5 +50,7 @@ export type Location = {
 
 export const enum Events {
     LATENCY = 'latency',
+    LATENCY2 = 'latency2',
+
     BANDWIDTH = 'bandwidth',
 }

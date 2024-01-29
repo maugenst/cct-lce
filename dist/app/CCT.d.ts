@@ -9,14 +9,18 @@ export declare class CCT {
     storage: Storage[];
     runningLatency: boolean;
     runningBandwidth: boolean;
+    filters?: FilterKeys;
+    socket: any;
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
     setFilters(filters?: FilterKeys): void;
     stopMeasurements(): void;
-    startLatencyChecks({ iterations, saveToLocalStorage, save, }: {
+    startCloud2CloudChecks(obj: any): Promise<void>;
+    startLatencyChecks({ iterations, saveToLocalStorage, save, from, }: {
         iterations: number;
         saveToLocalStorage?: boolean;
         save?: boolean;
+        from?: string;
     }): Promise<void>;
     private startMeasurementForLatency;
     startBandwidthChecks({ iterations, bandwidthMode, saveToLocalStorage, save, }: {
