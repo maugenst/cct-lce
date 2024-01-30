@@ -1,8 +1,10 @@
+/// <reference types="node" />
 import { Datacenter, Speed } from '../@types/Datacenter';
-import { Events, FilterKeys, Location, Storage } from '../@types/Shared';
+import { Events, FilterKeys, LatencyChecksParams, Location, Storage } from '../@types/Shared';
 import { LCE } from './LCE';
 import { BandwidthMode, BandwithPerSecond } from '../@types/Bandwidth';
-export declare class CCT {
+import { EventEmitter } from 'events';
+export declare class CCT extends EventEmitter {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
     lce: LCE;
@@ -11,18 +13,16 @@ export declare class CCT {
     runningBandwidth: boolean;
     filters?: FilterKeys;
     socket: any;
+    constructor();
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
     setFilters(filters?: FilterKeys): void;
     stopMeasurements(): void;
-    startCloud2CloudChecks(obj: any): Promise<void>;
-    startLatencyChecks({ iterations, saveToLocalStorage, save, from, }: {
-        iterations: number;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-        from?: string;
-    }): Promise<void>;
+    startLatencyChecks(params: LatencyChecksParams): Promise<void>;
+    private startCloudLatencyMeasurements;
+    private startLocalLatencyMeasurements;
     private startMeasurementForLatency;
+    private handleLatency;
     startBandwidthChecks({ iterations, bandwidthMode, saveToLocalStorage, save, }: {
         iterations: number;
         bandwidthMode?: BandwidthMode | undefined;

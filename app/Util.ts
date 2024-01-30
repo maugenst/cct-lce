@@ -1,9 +1,10 @@
 import {Datacenter} from '../@types/Datacenter';
 import {BandwithPerSecond} from '../@types/Bandwidth';
-import {LatencyDataPoint, BandwidthDataPoint} from '../@types/Shared';
+import {Latency} from '../@types/Latency';
+import {BandwidthDataPoint} from '../@types/Shared';
 
 export class Util {
-    static getAverageLatency(data: LatencyDataPoint[] | undefined): number {
+    static getAverageLatency(data: Latency[] | undefined): number {
         if (!data || data.length === 0) {
             return -1;
         }

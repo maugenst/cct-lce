@@ -5,7 +5,7 @@ import {
     BandwidthDataPoint,
     Events,
     FilterKeys,
-    LatencyDataPoint,
+    LatencyChecksParams,
     LocalStorage,
     Location,
     Storage,
@@ -15,12 +15,15 @@ import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
 import GeocoderResult = google.maps.GeocoderResult;
-import {Latency} from '../@types/Latency';
+
+import {EventEmitter} from 'events';
+
+import {Latency, LatencyIterationEvent} from '../@types/Latency';
 import {io} from 'socket.io-client';
 
 const localStorageName = 'CCT_DATA';
 
-export class CCT {
+export class CCT extends EventEmitter {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
     lce: LCE;
@@ -30,6 +33,10 @@ export class CCT {
 
     filters?: FilterKeys;
     socket: any;
+
+    constructor() {
+        super();
+    }
 
     async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
         try {
@@ -59,21 +66,24 @@ export class CCT {
     }
 
     setFilters(filters?: FilterKeys): void {
-        this.datacenters = filters
-            ? this.allDatacenters.filter((dc) =>
-                  Object.keys(filters).every((key) => {
-                      if (key === 'tags') {
-                          return filters[key as keyof FilterKeys]!.some((tag) => {
-                              return dc[key].toLowerCase().includes(tag.toLowerCase());
-                          });
-                      }
+        if (!filters) {
+            this.lce.updateDatacenters(this.allDatacenters);
+            return;
+        }
 
-                      return filters[key as keyof FilterKeys]!.map((filterVal) => filterVal.toLowerCase()).includes(
-                          dc[key as keyof FilterKeys]!.toLowerCase()
-                      );
-                  })
-              )
-            : this.allDatacenters;
+        this.datacenters = this.allDatacenters.filter((dc) =>
+            Object.keys(filters).every((key) => {
+                if (key === 'tags') {
+                    return filters[key as keyof FilterKeys]!.some((tag) => {
+                        return dc[key].toLowerCase().includes(tag.toLowerCase());
+                    });
+                }
+
+                return filters[key as keyof FilterKeys]!.map((filterVal) => filterVal.toLowerCase()).includes(
+                    dc[key as keyof FilterKeys]!.toLowerCase()
+                );
+            })
+        );
 
         this.lce.updateDatacenters(this.datacenters);
 
@@ -85,7 +95,7 @@ export class CCT {
         this.runningBandwidth = false;
 
         if (this.socket) {
-            this.socket.emit('disconnectBackEnd');
+            this.socket.emit('disconnectSocket');
             this.socket = null;
             return;
         }
@@ -93,114 +103,96 @@ export class CCT {
         this.lce.terminate();
     }
 
-    async startCloud2CloudChecks(obj: any) {
-        if (Util.isBackEnd()) {
-            return;
-        }
-
-        if (this.socket) {
-            this.socket.emit('disconnectBackEnd');
-            this.socket = null;
-        }
-
-        this.socket = io('ws://localhost');
-
-        this.socket.on('connect', () => {
-            this.socket.emit('startLatency', obj, this.filters);
-        });
-
-        this.socket.on('latencyIteration', (dataPoints: any) => {
-            dataPoints.forEach((dataPoint: any) => {
-                const index = this.datacenters.findIndex((e) => e.id === dataPoint.id);
-                if (index !== -1) {
-                    const data: any = dataPoint.data;
-
-                    this.datacenters[index].latencies?.push(data);
-                    const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
-                    this.datacenters[index].averageLatency = averageLatency;
-                    this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-
-                    this.addDataToStorage(dataPoint.id, dataPoint.data);
-                }
-
-                // if (saveToLocalStorage) {
-                //     this.setLocalStorage();
-                // }
-            });
-            this.lce.emit('latency2', dataPoints);
-        });
-
-        this.socket.on('disconnectBackEnd', () => {
-            this.stopMeasurements();
-            return;
-        });
-    }
-
-    async startLatencyChecks({
-        iterations,
-        saveToLocalStorage = false,
-        save = true,
-        from,
-    }: {
-        iterations: number;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-        from?: string;
-    }): Promise<void> {
+    async startLatencyChecks(params: LatencyChecksParams): Promise<void> {
         this.runningLatency = true;
 
-        if (from) {
-            await this.startCloud2CloudChecks({
-                iterations,
-                saveToLocalStorage,
-                save,
-                from,
-            });
-            return;
-        }
-
-        for (let iteration = 0; iteration < iterations || this.runningLatency; iteration++) {
-            const latencyMeasurementPromises: Promise<LatencyDataPoint>[] = [];
-            for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
-                const dc = this.datacenters[dcLength];
-                latencyMeasurementPromises.push(this.startMeasurementForLatency({dc, saveToLocalStorage, save}));
-            }
-            const dataPoints = await Promise.all(latencyMeasurementPromises);
-
-            this.lce.emit('latency2', dataPoints, 1111);
+        if (params.from) {
+            const index = this.datacenters.findIndex((e) => e.id === params.from);
+            await this.startCloudLatencyMeasurements(this.datacenters[index], params);
+        } else {
+            await this.startLocalLatencyMeasurements(params);
         }
 
         this.runningLatency = false;
     }
 
-    private async startMeasurementForLatency({
-        dc,
+    private async startCloudLatencyMeasurements(dc: Datacenter, parameters: LatencyChecksParams) {
+        console.log(dc);
+        if (Util.isBackEnd()) {
+            return;
+        }
+
+        if (this.socket) {
+            this.socket.emit('disconnectSocket');
+            this.socket = null;
+        }
+
+        this.socket = io('ws://localhost');
+
+        this.socket.on('connect', () => this.socket.emit('startLatency', parameters, this.filters));
+
+        this.socket.on('disconnectSocket', () => this.stopMeasurements());
+
+        this.socket.on('latencyCalcSocket', (latencyEventData: Latency) =>
+            this.emit(Events.LATENCY_CALC, latencyEventData)
+        );
+
+        this.socket.on('latencyCalcIterationSocket', (latencyIterationEventData: LatencyIterationEvent[]) => {
+            latencyIterationEventData.forEach((data: LatencyIterationEvent) => {
+                this.handleLatency(data.id, data.latency, true, false); // TODO: handle params properly
+            });
+
+            this.emit(Events.LATENCY_CALC_ITERATION, latencyIterationEventData);
+        });
+    }
+
+    private async startLocalLatencyMeasurements({
+        iterations = 16,
         saveToLocalStorage = false,
-        save = false,
-    }: {
-        dc: Datacenter;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<any> {
-        const result: Latency = await this.lce.getLatencyFor(dc);
-        const dataPoint: LatencyDataPoint = {value: result.latency, timestamp: result.timestamp};
+        save = true,
+    }: LatencyChecksParams) {
+        for (let i = 0; i < iterations && this.runningLatency; i++) {
+            const latencyMeasurementPromises: Promise<LatencyIterationEvent>[] = [];
+            for (let j = 0; j < this.datacenters.length; j++) {
+                const dc = this.datacenters[j];
+                latencyMeasurementPromises.push(this.startMeasurementForLatency(dc, saveToLocalStorage, save));
+            }
 
+            const latencyIterationEventData = await Promise.all(latencyMeasurementPromises);
+
+            this.emit(Events.LATENCY_CALC_ITERATION, latencyIterationEventData);
+        }
+    }
+
+    private async startMeasurementForLatency(
+        dc: Datacenter,
+        save: boolean,
+        saveToLocalStorage: boolean
+    ): Promise<LatencyIterationEvent> {
+        const latency: Latency = await this.lce.getLatencyFor(dc);
+
+        this.handleLatency(dc.id, latency, save, saveToLocalStorage);
+
+        this.emit(Events.LATENCY_CALC, latency);
+
+        return {id: dc.id, latency};
+    }
+
+    private handleLatency(id: string, latency: Latency, save: boolean, saveToLocalStorage: boolean) {
         if (save) {
-            const index = this.datacenters.findIndex((e) => e.id === dc.id);
+            const index = this.datacenters.findIndex((e) => e.id === id);
 
-            this.datacenters[index].latencies?.push(dataPoint);
+            this.datacenters[index].latencies?.push(latency);
             const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
             this.datacenters[index].averageLatency = averageLatency;
             this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
 
-            this.addDataToStorage(dc.id, dataPoint);
-        }
+            this.addDataToStorage(this.datacenters[index].id, latency);
 
-        if (saveToLocalStorage) {
-            this.setLocalStorage();
+            if (saveToLocalStorage) {
+                this.setLocalStorage();
+            }
         }
-
-        return {id: dc.id, data: dataPoint};
     }
 
     async startBandwidthChecks({
@@ -390,12 +382,12 @@ export class CCT {
         }
     }
 
-    private addDataToStorage(id: string, data: LatencyDataPoint | BandwidthDataPoint) {
+    private addDataToStorage(id: string, data: Latency | BandwidthDataPoint) {
         this.storage = this.storage.map((item: Storage) => {
             if (item.id === id) {
                 const isLatencyData = 'value' in data && typeof data.value === 'number';
 
-                const latencies = isLatencyData ? [...item.latencies, data as LatencyDataPoint] : item.latencies;
+                const latencies = isLatencyData ? [...item.latencies, data as Latency] : item.latencies;
 
                 const bandwidths = isLatencyData ? item.bandwidths : [...item.bandwidths, data as BandwidthDataPoint];
 
@@ -464,16 +456,11 @@ export class CCT {
     }
 
     subscribe(event: Events, callback: () => void): void {
-        console.log('124213123', event, callback, 123123);
-        if (this.lce) {
-            this.lce.on(event, callback);
-        }
+        this.on(event, callback);
     }
 
     unsubscribe(event: Events, callback: () => void): void {
-        if (this.lce) {
-            this.lce.off(event, callback);
-        }
+        this.off(event, callback);
     }
 
     clean(): void {

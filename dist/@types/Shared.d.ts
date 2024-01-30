@@ -1,15 +1,18 @@
 import { BandwithPerSecond } from './Bandwidth';
 import { Speed } from './Datacenter';
+import { Latency } from './Latency';
+export declare type LatencyChecksParams = {
+    iterations?: number;
+    saveToLocalStorage?: boolean;
+    save?: boolean;
+    from?: string;
+};
 export declare type FilterKeys = {
     name?: string[];
     cloud?: string[];
     town?: string[];
     country?: string[];
     tags?: string[];
-};
-export declare type LatencyDataPoint = {
-    value: number;
-    timestamp: number;
 };
 export declare type BandwidthDataPoint = {
     value: BandwithPerSecond;
@@ -21,12 +24,12 @@ export declare type LocalStorage = {
     latencyJudgement?: Speed;
     averageBandwidth: BandwithPerSecond;
     bandwidthJudgement?: Speed;
-    latencies: LatencyDataPoint[];
+    latencies: Latency[];
     bandwidths: BandwidthDataPoint[];
 };
 export declare type Storage = {
     id: string;
-    latencies: LatencyDataPoint[];
+    latencies: Latency[];
     bandwidths: BandwidthDataPoint[];
     shouldSave: boolean;
 };
@@ -41,7 +44,7 @@ export declare type Location = {
     longitude: number;
 };
 export declare const enum Events {
-    LATENCY = "latency",
-    LATENCY2 = "latency2",
+    LATENCY_CALC = "latencyCalc",
+    LATENCY_CALC_ITERATION = "latencyCalcIteration",
     BANDWIDTH = "bandwidth"
 }

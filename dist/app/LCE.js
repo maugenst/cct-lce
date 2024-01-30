@@ -2,12 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LCE = void 0;
 const node_fetch_1 = require("node-fetch");
-const events_1 = require("events");
 const Bandwidth_1 = require("../@types/Bandwidth");
 const abort_controller_1 = require("abort-controller");
-class LCE extends events_1.EventEmitter {
+class LCE {
     constructor(datacenters) {
-        super();
         this.datacenters = datacenters;
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
@@ -16,31 +14,6 @@ class LCE extends events_1.EventEmitter {
     updateDatacenters(datacenters) {
         this.datacenters = datacenters;
     }
-    async runLatencyCheckForAll() {
-        const results = [];
-        this.datacenters.forEach((datacenter) => {
-            results.push(this.getLatencyFor(datacenter));
-        });
-        const data = await Promise.all(results);
-        const filteredData = data.filter((d) => d !== null);
-        filteredData.sort(this.compare);
-        this.cancelableLatencyRequests = [];
-        return filteredData;
-    }
-    async runBandwidthCheckForAll() {
-        const results = [];
-        for (const datacenter of this.datacenters) {
-            if (this.terminateAllCalls) {
-                break;
-            }
-            const bandwidth = await this.getBandwidthFor(datacenter);
-            if (bandwidth) {
-                results.push(bandwidth);
-            }
-        }
-        this.cancelableBandwidthRequests = [];
-        return results;
-    }
     getBandwidthForId(id, options) {
         const dc = this.datacenters.find((datacenter) => datacenter.id === id);
         if (!dc) {
@@ -48,30 +21,11 @@ class LCE extends events_1.EventEmitter {
         }
         return this.getBandwidthFor(dc, options);
     }
-    getLatencyForId(id) {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getLatencyFor(dc);
-    }
     async getLatencyFor(datacenter) {
         const start = Date.now();
         await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
-        this.emit("latency");
-        return {
-            id: datacenter.id,
-            latency: end - start,
-            cloud: datacenter.cloud,
-            name: datacenter.name,
-            town: datacenter.town,
-            country: datacenter.country,
-            latitude: datacenter.latitude,
-            longitude: datacenter.longitude,
-            ip: datacenter.ip,
-            timestamp: Date.now(),
-        };
+        return { value: end - start, timestamp: Date.now() };
     }
     async getBandwidthFor(datacenter, options = {
         bandwidthMode: Bandwidth_1.BandwidthMode.big,
@@ -80,7 +34,6 @@ class LCE extends events_1.EventEmitter {
         const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
         const end = Date.now();
         if (response !== null) {
-            this.emit("bandwidth");
             let rawBody;
             try {
                 rawBody = await response.text();
