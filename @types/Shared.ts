@@ -51,9 +51,18 @@ export type Location = {
     longitude: number;
 };
 
-export const enum Events {
-    LATENCY_CALC = 'latencyCalc',
-    LATENCY_CALC_ITERATION = 'latencyCalcIteration',
+export const enum SocketEvents {
+    LATENCY = 'latency',
+    LATENCY_ITERATION = 'latency:iteration',
+    LATENCY_START = 'latency:start',
+    LATENCY_END = 'latency:end',
+    DISCONNECT = 'socket:disconnect',
+    ERROR = 'socket:error',
+}
 
-    BANDWIDTH = 'bandwidth',
+export const enum CCTEvents {
+    LATENCY = 'latency',
+    LATENCY_ITERATION = 'latency:iteration',
+    LATENCY_START = 'latency:start',
+    LATENCY_END = 'latency:end',
 }
