@@ -18,7 +18,7 @@ import GeocoderResult = google.maps.GeocoderResult;
 
 import {EventEmitter} from 'events';
 
-import {Latency, LatencyIterationEvent} from '../@types/Latency';
+import {Latency, LatencyEventData, LatencyIterationEvent} from '../@types/Latency';
 import {io} from 'socket.io-client';
 
 const localStorageName = 'CCT_DATA';
@@ -26,13 +26,12 @@ const localStorageName = 'CCT_DATA';
 export class CCT extends EventEmitter {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
-    lce: LCE;
-    storage: Storage[] = [];
     runningLatency = false;
     runningBandwidth = false;
-
-    filters?: FilterKeys;
     socket: any;
+    private filters?: FilterKeys;
+    private storage: Storage[] = [];
+    private lce: LCE;
 
     constructor() {
         super();
@@ -116,7 +115,7 @@ export class CCT extends EventEmitter {
         this.runningLatency = false;
     }
 
-    private async startCloudLatencyMeasurements(dc: Datacenter, parameters: LatencyChecksParams) {
+    private async startCloudLatencyMeasurements(dc: Datacenter, parameters: LatencyChecksParams): Promise<void> {
         console.log(dc);
         if (Util.isBackEnd()) {
             return;
@@ -133,16 +132,14 @@ export class CCT extends EventEmitter {
 
         this.socket.on('disconnectSocket', () => this.stopMeasurements());
 
-        this.socket.on('latencyCalcSocket', (latencyEventData: Latency) =>
-            this.emit(Events.LATENCY_CALC, latencyEventData)
-        );
+        this.socket.on('latencyCalcSocket', (latencyEventData: LatencyEventData) => {
+            this.handleLatency(latencyEventData, true, false);
 
-        this.socket.on('latencyCalcIterationSocket', (latencyIterationEventData: LatencyIterationEvent[]) => {
-            latencyIterationEventData.forEach((data: LatencyIterationEvent) => {
-                this.handleLatency(data.id, data.latency, true, false); // TODO: handle params properly
-            });
+            this.emit(Events.LATENCY_CALC, latencyEventData);
+        });
 
-            this.emit(Events.LATENCY_CALC_ITERATION, latencyIterationEventData);
+        this.socket.on('latencyCalcIterationSocket', (latencyEventData: LatencyEventData[]) => {
+            this.emit(Events.LATENCY_CALC_ITERATION, latencyEventData);
         });
     }
 
@@ -150,17 +147,15 @@ export class CCT extends EventEmitter {
         iterations = 16,
         saveToLocalStorage = false,
         save = true,
-    }: LatencyChecksParams) {
-        for (let i = 0; i < iterations && this.runningLatency; i++) {
-            const latencyMeasurementPromises: Promise<LatencyIterationEvent>[] = [];
-            for (let j = 0; j < this.datacenters.length; j++) {
-                const dc = this.datacenters[j];
-                latencyMeasurementPromises.push(this.startMeasurementForLatency(dc, saveToLocalStorage, save));
-            }
-
-            const latencyIterationEventData = await Promise.all(latencyMeasurementPromises);
+    }: Omit<LatencyChecksParams, 'from'>): Promise<void> {
+        while (this.runningLatency && iterations > 0) {
+            const latencyIterationEventData = await Promise.all(
+                this.datacenters.map((dc) => this.startMeasurementForLatency(dc, saveToLocalStorage, save))
+            );
 
             this.emit(Events.LATENCY_CALC_ITERATION, latencyIterationEventData);
+
+            iterations--;
         }
     }
 
@@ -168,26 +163,28 @@ export class CCT extends EventEmitter {
         dc: Datacenter,
         save: boolean,
         saveToLocalStorage: boolean
-    ): Promise<LatencyIterationEvent> {
+    ): Promise<LatencyEventData> {
         const latency: Latency = await this.lce.getLatencyFor(dc);
 
-        this.handleLatency(dc.id, latency, save, saveToLocalStorage);
+        const latencyEventData = {id: dc.id, latency};
 
-        this.emit(Events.LATENCY_CALC, latency);
+        this.handleLatency(latencyEventData, save, saveToLocalStorage);
 
-        return {id: dc.id, latency};
+        this.emit(Events.LATENCY_CALC, latencyEventData);
+
+        return latencyEventData;
     }
 
-    private handleLatency(id: string, latency: Latency, save: boolean, saveToLocalStorage: boolean) {
+    private handleLatency(data: LatencyEventData, save: boolean, saveToLocalStorage: boolean) {
         if (save) {
-            const index = this.datacenters.findIndex((e) => e.id === id);
+            const index = this.datacenters.findIndex((e) => e.id === data.id);
 
-            this.datacenters[index].latencies?.push(latency);
+            this.datacenters[index].latencies?.push(data.latency);
             const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
             this.datacenters[index].averageLatency = averageLatency;
             this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
 
-            this.addDataToStorage(this.datacenters[index].id, latency);
+            this.addDataToStorage(this.datacenters[index].id, data.latency);
 
             if (saveToLocalStorage) {
                 this.setLocalStorage();

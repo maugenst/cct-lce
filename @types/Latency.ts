@@ -3,7 +3,7 @@ export type Latency = {
     timestamp: number;
 };
 
-export type LatencyIterationEvent = {
+export type LatencyEventData = {
     id: string;
     latency: Latency;
 };

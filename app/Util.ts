@@ -15,11 +15,8 @@ export class Util {
 
     static isBackEnd(): boolean {
         try {
-            const a = Object.prototype.toString.call(global.process) === '[object process]';
-            console.log('true', a);
-            return a;
+            return Object.prototype.toString.call(global.process) === '[object process]';
         } catch (e) {
-            console.log('false');
             return false;
         }
     }
