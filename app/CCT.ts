@@ -412,4 +412,35 @@ export class CCT {
             dc.bandwidths = [];
         });
     }
+
+    async getClosestDatacenters({
+        latitude,
+        longitude,
+        top = 1,
+    }: {
+        latitude: number;
+        longitude: number;
+        top?: number;
+    }): Promise<Datacenter[]> {
+        if (!this.allDatacenters || !this.allDatacenters.length) {
+            await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
+        }
+
+        // Calculate and store distances for each datacenter
+        const datacentersWithDistances = this.allDatacenters.map((datacenter) => {
+            const distance = Util.calculateDistance(latitude, longitude, +datacenter.latitude, +datacenter.longitude);
+            return {datacenter, distance};
+        });
+
+        // Sort datacenters based on distances
+        datacentersWithDistances.sort((a, b) => a.distance - b.distance);
+
+        // Ensure 'top' is within the bounds of available datacenters
+        const validTop = Math.min(top, this.allDatacenters.length);
+
+        // Return the top closest datacenters based on the provided 'top' parameter
+        const topDatacenters = datacentersWithDistances.slice(0, validTop);
+
+        return topDatacenters.map((entry) => entry.datacenter);
+    }
 }
