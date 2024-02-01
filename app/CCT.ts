@@ -413,7 +413,15 @@ export class CCT {
         });
     }
 
-    async getClosestDatacenters({latitude, longitude, top = 1}: {latitude: number; longitude: number; top?: number}) {
+    async getClosestDatacenters({
+        latitude,
+        longitude,
+        top = 1,
+    }: {
+        latitude: number;
+        longitude: number;
+        top?: number;
+    }): Promise<Datacenter[]> {
         if (!this.allDatacenters || !this.allDatacenters.length) {
             await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
         }
@@ -426,7 +434,7 @@ export class CCT {
 
         // Sort datacenters based on distances
         datacentersWithDistances.sort((a, b) => a.distance - b.distance);
-        console.log(datacentersWithDistances, 'datacentersWithDistances');
+
         // Ensure 'top' is within the bounds of available datacenters
         const validTop = Math.min(top, this.allDatacenters.length);
 

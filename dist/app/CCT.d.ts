@@ -39,7 +39,7 @@ export declare class CCT {
     subscribe(event: Events, callback: () => void): void;
     unsubscribe(event: Events, callback: () => void): void;
     clean(): void;
-    getClosestDatacenters({ latitude, longitude, top }: {
+    getClosestDatacenters({ latitude, longitude, top, }: {
         latitude: number;
         longitude: number;
         top?: number;

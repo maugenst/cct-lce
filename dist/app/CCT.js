@@ -304,7 +304,7 @@ class CCT {
             dc.bandwidths = [];
         });
     }
-    async getClosestDatacenters({ latitude, longitude, top = 1 }) {
+    async getClosestDatacenters({ latitude, longitude, top = 1, }) {
         if (!this.allDatacenters || !this.allDatacenters.length) {
             await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
         }
@@ -313,7 +313,6 @@ class CCT {
             return { datacenter, distance };
         });
         datacentersWithDistances.sort((a, b) => a.distance - b.distance);
-        console.log(datacentersWithDistances, 'datacentersWithDistances');
         const validTop = Math.min(top, this.allDatacenters.length);
         const topDatacenters = datacentersWithDistances.slice(0, validTop);
         return topDatacenters.map((entry) => entry.datacenter);
