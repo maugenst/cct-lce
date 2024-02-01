@@ -58,6 +58,31 @@ export class Util {
         return sorted.slice(0, 3);
     }
 
+    static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+        // Convert degrees to radians using arrow notation
+        const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+        // Earth radius in meters
+        const R = 6371e3;
+
+        // Convert latitude and longitude from degrees to radians
+        const phi1 = toRadians(lat1);
+        const phi2 = toRadians(lat2);
+        const deltaPhi = toRadians(lat2 - lat1);
+        const deltaLambda = toRadians(lon2 - lon1);
+
+        // Apply the Haversine formula
+        const a =
+            Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+            Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // Calculate the distance
+        const distance = R * c;
+        // Convert to kilometers and round down
+        return Math.floor(distance / 1000); // returns distance in kilometers
+    }
+
     static sleep(ms: number): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }

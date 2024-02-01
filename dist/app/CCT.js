@@ -304,6 +304,20 @@ class CCT {
             dc.bandwidths = [];
         });
     }
+    async getClosestDatacenters({ latitude, longitude, top = 1 }) {
+        if (!this.allDatacenters || !this.allDatacenters.length) {
+            await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
+        }
+        const datacentersWithDistances = this.allDatacenters.map((datacenter) => {
+            const distance = Util_1.Util.calculateDistance(latitude, longitude, +datacenter.latitude, +datacenter.longitude);
+            return { datacenter, distance };
+        });
+        datacentersWithDistances.sort((a, b) => a.distance - b.distance);
+        console.log(datacentersWithDistances, 'datacentersWithDistances');
+        const validTop = Math.min(top, this.allDatacenters.length);
+        const topDatacenters = datacentersWithDistances.slice(0, validTop);
+        return topDatacenters.map((entry) => entry.datacenter);
+    }
 }
 exports.CCT = CCT;
 //# sourceMappingURL=CCT.js.map
