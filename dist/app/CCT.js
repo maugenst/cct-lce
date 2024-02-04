@@ -9,6 +9,7 @@ const Util_1 = require("./Util");
 const Bandwidth_1 = require("../@types/Bandwidth");
 const events_1 = require("events");
 const socket_io_client_1 = require("socket.io-client");
+const abort_controller_1 = require("abort-controller");
 const localStorageName = 'CCT_DATA';
 class CCT extends events_1.EventEmitter {
     constructor() {
@@ -16,6 +17,8 @@ class CCT extends events_1.EventEmitter {
         this.runningLatency = false;
         this.runningBandwidth = false;
         this.storage = [];
+        this.abortController = [];
+        this.num = 0;
     }
     async fetchDatacenterInformationRequest(dictionaryUrl) {
         try {
@@ -56,28 +59,6 @@ class CCT extends events_1.EventEmitter {
         this.lce.updateDatacenters(this.datacenters);
         this.filters = filters;
     }
-    stopMeasurements() {
-        this.runningLatency = false;
-        this.runningBandwidth = false;
-        if (this.socket) {
-            this.socket.emit("socket:disconnect");
-            this.socket = null;
-            return;
-        }
-        this.lce.terminate();
-    }
-    async startLatencyChecks(parameters) {
-        console.log(2222, '2222');
-        this.runningLatency = true;
-        if (parameters.from) {
-            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
-            await this.startCloudLatencyMeasurements(this.datacenters[index], parameters);
-        }
-        else {
-            await this.startLocalLatencyMeasurements(parameters);
-        }
-        this.runningLatency = false;
-    }
     async startCloudLatencyMeasurements(dc, { iterations, save, saveToLocalStorage }) {
         console.log(dc);
         if (Util_1.Util.isBackEnd()) {
@@ -98,15 +79,60 @@ class CCT extends events_1.EventEmitter {
             this.emit("latency:iteration", latencyEventData);
         });
     }
-    async startLocalLatencyMeasurements({ iterations = 16, save, saveToLocalStorage, }) {
-        while (this.runningLatency && iterations > 0) {
-            const latencyIterationEventData = await Promise.all(this.datacenters.map((dc) => this.startMeasurementForLatency(dc, saveToLocalStorage, save)));
-            this.emit("latency:iteration", latencyIterationEventData);
+    stopMeasurements() {
+        this.runningLatency = false;
+        this.runningBandwidth = false;
+        if (this.socket) {
+            this.socket.emit("socket:disconnect");
+            this.socket = null;
+            return;
+        }
+        this.abortController.forEach((o) => {
+            o.abort();
+        });
+        this.abortController = [];
+        this.lce.terminate();
+    }
+    async startLatencyChecks(parameters) {
+        this.runningLatency = true;
+        if (parameters.from) {
+            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
+            await this.startCloudLatencyMeasurements(this.datacenters[index], parameters);
+        }
+        else {
+            const abortController = new abort_controller_1.default();
+            this.abortController.push(abortController);
+            await this.startLocalLatencyMeasurements(parameters, abortController);
+        }
+        this.runningLatency = false;
+    }
+    async startLocalLatencyMeasurements({ iterations = 16, interval, save, saveToLocalStorage }, abortSignal) {
+        while (iterations > 0) {
+            if (abortSignal.signal.aborted) {
+                return;
+            }
+            const latencyIterationEventData = await Promise.all(this.datacenters.map((dc) => this.startMeasurementForLatency(dc, abortSignal, save, saveToLocalStorage)));
+            if (abortSignal.signal.aborted) {
+                const filteredEventData = latencyIterationEventData.filter((entry) => entry !== null);
+                if (filteredEventData.length) {
+                    this.emit("latency:iteration", filteredEventData);
+                }
+                return;
+            }
+            else {
+                this.emit("latency:iteration", latencyIterationEventData);
+            }
             iterations--;
+            if (interval) {
+                await Util_1.Util.sleep(interval, abortSignal);
+            }
         }
     }
-    async startMeasurementForLatency(dc, save, saveToLocalStorage) {
+    async startMeasurementForLatency(dc, abortSignal, save, saveToLocalStorage) {
         const latency = await this.lce.getLatencyFor(dc);
+        if (abortSignal.signal.aborted) {
+            return null;
+        }
         const latencyEventData = { id: dc.id, latency };
         this.handleLatency(latencyEventData, save, saveToLocalStorage);
         this.emit("latency", latencyEventData);
@@ -344,4 +370,17 @@ class CCT extends events_1.EventEmitter {
     }
 }
 exports.CCT = CCT;
+(async function () {
+    const a = new CCT();
+    console.log(1);
+    await a.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
+    a.startLatencyChecks({ iterations: 30 });
+    a.stopMeasurements();
+    a.startLatencyChecks({ iterations: 30 });
+    console.log(a.runningLatency, 'running latency');
+    setTimeout(function () {
+        console.log('After seconds');
+        a.stopMeasurements();
+    }, 10);
+})();
 //# sourceMappingURL=CCT.js.map

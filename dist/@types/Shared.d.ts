@@ -2,6 +2,7 @@ import { BandwithPerSecond } from './Bandwidth';
 import { Speed } from './Datacenter';
 import { Latency } from './Latency';
 export declare type LatencyChecksParams = {
+    interval?: number;
     iterations?: number;
     saveToLocalStorage?: boolean;
     save?: boolean;

@@ -56,8 +56,17 @@ class Util {
         const sorted = Util.sortDatacenters(datacenters);
         return sorted.slice(0, 3);
     }
-    static sleep(ms) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
+    static sleep(ms, controller) {
+        const signal = controller.signal;
+        return new Promise((resolve, _) => {
+            const timeoutId = setTimeout(() => {
+                resolve();
+            }, ms);
+            signal.addEventListener('abort', () => {
+                clearTimeout(timeoutId);
+                resolve();
+            });
+        });
     }
 }
 exports.Util = Util;

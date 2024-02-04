@@ -3,24 +3,25 @@ import fetch, {Response} from 'node-fetch';
 import {Datacenter, Speed} from '../@types/Datacenter';
 import {
     BandwidthDataPoint,
-    SocketEvents,
     CCTEvents,
     FilterKeys,
     LatencyChecksParams,
     LocalStorage,
     Location,
+    SocketEvents,
     Storage,
     StoreData,
 } from '../@types/Shared';
 import {LCE} from './LCE';
 import {Util} from './Util';
 import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
-import GeocoderResult = google.maps.GeocoderResult;
 
 import {EventEmitter} from 'events';
 
 import {Latency, LatencyEventData} from '../@types/Latency';
 import {io} from 'socket.io-client';
+import GeocoderResult = google.maps.GeocoderResult;
+import AbortController from 'abort-controller';
 
 const localStorageName = 'CCT_DATA';
 
@@ -33,6 +34,9 @@ export class CCT extends EventEmitter {
     private filters?: FilterKeys;
     private storage: Storage[] = [];
     private lce: LCE;
+    private abortController: AbortController[] = [];
+
+    num = 0;
 
     constructor() {
         super();
@@ -90,43 +94,15 @@ export class CCT extends EventEmitter {
         this.filters = filters;
     }
 
-    stopMeasurements(): void {
-        this.runningLatency = false;
-        this.runningBandwidth = false;
-
-        if (this.socket) {
-            this.socket.emit(SocketEvents.DISCONNECT);
-            this.socket = null;
-            return;
-        }
-
-        this.lce.terminate();
-    }
-
-    async startLatencyChecks(parameters: LatencyChecksParams): Promise<void> {
-        console.log(2222, '2222');
-        this.runningLatency = true;
-
-        if (parameters.from) {
-            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
-            await this.startCloudLatencyMeasurements(this.datacenters[index], parameters);
-        } else {
-            await this.startLocalLatencyMeasurements(parameters);
-        }
-
-        this.runningLatency = false;
-    }
-
     private async startCloudLatencyMeasurements(
         dc: Datacenter,
-        {iterations, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>
+        {iterations, interval, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>
     ): Promise<void> {
         console.log(dc);
         if (Util.isBackEnd()) {
             return;
         }
 
-        // TODO: test disconnect
         if (this.socket) {
             this.socket.emit(SocketEvents.DISCONNECT);
             this.socket = null;
@@ -134,7 +110,9 @@ export class CCT extends EventEmitter {
 
         this.socket = io('ws://localhost');
 
-        this.socket.on('connect', () => this.socket.emit(SocketEvents.LATENCY_START, iterations, this.filters));
+        this.socket.on('connect', () =>
+            this.socket.emit(SocketEvents.LATENCY_START, this.filters, iterations, interval)
+        );
 
         this.socket.on(SocketEvents.DISCONNECT, () => this.stopMeasurements());
 
@@ -149,30 +127,82 @@ export class CCT extends EventEmitter {
         });
     }
 
-    private async startLocalLatencyMeasurements({
-        iterations = 16,
-        save,
-        saveToLocalStorage,
-    }: Omit<LatencyChecksParams, 'from'>): Promise<void> {
-        // TODO: fix stop issue
-        while (this.runningLatency && iterations > 0) {
+    stopMeasurements(): void {
+        this.runningLatency = false;
+        this.runningBandwidth = false;
+
+        if (this.socket) {
+            this.socket.emit(SocketEvents.DISCONNECT);
+            this.socket = null;
+            return;
+        }
+
+        this.abortController.forEach((o) => {
+            o.abort();
+        });
+        this.abortController = [];
+
+        this.lce.terminate();
+    }
+
+    async startLatencyChecks(parameters: LatencyChecksParams): Promise<void> {
+        this.runningLatency = true;
+
+        if (parameters.from) {
+            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
+            await this.startCloudLatencyMeasurements(this.datacenters[index], parameters);
+        } else {
+            const abortController = new AbortController();
+            this.abortController.push(abortController);
+
+            await this.startLocalLatencyMeasurements(parameters, abortController);
+        }
+
+        this.runningLatency = false;
+    }
+
+    private async startLocalLatencyMeasurements(
+        {iterations = 16, interval, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>,
+        abortSignal: AbortController
+    ): Promise<void> {
+        while (iterations > 0) {
+            if (abortSignal.signal.aborted) {
+                return;
+            }
+
             const latencyIterationEventData = await Promise.all(
-                this.datacenters.map((dc) => this.startMeasurementForLatency(dc, saveToLocalStorage, save))
+                this.datacenters.map((dc) => this.startMeasurementForLatency(dc, abortSignal, save, saveToLocalStorage))
             );
 
-            this.emit(CCTEvents.LATENCY_ITERATION, latencyIterationEventData);
+            if (abortSignal.signal.aborted) {
+                const filteredEventData = latencyIterationEventData.filter((entry) => entry !== null);
+                if (filteredEventData.length) {
+                    this.emit(CCTEvents.LATENCY_ITERATION, filteredEventData);
+                }
+                return;
+            } else {
+                this.emit(CCTEvents.LATENCY_ITERATION, latencyIterationEventData);
+            }
 
             iterations--;
+
+            if (interval) {
+                await Util.sleep(interval, abortSignal);
+            }
         }
     }
 
     private async startMeasurementForLatency(
         dc: Datacenter,
+        abortSignal: AbortController,
         save?: boolean,
         saveToLocalStorage?: boolean
-    ): Promise<LatencyEventData> {
-        // TODO: consider refactoring of this function
+    ): Promise<LatencyEventData | null> {
         const latency: Latency = await this.lce.getLatencyFor(dc);
+
+        if (abortSignal.signal.aborted) {
+            return null;
+        }
 
         const latencyEventData = {id: dc.id, latency};
 
@@ -184,8 +214,6 @@ export class CCT extends EventEmitter {
     }
 
     private handleLatency(data: LatencyEventData, save = true, saveToLocalStorage = false): void {
-        // TODO: rewrite to map
-
         if (save) {
             const index = this.datacenters.findIndex((e) => e.id === data.id);
 

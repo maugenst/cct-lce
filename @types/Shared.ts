@@ -3,6 +3,7 @@ import {Speed} from './Datacenter';
 import {Latency} from './Latency';
 
 export type LatencyChecksParams = {
+    interval?: number;
     iterations?: number;
     saveToLocalStorage?: boolean;
     save?: boolean;

@@ -67,7 +67,18 @@ export class Util {
         return sorted.slice(0, 3);
     }
 
-    static sleep(ms: number): Promise<void> {
-        return new Promise((resolve) => setTimeout(resolve, ms));
+    static sleep(ms: number, controller: any): Promise<void> {
+        const signal = controller.signal;
+
+        return new Promise((resolve, _) => {
+            const timeoutId = setTimeout(() => {
+                resolve();
+            }, ms);
+
+            signal.addEventListener('abort', () => {
+                clearTimeout(timeoutId);
+                resolve();
+            });
+        });
     }
 }

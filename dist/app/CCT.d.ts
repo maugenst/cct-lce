@@ -12,13 +12,15 @@ export declare class CCT extends EventEmitter {
     private filters?;
     private storage;
     private lce;
+    private abortController;
+    num: number;
     constructor();
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
     setFilters(filters?: FilterKeys): void;
+    private startCloudLatencyMeasurements;
     stopMeasurements(): void;
     startLatencyChecks(parameters: LatencyChecksParams): Promise<void>;
-    private startCloudLatencyMeasurements;
     private startLocalLatencyMeasurements;
     private startMeasurementForLatency;
     private handleLatency;

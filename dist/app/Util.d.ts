@@ -8,5 +8,5 @@ export declare class Util {
     static getAverageBandwidth(data: BandwidthDataPoint[] | undefined): BandwithPerSecond;
     static sortDatacenters(datacenters: Datacenter[]): Datacenter[];
     static getTop3(datacenters: Datacenter[]): Datacenter[];
-    static sleep(ms: number): Promise<void>;
+    static sleep(ms: number, controller: any): Promise<void>;
 }
