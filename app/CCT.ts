@@ -2,7 +2,8 @@ import {v4 as uuid} from 'uuid';
 import fetch, {Response} from 'node-fetch';
 import {Datacenter, Speed} from '../@types/Datacenter';
 import {
-    BandwidthDataPoint,
+    BandwidthChecksParams,
+    BandwidthMode,
     CCTEvents,
     FilterKeys,
     LatencyChecksParams,
@@ -14,7 +15,7 @@ import {
 } from '../@types/Shared';
 import {LCE} from './LCE';
 import {Util} from './Util';
-import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
+import {Bandwidth, BandwidthEventData, BandwidthPerSecond} from '../@types/Bandwidth';
 
 import {EventEmitter} from 'events';
 
@@ -30,13 +31,14 @@ export class CCT extends EventEmitter {
     datacenters: Datacenter[];
     runningLatency = false;
     runningBandwidth = false;
-    socket: any;
+    private latencySocket: any;
+
+    private bandwidthSocket: any;
+
     private filters?: FilterKeys;
     private storage: Storage[] = [];
-    private lce: LCE;
+    private lce = new LCE();
     private abortController: AbortController[] = [];
-
-    num = 0;
 
     constructor() {
         super();
@@ -65,31 +67,24 @@ export class CCT extends EventEmitter {
 
         this.clean();
         this.readLocalStorage();
-
-        this.lce = new LCE(this.datacenters);
     }
 
     setFilters(filters?: FilterKeys): void {
-        if (!filters) {
-            this.lce.updateDatacenters(this.allDatacenters);
-            return;
-        }
+        this.datacenters = filters
+            ? this.allDatacenters.filter((dc) =>
+                  Object.keys(filters).every((key) => {
+                      if (key === 'tags') {
+                          return filters[key as keyof FilterKeys]!.some((tag) => {
+                              return dc[key].toLowerCase().includes(tag.toLowerCase());
+                          });
+                      }
 
-        this.datacenters = this.allDatacenters.filter((dc) =>
-            Object.keys(filters).every((key) => {
-                if (key === 'tags') {
-                    return filters[key as keyof FilterKeys]!.some((tag) => {
-                        return dc[key].toLowerCase().includes(tag.toLowerCase());
-                    });
-                }
-
-                return filters[key as keyof FilterKeys]!.map((filterVal) => filterVal.toLowerCase()).includes(
-                    dc[key as keyof FilterKeys]!.toLowerCase()
-                );
-            })
-        );
-
-        this.lce.updateDatacenters(this.datacenters);
+                      return filters[key as keyof FilterKeys]!.map((filterVal) => filterVal.toLowerCase()).includes(
+                          dc[key as keyof FilterKeys]!.toLowerCase()
+                      );
+                  })
+              )
+            : this.allDatacenters;
 
         this.filters = filters;
     }
@@ -103,26 +98,26 @@ export class CCT extends EventEmitter {
             return;
         }
 
-        if (this.socket) {
-            this.socket.emit(SocketEvents.DISCONNECT);
-            this.socket = null;
+        if (this.latencySocket) {
+            this.latencySocket.emit(SocketEvents.DISCONNECT);
+            this.latencySocket = null;
         }
 
-        this.socket = io('ws://localhost');
+        this.latencySocket = io('ws://localhost');
 
-        this.socket.on('connect', () =>
-            this.socket.emit(SocketEvents.LATENCY_START, this.filters, iterations, interval)
+        this.latencySocket.on('connect', () =>
+            this.latencySocket.emit(SocketEvents.LATENCY_START, this.filters, iterations, interval)
         );
 
-        this.socket.on(SocketEvents.DISCONNECT, () => this.stopMeasurements());
+        this.latencySocket.on(SocketEvents.DISCONNECT, () => this.stopMeasurements());
 
-        this.socket.on(SocketEvents.LATENCY, (latencyEventData: LatencyEventData) => {
+        this.latencySocket.on(SocketEvents.LATENCY, (latencyEventData: LatencyEventData) => {
             this.handleLatency(latencyEventData, save, saveToLocalStorage);
 
             this.emit(CCTEvents.LATENCY, latencyEventData);
         });
 
-        this.socket.on(SocketEvents.LATENCY_ITERATION, (latencyEventData: LatencyEventData[]) => {
+        this.latencySocket.on(SocketEvents.LATENCY_ITERATION, (latencyEventData: LatencyEventData[]) => {
             this.emit(CCTEvents.LATENCY_ITERATION, latencyEventData);
         });
     }
@@ -131,9 +126,9 @@ export class CCT extends EventEmitter {
         this.runningLatency = false;
         this.runningBandwidth = false;
 
-        if (this.socket) {
-            this.socket.emit(SocketEvents.DISCONNECT);
-            this.socket = null;
+        if (this.latencySocket) {
+            this.latencySocket.emit(SocketEvents.DISCONNECT);
+            this.latencySocket = null;
             return;
         }
 
@@ -163,18 +158,20 @@ export class CCT extends EventEmitter {
 
     private async startLocalLatencyMeasurements(
         {iterations = 16, interval, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>,
-        abortSignal: AbortController
+        abortController: AbortController
     ): Promise<void> {
         while (iterations > 0) {
-            if (abortSignal.signal.aborted) {
+            if (abortController.signal.aborted) {
                 return;
             }
 
             const latencyIterationEventData = await Promise.all(
-                this.datacenters.map((dc) => this.startMeasurementForLatency(dc, abortSignal, save, saveToLocalStorage))
+                this.datacenters.map((dc) =>
+                    this.startMeasurementForLatency(dc, abortController, save, saveToLocalStorage)
+                )
             );
 
-            if (abortSignal.signal.aborted) {
+            if (abortController.signal.aborted) {
                 const filteredEventData = latencyIterationEventData.filter((entry) => entry !== null);
                 if (filteredEventData.length) {
                     this.emit(CCTEvents.LATENCY_ITERATION, filteredEventData);
@@ -187,20 +184,20 @@ export class CCT extends EventEmitter {
             iterations--;
 
             if (interval) {
-                await Util.sleep(interval, abortSignal);
+                await Util.sleep(interval, abortController);
             }
         }
     }
 
     private async startMeasurementForLatency(
         dc: Datacenter,
-        abortSignal: AbortController,
+        abortController: AbortController,
         save?: boolean,
         saveToLocalStorage?: boolean
     ): Promise<LatencyEventData | null> {
         const latency: Latency = await this.lce.getLatencyFor(dc);
 
-        if (abortSignal.signal.aborted) {
+        if (abortController.signal.aborted) {
             return null;
         }
 
@@ -230,65 +227,123 @@ export class CCT extends EventEmitter {
         }
     }
 
-    async startBandwidthChecks({
-        iterations,
-        bandwidthMode,
-        saveToLocalStorage = false,
-        save = true,
-    }: {
-        iterations: number;
-        bandwidthMode?: BandwidthMode | undefined;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void> {
+    async startBandwidthChecks(parameters: BandwidthChecksParams): Promise<void> {
         this.runningBandwidth = true;
 
-        const bandwidthMeasurementPromises: Promise<void>[] = [];
-        for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
-            const dc = this.datacenters[dcLength];
-            bandwidthMeasurementPromises.push(
-                this.startMeasurementForBandwidth({iterations, dc, bandwidthMode, saveToLocalStorage, save})
-            );
-        }
+        if (parameters.from) {
+            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
+            await this.startCloudBandwidthMeasurements(this.datacenters[index], parameters);
+        } else {
+            const abortController = new AbortController();
+            this.abortController.push(abortController);
 
-        await Promise.all(bandwidthMeasurementPromises);
+            await this.startLocalBandwidthMeasurements(parameters, abortController);
+        }
 
         this.runningBandwidth = false;
     }
 
-    private async startMeasurementForBandwidth({
-        iterations,
-        dc,
-        bandwidthMode = BandwidthMode.big,
-        saveToLocalStorage = false,
-        save = false,
-    }: {
-        iterations: number;
-        dc: Datacenter;
-        bandwidthMode?: BandwidthMode;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void> {
-        for (let i = 0; i < iterations; i++) {
-            const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
+    private async startCloudBandwidthMeasurements(
+        dc: Datacenter,
+        {iterations, interval, save, saveToLocalStorage, bandwidthMode}: Omit<BandwidthChecksParams, 'from'>
+    ): Promise<void> {
+        console.log(dc);
+        if (Util.isBackEnd()) {
+            return;
+        }
 
-            if (!this.runningBandwidth) {
+        if (this.bandwidthSocket) {
+            this.bandwidthSocket.emit(SocketEvents.DISCONNECT);
+            this.bandwidthSocket = null;
+        }
+
+        this.bandwidthSocket = io('ws://localhost');
+
+        this.bandwidthSocket.on('connect', () =>
+            this.bandwidthSocket.emit(SocketEvents.BANDWIDTH_START, this.filters, iterations, interval, bandwidthMode)
+        );
+
+        this.bandwidthSocket.on(SocketEvents.DISCONNECT, () => this.stopMeasurements());
+
+        this.bandwidthSocket.on(SocketEvents.BANDWIDTH, (bandwidthEventData: BandwidthEventData) => {
+            this.handleBandwidth(bandwidthEventData, save, saveToLocalStorage);
+
+            this.emit(CCTEvents.BANDWIDTH, bandwidthEventData);
+        });
+
+        this.bandwidthSocket.on(SocketEvents.BANDWIDTH_ITERATION, (latencyEventData: LatencyEventData[]) => {
+            this.emit(CCTEvents.BANDWIDTH_ITERATION, latencyEventData);
+        });
+    }
+
+    private async startLocalBandwidthMeasurements(
+        {iterations = 4, interval, save, saveToLocalStorage, bandwidthMode}: Omit<BandwidthChecksParams, 'from'>,
+        abortController: AbortController
+    ): Promise<void> {
+        while (iterations > 0) {
+            if (abortController.signal.aborted) {
                 return;
             }
 
-            if (result && result.bandwidth && save) {
-                const index = this.datacenters.findIndex((e) => e.id === dc.id);
-                const dataPoint: BandwidthDataPoint = {value: result.bandwidth, timestamp: result.timestamp};
+            const bandwidthIterationEventData = await Promise.all(
+                this.datacenters.map((dc) =>
+                    this.startMeasurementForBandwidth(dc, abortController, save, saveToLocalStorage, bandwidthMode)
+                )
+            );
 
-                this.datacenters[index].bandwidths?.push(dataPoint);
-                const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
-                this.datacenters[index].averageBandwidth = averageBandwidth;
-                this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                this.addDataToStorage(dc.id, dataPoint);
-
-                if (saveToLocalStorage) {
-                    this.setLocalStorage();
+            if (abortController.signal.aborted) {
+                const filteredEventData = bandwidthIterationEventData.filter((entry) => entry !== null);
+                if (filteredEventData.length) {
+                    this.emit(CCTEvents.BANDWIDTH_ITERATION, filteredEventData);
                 }
+                return;
+            } else {
+                this.emit(CCTEvents.BANDWIDTH_ITERATION, bandwidthIterationEventData);
+            }
+
+            iterations--;
+
+            if (interval) {
+                await Util.sleep(interval, abortController);
+            }
+        }
+    }
+
+    private async startMeasurementForBandwidth(
+        dc: Datacenter,
+        abortController: AbortController,
+        save?: boolean,
+        saveToLocalStorage?: boolean,
+        bandwidthMode?: BandwidthMode
+    ): Promise<BandwidthEventData | null> {
+        const bandwidth: Bandwidth | null = await this.lce.getBandwidthFor(dc, bandwidthMode);
+
+        if (!bandwidth || abortController.signal.aborted) {
+            return null;
+        }
+
+        const bandwidthEventData = {id: dc.id, bandwidth};
+
+        this.handleBandwidth(bandwidthEventData, save, saveToLocalStorage);
+
+        this.emit(CCTEvents.BANDWIDTH, bandwidthEventData);
+
+        return bandwidthEventData;
+    }
+
+    private handleBandwidth(data: BandwidthEventData, save = true, saveToLocalStorage = false): void {
+        if (save) {
+            const index = this.datacenters.findIndex((e) => e.id === data.id);
+
+            this.datacenters[index].bandwidths?.push(data.bandwidth);
+            const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
+            this.datacenters[index].averageBandwidth = averageBandwidth;
+            this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
+
+            this.addDataToStorage(data.id, data.bandwidth);
+
+            if (saveToLocalStorage) {
+                this.setLocalStorage();
             }
         }
     }
@@ -303,7 +358,7 @@ export class CCT extends EventEmitter {
         }
     }
 
-    judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed {
+    judgeBandwidth(averageBandwidth: BandwidthPerSecond): Speed {
         if (averageBandwidth.megaBitsPerSecond > 1) {
             return Speed.good; // green
         } else if (averageBandwidth.megaBitsPerSecond <= 1 && averageBandwidth.megaBitsPerSecond > 0.3) {
@@ -417,14 +472,14 @@ export class CCT extends EventEmitter {
         }
     }
 
-    private addDataToStorage(id: string, data: Latency | BandwidthDataPoint) {
+    private addDataToStorage(id: string, data: Latency | Bandwidth) {
         this.storage = this.storage.map((item: Storage) => {
             if (item.id === id) {
                 const isLatencyData = 'value' in data && typeof data.value === 'number';
 
                 const latencies = isLatencyData ? [...item.latencies, data as Latency] : item.latencies;
 
-                const bandwidths = isLatencyData ? item.bandwidths : [...item.bandwidths, data as BandwidthDataPoint];
+                const bandwidths = isLatencyData ? item.bandwidths : [...item.bandwidths, data as Bandwidth];
 
                 return {
                     id: item.id,

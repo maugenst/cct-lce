@@ -1,6 +1,5 @@
-import {BandwithPerSecond} from './Bandwidth';
-import {BandwidthDataPoint} from './Shared';
 import {Latency} from './Latency';
+import {Bandwidth, BandwidthPerSecond} from './Bandwidth';
 
 export type Datacenter = {
     id: string;
@@ -16,10 +15,10 @@ export type Datacenter = {
     lastUpdate: string;
     averageLatency: number;
     latencyJudgement?: Speed;
-    averageBandwidth: BandwithPerSecond;
+    averageBandwidth: BandwidthPerSecond;
     bandwidthJudgement?: Speed;
     latencies: Latency[];
-    bandwidths: BandwidthDataPoint[];
+    bandwidths: Bandwidth[];
 };
 
 export enum Speed {

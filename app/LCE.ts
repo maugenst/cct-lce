@@ -1,37 +1,18 @@
 import fetch, {Response} from 'node-fetch';
 import {Datacenter} from '../@types/Datacenter';
-import {BandwidthMode, Bandwith, BandwithPerSecond} from '../@types/Bandwidth';
 import {Latency} from '../@types/Latency';
 import AbortController from 'abort-controller';
+import {BandwidthMode} from '../@types/Shared';
+import {Bandwidth, BandwidthPerSecond} from '../@types/Bandwidth';
 
 export class LCE {
     datacenters: Datacenter[];
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
-    terminateAllCalls: boolean;
 
-    constructor(datacenters: Datacenter[]) {
-        this.datacenters = datacenters;
+    constructor() {
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
-    }
-
-    updateDatacenters(datacenters: Datacenter[]): void {
-        this.datacenters = datacenters;
-    }
-
-    getBandwidthForId(
-        id: string,
-        options?: {
-            bandwidthMode: BandwidthMode;
-        }
-    ): Promise<Bandwith | null> | null {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getBandwidthFor(dc, options);
     }
 
     async getLatencyFor(datacenter: Datacenter): Promise<Latency> {
@@ -44,38 +25,25 @@ export class LCE {
 
     async getBandwidthFor(
         datacenter: Datacenter,
-        options: {
-            bandwidthMode: BandwidthMode;
-        } = {
-            bandwidthMode: BandwidthMode.big, // Default
-        }
-    ): Promise<Bandwith | null> {
+        bandwidthMode: BandwidthMode = BandwidthMode.big
+    ): Promise<Bandwidth | null> {
         const start = Date.now();
-        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${bandwidthMode}`);
         const end = Date.now();
 
         if (response !== null) {
             let rawBody;
+
             try {
                 rawBody = await response.text();
             } catch (error) {
                 console.log(error);
                 return null;
             }
-            const bandwidth: BandwithPerSecond = LCE.calcBandwidth(rawBody.length, end - start);
 
-            return {
-                id: datacenter.id,
-                bandwidth,
-                cloud: datacenter.cloud,
-                name: datacenter.name,
-                town: datacenter.town,
-                country: datacenter.country,
-                latitude: datacenter.latitude,
-                longitude: datacenter.longitude,
-                ip: datacenter.ip,
-                timestamp: Date.now(),
-            };
+            const bandwidth: BandwidthPerSecond = this.calcBandwidth(rawBody.length, end - start);
+
+            return {value: bandwidth, timestamp: Date.now()};
         }
         return null;
     }
@@ -115,14 +83,13 @@ export class LCE {
         }
     }
 
-    compare(a: {latency: number | Bandwith}, b: {latency: number | Bandwith}): number {
+    compare(a: {latency: number | Bandwidth}, b: {latency: number | Bandwidth}): number {
         if (a.latency < b.latency) return -1;
         if (a.latency > b.latency) return 1;
         return 0;
     }
 
     terminate(): void {
-        this.terminateAllCalls = true;
         this.cancelableLatencyRequests.forEach((controller) => {
             controller.abort();
         });
@@ -131,13 +98,12 @@ export class LCE {
         });
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
     }
 
-    static calcBandwidth(downloadSize: number, latency: number): BandwithPerSecond {
-        const durationinSeconds = latency / 1000;
+    calcBandwidth(downloadSize: number, latency: number): BandwidthPerSecond {
+        const durationInSeconds = latency / 1000;
         const bitsLoaded = downloadSize * 8;
-        const bitsPerSeconds = bitsLoaded / durationinSeconds;
+        const bitsPerSeconds = bitsLoaded / durationInSeconds;
         const kiloBitsPerSeconds = bitsPerSeconds / 1000;
         const megaBitsPerSeconds = kiloBitsPerSeconds / 1000;
         return {

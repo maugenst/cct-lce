@@ -2,24 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LCE = void 0;
 const node_fetch_1 = require("node-fetch");
-const Bandwidth_1 = require("../@types/Bandwidth");
 const abort_controller_1 = require("abort-controller");
+const Shared_1 = require("../@types/Shared");
 class LCE {
-    constructor(datacenters) {
-        this.datacenters = datacenters;
+    constructor() {
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
-    }
-    updateDatacenters(datacenters) {
-        this.datacenters = datacenters;
-    }
-    getBandwidthForId(id, options) {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getBandwidthFor(dc, options);
     }
     async getLatencyFor(datacenter) {
         const start = Date.now();
@@ -27,11 +15,9 @@ class LCE {
         const end = Date.now();
         return { value: end - start, timestamp: Date.now() };
     }
-    async getBandwidthFor(datacenter, options = {
-        bandwidthMode: Bandwidth_1.BandwidthMode.big,
-    }) {
+    async getBandwidthFor(datacenter, bandwidthMode = Shared_1.BandwidthMode.big) {
         const start = Date.now();
-        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${bandwidthMode}`);
         const end = Date.now();
         if (response !== null) {
             let rawBody;
@@ -42,19 +28,8 @@ class LCE {
                 console.log(error);
                 return null;
             }
-            const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
-            return {
-                id: datacenter.id,
-                bandwidth,
-                cloud: datacenter.cloud,
-                name: datacenter.name,
-                town: datacenter.town,
-                country: datacenter.country,
-                latitude: datacenter.latitude,
-                longitude: datacenter.longitude,
-                ip: datacenter.ip,
-                timestamp: Date.now(),
-            };
+            const bandwidth = this.calcBandwidth(rawBody.length, end - start);
+            return { value: bandwidth, timestamp: Date.now() };
         }
         return null;
     }
@@ -94,7 +69,6 @@ class LCE {
         return 0;
     }
     terminate() {
-        this.terminateAllCalls = true;
         this.cancelableLatencyRequests.forEach((controller) => {
             controller.abort();
         });
@@ -103,12 +77,11 @@ class LCE {
         });
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
     }
-    static calcBandwidth(downloadSize, latency) {
-        const durationinSeconds = latency / 1000;
+    calcBandwidth(downloadSize, latency) {
+        const durationInSeconds = latency / 1000;
         const bitsLoaded = downloadSize * 8;
-        const bitsPerSeconds = bitsLoaded / durationinSeconds;
+        const bitsPerSeconds = bitsLoaded / durationInSeconds;
         const kiloBitsPerSeconds = bitsPerSeconds / 1000;
         const megaBitsPerSeconds = kiloBitsPerSeconds / 1000;
         return {

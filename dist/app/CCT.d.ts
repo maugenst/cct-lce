@@ -1,19 +1,19 @@
 /// <reference types="node" />
 import { Datacenter, Speed } from '../@types/Datacenter';
-import { CCTEvents, FilterKeys, LatencyChecksParams, Location } from '../@types/Shared';
-import { BandwidthMode, BandwithPerSecond } from '../@types/Bandwidth';
+import { BandwidthChecksParams, CCTEvents, FilterKeys, LatencyChecksParams, Location } from '../@types/Shared';
+import { BandwidthPerSecond } from '../@types/Bandwidth';
 import { EventEmitter } from 'events';
 export declare class CCT extends EventEmitter {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
     runningLatency: boolean;
     runningBandwidth: boolean;
-    socket: any;
+    private latencySocket;
+    private bandwidthSocket;
     private filters?;
     private storage;
     private lce;
     private abortController;
-    num: number;
     constructor();
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
@@ -24,15 +24,13 @@ export declare class CCT extends EventEmitter {
     private startLocalLatencyMeasurements;
     private startMeasurementForLatency;
     private handleLatency;
-    startBandwidthChecks({ iterations, bandwidthMode, saveToLocalStorage, save, }: {
-        iterations: number;
-        bandwidthMode?: BandwidthMode | undefined;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void>;
+    startBandwidthChecks(parameters: BandwidthChecksParams): Promise<void>;
+    private startCloudBandwidthMeasurements;
+    private startLocalBandwidthMeasurements;
     private startMeasurementForBandwidth;
+    private handleBandwidth;
     judgeLatency(averageLatency: number): Speed;
-    judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed;
+    judgeBandwidth(averageBandwidth: BandwidthPerSecond): Speed;
     getCurrentDatacentersSorted(): Datacenter[];
     getAddress(): Promise<Location>;
     storeRequest(body: any): Promise<any>;

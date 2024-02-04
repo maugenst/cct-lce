@@ -1,7 +1,6 @@
 import {Datacenter} from '../@types/Datacenter';
-import {BandwithPerSecond} from '../@types/Bandwidth';
 import {Latency} from '../@types/Latency';
-import {BandwidthDataPoint} from '../@types/Shared';
+import {Bandwidth, BandwidthPerSecond} from '../@types/Bandwidth';
 
 export class Util {
     static getAverageLatency(data: Latency[] | undefined): number {
@@ -21,10 +20,10 @@ export class Util {
         }
     }
 
-    static getAverageBandwidth(data: BandwidthDataPoint[] | undefined): BandwithPerSecond {
+    static getAverageBandwidth(data: Bandwidth[] | undefined): BandwidthPerSecond {
         if (data && data.length) {
-            const bandwidthTotal: BandwithPerSecond = data.reduce(
-                (prev: BandwithPerSecond, cur: BandwidthDataPoint) => {
+            const bandwidthTotal: BandwidthPerSecond = data.reduce(
+                (prev: BandwidthPerSecond, cur: Bandwidth) => {
                     return {
                         bitsPerSecond: prev.bitsPerSecond + cur.value.bitsPerSecond,
                         kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.value.kiloBitsPerSecond,
