@@ -26,6 +26,7 @@ import AbortController from 'abort-controller';
 
 const localStorageName = 'CCT_DATA';
 
+// TODO: delete
 const defaultSocketConfig = {
     reconnectionAttempts: 3,
     timeout: 10000,
@@ -108,15 +109,51 @@ export class CCT extends EventEmitter {
         this.filters = filters;
     }
 
+    stopMeasurements(): void {
+        this.runningLatency = false;
+        this.runningBandwidth = false;
+
+        this.abortController.forEach((o) => {
+            o.abort();
+        });
+        this.abortController = [];
+
+        this.lce.terminate();
+    }
+
+    private async clearLatencySocket() {
+        if (this.latencySocket) {
+            this.latencySocket.emit(SocketEvents.DISCONNECT);
+            this.latencySocket.removeAllListeners();
+            this.latencySocket = null;
+            console.log('abortedCloudLatencyMeasurements');
+        }
+    }
+
+    private async clearBandwidthSocket() {
+        if (this.bandwidthSocket) {
+            this.bandwidthSocket.emit(SocketEvents.DISCONNECT);
+            this.bandwidthSocket.removeAllListeners();
+            this.bandwidthSocket = null;
+            console.log('abortedCloudBandwidthMeasurements');
+        }
+    }
+
     private async startCloudLatencyMeasurements(
         {iterations, interval, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>,
-        dc: Datacenter
+        dc: Datacenter,
+        abortController: AbortController
     ): Promise<void> {
         if (Util.isBackEnd()) {
             return;
         }
 
         return new Promise<void>((resolve) => {
+            abortController.signal.addEventListener('abort', () => {
+                this.clearLatencySocket();
+                resolve();
+            });
+
             const uri = `wss://${dc.ip}`;
             console.log('uri', uri);
             this.latencySocket = io('ws://localhost', {...defaultSocketConfig, query: {id: dc.id}});
@@ -131,14 +168,17 @@ export class CCT extends EventEmitter {
             });
 
             this.latencySocket.on(SocketEvents.LATENCY_END, () => {
+                this.clearLatencySocket();
                 resolve();
             });
 
             this.latencySocket.on(SocketEvents.DISCONNECT, () => {
+                this.clearLatencySocket();
                 resolve();
             });
 
             this.latencySocket.on('connect_error', () => {
+                this.clearLatencySocket();
                 resolve();
             });
 
@@ -153,53 +193,29 @@ export class CCT extends EventEmitter {
         });
     }
 
-    stopMeasurements(): void {
-        this.runningLatency = false;
-        this.runningBandwidth = false;
-
-        if (this.latencySocket) {
-            this.latencySocket.emit(SocketEvents.DISCONNECT);
-        }
-
-        if (this.bandwidthSocket) {
-            this.bandwidthSocket.emit(SocketEvents.DISCONNECT);
-        }
-
-        this.abortController.forEach((o) => {
-            o.abort();
-        });
-        this.abortController = [];
-
-        this.lce.terminate();
-    }
-
     async startLatencyChecks(parameters: LatencyChecksParams = {}): Promise<void> {
+        console.log('startedCloudLatencyMeasurements');
+
         this.runningLatency = true;
+
+        const abortController = new AbortController();
+        this.abortController.push(abortController);
 
         if (parameters.from) {
             const dc = this.allDatacenters.find((dc) => dc.id === parameters.from);
 
             if (dc) {
-                await this.startCloudLatencyMeasurements(parameters, dc);
-            }
-            // todo: установить либу в дрон и юай, проверить будет ли корректно стопать вычисления
-            // похуй, беды от лишенего кола не будет
-            // если закончилось само - надо удалить инстанс сст в дране вызвав дисконект, если стопом закончилось, то не надо.
-            if (this.latencySocket) {
-                this.latencySocket.emit(SocketEvents.DISCONNECT);
-                this.latencySocket.removeAllListeners(); // отличие само от стопа в том, что на стом низя ремувать листенеры, иначе не придет дисконект
-                this.latencySocket = null;
+                await this.startCloudLatencyMeasurements(parameters, dc, abortController);
             }
         } else {
-            const abortController = new AbortController();
-            this.abortController.push(abortController);
-
             await this.startLocalLatencyMeasurements(parameters, abortController);
         }
 
         this.runningLatency = false;
 
+        console.log('before emit endedCloudLatencyMeasurements');
         this.emit(CCTEvents.LATENCY_END);
+        console.log('after emit endedCloudLatencyMeasurements');
     }
 
     private async startLocalLatencyMeasurements(
@@ -275,6 +291,9 @@ export class CCT extends EventEmitter {
     async startBandwidthChecks(parameters: BandwidthChecksParams = {}): Promise<void> {
         this.runningBandwidth = true;
 
+        const abortController = new AbortController();
+        this.abortController.push(abortController);
+
         if (parameters.from) {
             const dc = this.allDatacenters.find((dc) => dc.id === parameters.from);
             if (dc) {
@@ -287,9 +306,6 @@ export class CCT extends EventEmitter {
                 this.bandwidthSocket = null;
             }
         } else {
-            const abortController = new AbortController();
-            this.abortController.push(abortController);
-
             await this.startLocalBandwidthMeasurements(parameters, abortController);
         }
 

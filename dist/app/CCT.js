@@ -71,11 +71,20 @@ class CCT extends events_1.EventEmitter {
             : this.allDatacenters;
         this.filters = filters;
     }
-    async startCloudLatencyMeasurements({ iterations, interval, save, saveToLocalStorage }, dc) {
+    async startCloudLatencyMeasurements({ iterations, interval, save, saveToLocalStorage }, dc, abortController) {
         if (Util_1.Util.isBackEnd()) {
             return;
         }
         return new Promise((resolve) => {
+            abortController.signal.addEventListener('abort', () => {
+                if (this.latencySocket) {
+                    this.latencySocket.emit("socket:disconnect");
+                    this.latencySocket.removeAllListeners();
+                    this.latencySocket = null;
+                    console.log('abortedCloudLatencyMeasurements');
+                }
+                resolve();
+            });
             const uri = `wss://${dc.ip}`;
             console.log('uri', uri);
             this.latencySocket = (0, socket_io_client_1.io)('ws://localhost', { ...defaultSocketConfig, query: { id: dc.id } });
@@ -89,12 +98,27 @@ class CCT extends events_1.EventEmitter {
                 });
             });
             this.latencySocket.on("latency:end", () => {
+                if (this.latencySocket) {
+                    this.latencySocket.emit("socket:disconnect");
+                    this.latencySocket.removeAllListeners();
+                    this.latencySocket = null;
+                }
                 resolve();
             });
             this.latencySocket.on("socket:disconnect", () => {
+                if (this.latencySocket) {
+                    this.latencySocket.emit("socket:disconnect");
+                    this.latencySocket.removeAllListeners();
+                    this.latencySocket = null;
+                }
                 resolve();
             });
             this.latencySocket.on('connect_error', () => {
+                if (this.latencySocket) {
+                    this.latencySocket.emit("socket:disconnect");
+                    this.latencySocket.removeAllListeners();
+                    this.latencySocket = null;
+                }
                 resolve();
             });
             this.latencySocket.on("latency", (latencyEventData) => {
@@ -109,12 +133,6 @@ class CCT extends events_1.EventEmitter {
     stopMeasurements() {
         this.runningLatency = false;
         this.runningBandwidth = false;
-        if (this.latencySocket) {
-            this.latencySocket.emit("socket:disconnect");
-        }
-        if (this.bandwidthSocket) {
-            this.bandwidthSocket.emit("socket:disconnect");
-        }
         this.abortController.forEach((o) => {
             o.abort();
         });
@@ -122,25 +140,23 @@ class CCT extends events_1.EventEmitter {
         this.lce.terminate();
     }
     async startLatencyChecks(parameters = {}) {
+        console.log('startedCloudLatencyMeasurements');
         this.runningLatency = true;
+        const abortController = new abort_controller_1.default();
+        this.abortController.push(abortController);
         if (parameters.from) {
             const dc = this.allDatacenters.find((dc) => dc.id === parameters.from);
             if (dc) {
-                await this.startCloudLatencyMeasurements(parameters, dc);
-            }
-            if (this.latencySocket) {
-                this.latencySocket.emit("socket:disconnect");
-                this.latencySocket.removeAllListeners();
-                this.latencySocket = null;
+                await this.startCloudLatencyMeasurements(parameters, dc, abortController);
             }
         }
         else {
-            const abortController = new abort_controller_1.default();
-            this.abortController.push(abortController);
             await this.startLocalLatencyMeasurements(parameters, abortController);
         }
         this.runningLatency = false;
+        console.log('before emit endedCloudLatencyMeasurements');
         this.emit("latency:end");
+        console.log('after emit endedCloudLatencyMeasurements');
     }
     async startLocalLatencyMeasurements({ iterations = 16, interval, save, saveToLocalStorage }, abortController) {
         while (iterations > 0) {
