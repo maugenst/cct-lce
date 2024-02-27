@@ -9,6 +9,7 @@ export declare class LCE {
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
     constructor();
+    checkIfCompatibleWithSockets(ip: string): Promise<boolean>;
     getLatencyFor(datacenter: Datacenter): Promise<Latency>;
     getBandwidthFor(datacenter: Datacenter, bandwidthMode?: BandwidthMode): Promise<Bandwidth | null>;
     bandwidthFetch(url: string): Promise<Response | null>;
@@ -21,4 +22,5 @@ export declare class LCE {
     }): number;
     terminate(): void;
     calcBandwidth(downloadSize: number, latency: number): BandwidthPerSecond;
+    isSemverVersionHigher(version: string, baseVersion?: string): boolean;
 }

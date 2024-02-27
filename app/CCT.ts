@@ -20,21 +20,28 @@ import {Bandwidth, BandwidthEventData, BandwidthPerSecond} from '../@types/Bandw
 import {EventEmitter} from 'events';
 
 import {Latency, LatencyEventData} from '../@types/Latency';
-import {io} from 'socket.io-client';
+import {io, Socket} from 'socket.io-client';
 import GeocoderResult = google.maps.GeocoderResult;
 import AbortController from 'abort-controller';
 
 const localStorageName = 'CCT_DATA';
 
+const defaultSocketConfig = {
+    reconnectionAttempts: 3,
+    timeout: 10000,
+};
+
 export class CCT extends EventEmitter {
-    allDatacenters: Datacenter[];
-    datacenters: Datacenter[];
+    allDatacenters: Datacenter[] = [];
+    datacenters: Datacenter[] = [];
+
     runningLatency = false;
     runningBandwidth = false;
-    private latencySocket: any;
 
-    private bandwidthSocket: any;
+    private compatibleDCsWithSockets: Datacenter[] = []; // drones with socket functionality
 
+    private latencySocket: Socket | null = null;
+    private bandwidthSocket: Socket | null = null;
     private filters?: FilterKeys;
     private storage: Storage[] = [];
     private lce = new LCE();
@@ -47,14 +54,13 @@ export class CCT extends EventEmitter {
     async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
         try {
             return (await fetch(dictionaryUrl).then((res: Response) => res.json())) as Datacenter[];
-        } catch {
+        } catch (e) {
             return [];
         }
     }
 
     async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
         this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
-
         this.datacenters = this.allDatacenters;
         this.storage = this.allDatacenters.map((dc) => {
             return {
@@ -67,6 +73,19 @@ export class CCT extends EventEmitter {
 
         this.clean();
         this.readLocalStorage();
+    }
+
+    async fetchCompatibleDCsWithSockets(): Promise<Datacenter[]> {
+        const result = await Promise.all(
+            this.datacenters.map(async (dc) => {
+                const isCompatible = await this.lce.checkIfCompatibleWithSockets(dc.ip);
+                return isCompatible ? dc : null;
+            })
+        );
+
+        this.compatibleDCsWithSockets = result.filter((dc): dc is Datacenter => dc !== null);
+
+        return this.compatibleDCsWithSockets;
     }
 
     setFilters(filters?: FilterKeys): void {
@@ -90,35 +109,47 @@ export class CCT extends EventEmitter {
     }
 
     private async startCloudLatencyMeasurements(
-        dc: Datacenter,
-        {iterations, interval, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>
+        {iterations, interval, save, saveToLocalStorage}: Omit<LatencyChecksParams, 'from'>,
+        dc: Datacenter
     ): Promise<void> {
-        console.log(dc);
         if (Util.isBackEnd()) {
             return;
         }
 
-        if (this.latencySocket) {
-            this.latencySocket.emit(SocketEvents.DISCONNECT);
-            this.latencySocket = null;
-        }
+        return new Promise<void>((resolve) => {
+            const uri = `wss://${dc.ip}`;
+            console.log('uri', uri);
+            this.latencySocket = io('ws://localhost', {...defaultSocketConfig, query: {id: dc.id}});
 
-        this.latencySocket = io('ws://localhost');
+            this.latencySocket.on('connect', () => {
+                this.latencySocket?.emit(SocketEvents.LATENCY_START, {
+                    id: dc.id,
+                    filters: this.filters,
+                    iterations,
+                    interval,
+                });
+            });
 
-        this.latencySocket.on('connect', () =>
-            this.latencySocket.emit(SocketEvents.LATENCY_START, this.filters, iterations, interval)
-        );
+            this.latencySocket.on(SocketEvents.LATENCY_END, () => {
+                resolve();
+            });
 
-        this.latencySocket.on(SocketEvents.DISCONNECT, () => this.stopMeasurements());
+            this.latencySocket.on(SocketEvents.DISCONNECT, () => {
+                resolve();
+            });
 
-        this.latencySocket.on(SocketEvents.LATENCY, (latencyEventData: LatencyEventData) => {
-            this.handleLatency(latencyEventData, save, saveToLocalStorage);
+            this.latencySocket.on('connect_error', () => {
+                resolve();
+            });
 
-            this.emit(CCTEvents.LATENCY, latencyEventData);
-        });
+            this.latencySocket.on(SocketEvents.LATENCY, (latencyEventData: LatencyEventData) => {
+                this.handleLatency(latencyEventData, save, saveToLocalStorage);
+                this.emit(CCTEvents.LATENCY, latencyEventData);
+            });
 
-        this.latencySocket.on(SocketEvents.LATENCY_ITERATION, (latencyEventData: LatencyEventData[]) => {
-            this.emit(CCTEvents.LATENCY_ITERATION, latencyEventData);
+            this.latencySocket.on(SocketEvents.LATENCY_ITERATION, (latencyEventData: LatencyEventData[]) => {
+                this.emit(CCTEvents.LATENCY_ITERATION, latencyEventData);
+            });
         });
     }
 
@@ -128,8 +159,10 @@ export class CCT extends EventEmitter {
 
         if (this.latencySocket) {
             this.latencySocket.emit(SocketEvents.DISCONNECT);
-            this.latencySocket = null;
-            return;
+        }
+
+        if (this.bandwidthSocket) {
+            this.bandwidthSocket.emit(SocketEvents.DISCONNECT);
         }
 
         this.abortController.forEach((o) => {
@@ -140,12 +173,23 @@ export class CCT extends EventEmitter {
         this.lce.terminate();
     }
 
-    async startLatencyChecks(parameters: LatencyChecksParams): Promise<void> {
+    async startLatencyChecks(parameters: LatencyChecksParams = {}): Promise<void> {
         this.runningLatency = true;
 
         if (parameters.from) {
-            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
-            await this.startCloudLatencyMeasurements(this.datacenters[index], parameters);
+            const dc = this.allDatacenters.find((dc) => dc.id === parameters.from);
+
+            if (dc) {
+                await this.startCloudLatencyMeasurements(parameters, dc);
+            }
+            // todo: установить либу в дрон и юай, проверить будет ли корректно стопать вычисления
+            // похуй, беды от лишенего кола не будет
+            // если закончилось само - надо удалить инстанс сст в дране вызвав дисконект, если стопом закончилось, то не надо.
+            if (this.latencySocket) {
+                this.latencySocket.emit(SocketEvents.DISCONNECT);
+                this.latencySocket.removeAllListeners(); // отличие само от стопа в том, что на стом низя ремувать листенеры, иначе не придет дисконект
+                this.latencySocket = null;
+            }
         } else {
             const abortController = new AbortController();
             this.abortController.push(abortController);
@@ -154,6 +198,8 @@ export class CCT extends EventEmitter {
         }
 
         this.runningLatency = false;
+
+        this.emit(CCTEvents.LATENCY_END);
     }
 
     private async startLocalLatencyMeasurements(
@@ -196,7 +242,6 @@ export class CCT extends EventEmitter {
         saveToLocalStorage?: boolean
     ): Promise<LatencyEventData | null> {
         const latency: Latency = await this.lce.getLatencyFor(dc);
-
         if (abortController.signal.aborted) {
             return null;
         }
@@ -227,12 +272,20 @@ export class CCT extends EventEmitter {
         }
     }
 
-    async startBandwidthChecks(parameters: BandwidthChecksParams): Promise<void> {
+    async startBandwidthChecks(parameters: BandwidthChecksParams = {}): Promise<void> {
         this.runningBandwidth = true;
 
         if (parameters.from) {
-            const index = this.datacenters.findIndex((e) => e.id === parameters.from);
-            await this.startCloudBandwidthMeasurements(this.datacenters[index], parameters);
+            const dc = this.allDatacenters.find((dc) => dc.id === parameters.from);
+            if (dc) {
+                await this.startCloudBandwidthMeasurements(parameters, dc);
+            }
+
+            if (this.bandwidthSocket) {
+                this.bandwidthSocket.emit(SocketEvents.DISCONNECT);
+                this.bandwidthSocket.removeAllListeners();
+                this.bandwidthSocket = null;
+            }
         } else {
             const abortController = new AbortController();
             this.abortController.push(abortController);
@@ -241,38 +294,51 @@ export class CCT extends EventEmitter {
         }
 
         this.runningBandwidth = false;
+
+        this.emit(CCTEvents.BANDWIDTH_END);
     }
 
     private async startCloudBandwidthMeasurements(
-        dc: Datacenter,
-        {iterations, interval, save, saveToLocalStorage, bandwidthMode}: Omit<BandwidthChecksParams, 'from'>
+        {iterations, interval, save, saveToLocalStorage, bandwidthMode}: Omit<BandwidthChecksParams, 'from'>,
+        dc: Datacenter
     ): Promise<void> {
-        console.log(dc);
         if (Util.isBackEnd()) {
             return;
         }
 
-        if (this.bandwidthSocket) {
-            this.bandwidthSocket.emit(SocketEvents.DISCONNECT);
-            this.bandwidthSocket = null;
-        }
+        return new Promise<void>((resolve) => {
+            this.bandwidthSocket = io('ws://localhost', {...defaultSocketConfig, query: {id: dc.id}});
 
-        this.bandwidthSocket = io('ws://localhost');
+            this.bandwidthSocket.on('connect', () =>
+                this.bandwidthSocket?.emit(SocketEvents.BANDWIDTH_START, {
+                    id: dc.id,
+                    filters: this.filters,
+                    iterations,
+                    interval,
+                    bandwidthMode,
+                })
+            );
 
-        this.bandwidthSocket.on('connect', () =>
-            this.bandwidthSocket.emit(SocketEvents.BANDWIDTH_START, this.filters, iterations, interval, bandwidthMode)
-        );
+            this.bandwidthSocket.on(SocketEvents.BANDWIDTH_END, () => {
+                resolve();
+            });
 
-        this.bandwidthSocket.on(SocketEvents.DISCONNECT, () => this.stopMeasurements());
+            this.bandwidthSocket.on(SocketEvents.DISCONNECT, () => {
+                resolve();
+            });
 
-        this.bandwidthSocket.on(SocketEvents.BANDWIDTH, (bandwidthEventData: BandwidthEventData) => {
-            this.handleBandwidth(bandwidthEventData, save, saveToLocalStorage);
+            this.bandwidthSocket.on('connect_error', () => {
+                resolve();
+            });
 
-            this.emit(CCTEvents.BANDWIDTH, bandwidthEventData);
-        });
+            this.bandwidthSocket.on(SocketEvents.BANDWIDTH, (bandwidthEventData: BandwidthEventData) => {
+                this.handleBandwidth(bandwidthEventData, save, saveToLocalStorage);
+                this.emit(CCTEvents.BANDWIDTH, bandwidthEventData);
+            });
 
-        this.bandwidthSocket.on(SocketEvents.BANDWIDTH_ITERATION, (latencyEventData: LatencyEventData[]) => {
-            this.emit(CCTEvents.BANDWIDTH_ITERATION, latencyEventData);
+            this.bandwidthSocket.on(SocketEvents.BANDWIDTH_ITERATION, (latencyEventData: LatencyEventData[]) => {
+                this.emit(CCTEvents.BANDWIDTH_ITERATION, latencyEventData);
+            });
         });
     }
 

@@ -72,11 +72,9 @@ export const enum SocketEvents {
 export const enum CCTEvents {
     LATENCY = 'latency',
     LATENCY_ITERATION = 'latency:iteration',
-    LATENCY_START = 'latency:start',
     LATENCY_END = 'latency:end',
 
     BANDWIDTH = 'bandwidth',
     BANDWIDTH_ITERATION = 'bandwidth:iteration',
-    BANDWIDTH_START = 'bandwidth:start',
     BANDWIDTH_END = 'bandwidth:end',
 }

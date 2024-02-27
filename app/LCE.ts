@@ -15,6 +15,22 @@ export class LCE {
         this.cancelableBandwidthRequests = [];
     }
 
+    async checkIfCompatibleWithSockets(ip: string): Promise<boolean> {
+        try {
+            const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
+
+            const droneVersion = result?.headers.get('drone-version');
+            console.log('drone version ', droneVersion);
+            if (!droneVersion) {
+                return false;
+            }
+
+            return this.isSemverVersionHigher(droneVersion);
+        } catch (e) {
+            return false;
+        }
+    }
+
     async getLatencyFor(datacenter: Datacenter): Promise<Latency> {
         const start = Date.now();
         await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
@@ -111,5 +127,22 @@ export class LCE {
             kiloBitsPerSecond: kiloBitsPerSeconds,
             megaBitsPerSecond: megaBitsPerSeconds,
         };
+    }
+
+    isSemverVersionHigher(version: string, baseVersion = '0.0.0'): boolean {
+        const versionParts = version.split('.').map(Number);
+        const baseParts = baseVersion.split('.').map(Number);
+
+        for (let i = 0; i < 3; i++) {
+            if (versionParts[i] > baseParts[i]) {
+                return true;
+            } else if (versionParts[i] < baseParts[i]) {
+                return false;
+            }
+            // If they are equal, move to the next part
+        }
+
+        // If all parts are equal
+        return false;
     }
 }

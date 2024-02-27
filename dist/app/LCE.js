@@ -9,6 +9,20 @@ class LCE {
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
     }
+    async checkIfCompatibleWithSockets(ip) {
+        try {
+            const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
+            const droneVersion = result === null || result === void 0 ? void 0 : result.headers.get('drone-version');
+            console.log('drone version ', droneVersion);
+            if (!droneVersion) {
+                return false;
+            }
+            return this.isSemverVersionHigher(droneVersion);
+        }
+        catch (e) {
+            return false;
+        }
+    }
     async getLatencyFor(datacenter) {
         const start = Date.now();
         await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
@@ -89,6 +103,19 @@ class LCE {
             kiloBitsPerSecond: kiloBitsPerSeconds,
             megaBitsPerSecond: megaBitsPerSeconds,
         };
+    }
+    isSemverVersionHigher(version, baseVersion = '0.0.0') {
+        const versionParts = version.split('.').map(Number);
+        const baseParts = baseVersion.split('.').map(Number);
+        for (let i = 0; i < 3; i++) {
+            if (versionParts[i] > baseParts[i]) {
+                return true;
+            }
+            else if (versionParts[i] < baseParts[i]) {
+                return false;
+            }
+        }
+        return false;
     }
 }
 exports.LCE = LCE;

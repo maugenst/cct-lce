@@ -8,6 +8,7 @@ export declare class CCT extends EventEmitter {
     datacenters: Datacenter[];
     runningLatency: boolean;
     runningBandwidth: boolean;
+    private compatibleDCsWithSockets;
     private latencySocket;
     private bandwidthSocket;
     private filters?;
@@ -17,14 +18,15 @@ export declare class CCT extends EventEmitter {
     constructor();
     fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
+    fetchCompatibleDCsWithSockets(): Promise<Datacenter[]>;
     setFilters(filters?: FilterKeys): void;
     private startCloudLatencyMeasurements;
     stopMeasurements(): void;
-    startLatencyChecks(parameters: LatencyChecksParams): Promise<void>;
+    startLatencyChecks(parameters?: LatencyChecksParams): Promise<void>;
     private startLocalLatencyMeasurements;
     private startMeasurementForLatency;
     private handleLatency;
-    startBandwidthChecks(parameters: BandwidthChecksParams): Promise<void>;
+    startBandwidthChecks(parameters?: BandwidthChecksParams): Promise<void>;
     private startCloudBandwidthMeasurements;
     private startLocalBandwidthMeasurements;
     private startMeasurementForBandwidth;
