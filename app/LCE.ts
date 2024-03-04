@@ -139,10 +139,8 @@ export class LCE {
             } else if (versionParts[i] < baseParts[i]) {
                 return false;
             }
-            // If they are equal, move to the next part
         }
 
-        // If all parts are equal
         return false;
     }
 }

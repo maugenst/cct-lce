@@ -1,8 +1,16 @@
-import {Datacenter} from '../@types/Datacenter';
+import {Datacenter, Speed} from '../@types/Datacenter';
 import {Latency} from '../@types/Latency';
 import {Bandwidth, BandwidthPerSecond} from '../@types/Bandwidth';
 
 export class Util {
+    static isBackEnd(): boolean {
+        try {
+            return Object.prototype.toString.call(global.process) === '[object process]';
+        } catch (e) {
+            return false;
+        }
+    }
+
     static getAverageLatency(data: Latency[] | undefined): number {
         if (!data || data.length === 0) {
             return -1;
@@ -10,14 +18,6 @@ export class Util {
 
         const totalValue = data.reduce((prev, cur) => prev + cur.value, 0);
         return totalValue / data.length;
-    }
-
-    static isBackEnd(): boolean {
-        try {
-            return Object.prototype.toString.call(global.process) === '[object process]';
-        } catch (e) {
-            return false;
-        }
     }
 
     static getAverageBandwidth(data: Bandwidth[] | undefined): BandwidthPerSecond {
@@ -79,5 +79,25 @@ export class Util {
                 resolve();
             });
         });
+    }
+
+    static judgeLatency(averageLatency: number): Speed {
+        if (averageLatency < 170) {
+            return Speed.good; // green
+        } else if (averageLatency >= 170 && averageLatency < 280) {
+            return Speed.ok; // yellow
+        } else {
+            return Speed.bad; // red
+        }
+    }
+
+    static judgeBandwidth(averageBandwidth: BandwidthPerSecond): Speed {
+        if (averageBandwidth.megaBitsPerSecond > 1) {
+            return Speed.good; // green
+        } else if (averageBandwidth.megaBitsPerSecond <= 1 && averageBandwidth.megaBitsPerSecond > 0.3) {
+            return Speed.ok; // yellow
+        } else {
+            return Speed.bad; // red
+        }
     }
 }
