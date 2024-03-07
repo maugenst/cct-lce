@@ -4,5 +4,5 @@ export declare type Latency = {
 };
 export declare type LatencyEventData = {
     id: string;
-    latency: Latency;
+    data: Latency;
 };

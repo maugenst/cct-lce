@@ -4,7 +4,7 @@ export declare type Bandwidth = {
 };
 export declare type BandwidthEventData = {
     id: string;
-    bandwidth: Bandwidth;
+    data: Bandwidth;
 };
 export declare type BandwidthPerSecond = {
     bitsPerSecond: number;

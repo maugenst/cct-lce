@@ -5,7 +5,7 @@ export type Bandwidth = {
 
 export type BandwidthEventData = {
     id: string;
-    bandwidth: Bandwidth;
+    data: Bandwidth;
 };
 
 export type BandwidthPerSecond = {

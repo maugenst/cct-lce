@@ -5,5 +5,5 @@ export type Latency = {
 
 export type LatencyEventData = {
     id: string;
-    latency: Latency;
+    data: Latency;
 };
