@@ -13,7 +13,6 @@ class LCE {
         try {
             const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
             const droneVersion = result === null || result === void 0 ? void 0 : result.headers.get('drone-version');
-            console.log('drone version ', droneVersion);
             if (!droneVersion) {
                 return false;
             }
@@ -104,7 +103,7 @@ class LCE {
             megaBitsPerSecond: megaBitsPerSeconds,
         };
     }
-    isSemverVersionHigher(version, baseVersion = '0.0.0') {
+    isSemverVersionHigher(version, baseVersion = '3.0.0') {
         const versionParts = version.split('.').map(Number);
         const baseParts = baseVersion.split('.').map(Number);
         for (let i = 0; i < 3; i++) {

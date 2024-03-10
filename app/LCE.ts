@@ -1,12 +1,12 @@
 import fetch, {Response} from 'node-fetch';
+import AbortController from 'abort-controller';
+
 import {Datacenter} from '../@types/Datacenter';
 import {Latency} from '../@types/Latency';
-import AbortController from 'abort-controller';
 import {BandwidthMode} from '../@types/Shared';
 import {Bandwidth, BandwidthPerSecond} from '../@types/Bandwidth';
 
 export class LCE {
-    datacenters: Datacenter[];
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
 
@@ -20,7 +20,7 @@ export class LCE {
             const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
 
             const droneVersion = result?.headers.get('drone-version');
-            console.log('drone version ', droneVersion);
+
             if (!droneVersion) {
                 return false;
             }
@@ -129,7 +129,7 @@ export class LCE {
         };
     }
 
-    isSemverVersionHigher(version: string, baseVersion = '0.0.0'): boolean {
+    isSemverVersionHigher(version: string, baseVersion = '3.0.0'): boolean {
         const versionParts = version.split('.').map(Number);
         const baseParts = baseVersion.split('.').map(Number);
 

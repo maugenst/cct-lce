@@ -1,6 +1,6 @@
-import { Bandwidth, BandwidthPerSecond } from './Bandwidth';
-import { Speed } from './Datacenter';
-import { Latency } from './Latency';
+import { Datacenter } from './Datacenter';
+export declare type MeasurementType = 'latency' | 'bandwidth';
+export declare type MeasurementParams = LatencyChecksParams | BandwidthChecksParams;
 export declare type BandwidthChecksParams = ChecksParams & {
     bandwidthMode?: BandwidthMode;
 };
@@ -12,27 +12,23 @@ declare type ChecksParams = {
     save?: boolean;
     from?: string;
 };
+export interface MeasurementConfig<T> {
+    type: MeasurementType;
+    socketStartEvent: SocketEvents;
+    socketEndEvent: SocketEvents;
+    socketIterationEvent: SocketEvents;
+    socketTickEvent: SocketEvents;
+    iterationEvent: CCTEvents;
+    tickEvent: CCTEvents;
+    endEvent: CCTEvents;
+    getMeasurementResult: (dc: Datacenter, params: MeasurementParams) => Promise<T>;
+}
 export declare type FilterKeys = {
     name?: string[];
     cloud?: string[];
     town?: string[];
     country?: string[];
     tags?: string[];
-};
-export declare type LocalStorage = {
-    id: string;
-    averageLatency: number;
-    latencyJudgement?: Speed;
-    averageBandwidth: BandwidthPerSecond;
-    bandwidthJudgement?: Speed;
-    latencies: Latency[];
-    bandwidths: Bandwidth[];
-};
-export declare type Storage = {
-    id: string;
-    latencies: Latency[];
-    bandwidths: Bandwidth[];
-    shouldSave: boolean;
 };
 export declare type StoreData = {
     latency: string;
@@ -67,6 +63,7 @@ export declare const enum CCTEvents {
     LATENCY_END = "latency:end",
     BANDWIDTH = "bandwidth",
     BANDWIDTH_ITERATION = "bandwidth:iteration",
-    BANDWIDTH_END = "bandwidth:end"
+    BANDWIDTH_END = "bandwidth:end",
+    EXCLUDE = "exclude"
 }
 export {};

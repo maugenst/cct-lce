@@ -19,6 +19,8 @@ export type Datacenter = {
     bandwidthJudgement?: Speed;
     latencies: Latency[];
     bandwidths: Bandwidth[];
+    storedLatencyCount: number;
+    storedBandwidthCount: number;
 };
 
 export enum Speed {

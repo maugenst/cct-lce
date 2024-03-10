@@ -11,40 +11,40 @@ class Util {
             return false;
         }
     }
-    static getAverageLatency(data) {
-        if (!data || data.length === 0) {
+    static getAverageLatency(data, startIndex = 0) {
+        if (!data || data.length === 0 || startIndex >= data.length) {
             return -1;
         }
-        const totalValue = data.reduce((prev, cur) => prev + cur.value, 0);
-        return totalValue / data.length;
+        const relevantData = data.slice(startIndex);
+        const totalValue = relevantData.reduce((prev, cur) => prev + cur.value, 0);
+        return totalValue / relevantData.length;
     }
-    static getAverageBandwidth(data) {
-        if (data && data.length) {
-            const bandwidthTotal = data.reduce((prev, cur) => {
-                return {
-                    bitsPerSecond: prev.bitsPerSecond + cur.value.bitsPerSecond,
-                    kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.value.kiloBitsPerSecond,
-                    megaBitsPerSecond: prev.megaBitsPerSecond + cur.value.megaBitsPerSecond,
-                };
-            }, {
-                bitsPerSecond: 0,
-                kiloBitsPerSecond: 0,
-                megaBitsPerSecond: 0,
-            });
-            const averageCount = data.length;
-            return {
-                bitsPerSecond: bandwidthTotal.bitsPerSecond / averageCount,
-                kiloBitsPerSecond: bandwidthTotal.kiloBitsPerSecond / averageCount,
-                megaBitsPerSecond: bandwidthTotal.megaBitsPerSecond / averageCount,
-            };
-        }
-        else {
+    static getAverageBandwidth(data, startIndex = 0) {
+        if (!data || data.length === 0 || startIndex >= data.length) {
             return {
                 bitsPerSecond: -1,
                 kiloBitsPerSecond: -1,
                 megaBitsPerSecond: -1,
             };
         }
+        const relevantData = data.slice(startIndex);
+        const bandwidthTotal = relevantData.reduce((prev, cur) => {
+            return {
+                bitsPerSecond: prev.bitsPerSecond + cur.value.bitsPerSecond,
+                kiloBitsPerSecond: prev.kiloBitsPerSecond + cur.value.kiloBitsPerSecond,
+                megaBitsPerSecond: prev.megaBitsPerSecond + cur.value.megaBitsPerSecond,
+            };
+        }, {
+            bitsPerSecond: 0,
+            kiloBitsPerSecond: 0,
+            megaBitsPerSecond: 0,
+        });
+        const averageCount = relevantData.length;
+        return {
+            bitsPerSecond: bandwidthTotal.bitsPerSecond / averageCount,
+            kiloBitsPerSecond: bandwidthTotal.kiloBitsPerSecond / averageCount,
+            megaBitsPerSecond: bandwidthTotal.megaBitsPerSecond / averageCount,
+        };
     }
     static sortDatacenters(datacenters) {
         datacenters.sort((a, b) => a.averageLatency - b.averageLatency);

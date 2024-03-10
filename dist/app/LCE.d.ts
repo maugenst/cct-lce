@@ -1,11 +1,10 @@
 import { Response } from 'node-fetch';
+import AbortController from 'abort-controller';
 import { Datacenter } from '../@types/Datacenter';
 import { Latency } from '../@types/Latency';
-import AbortController from 'abort-controller';
 import { BandwidthMode } from '../@types/Shared';
 import { Bandwidth, BandwidthPerSecond } from '../@types/Bandwidth';
 export declare class LCE {
-    datacenters: Datacenter[];
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
     constructor();
