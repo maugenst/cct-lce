@@ -10,8 +10,8 @@ const Datacenter_1 = require("../@types/Datacenter");
 const LCE_1 = require("./LCE");
 const Util_1 = require("./Util");
 const defaultSocketConfig = {
-    reconnectionAttempts: 3,
-    timeout: 10000,
+    reconnection: false,
+    timeout: 5000,
 };
 class CCT extends events_1.EventEmitter {
     constructor() {
@@ -128,17 +128,16 @@ class CCT extends events_1.EventEmitter {
             this.emit(config.endEvent);
         }
     }
-    setIdToExlude(ids) {
+    setIdToExclude(ids) {
         this.idsToExclude = ids || [];
         this.setFilters(this.filters);
     }
     clearSocket(type) {
-        let socket = this.sockets[type];
+        const socket = this.sockets[type];
         if (!socket)
             return;
-        socket.emit("socket:disconnect");
+        socket.emit("stop");
         socket.removeAllListeners();
-        socket = null;
         this.sockets[type] = null;
     }
     async startCloudMeasurements(config, params, dc, abortController) {
@@ -151,8 +150,9 @@ class CCT extends events_1.EventEmitter {
             };
             abortController.signal.addEventListener('abort', resolveAndClear);
             const socket = (0, socket_io_client_1.io)('ws://localhost', { ...defaultSocketConfig, query: { id: dc.id } });
+            console.log(socket);
             this.sockets[config.type] = socket;
-            const events = [config.socketEndEvent, "socket:disconnect", "socket:connect_error"];
+            const events = [config.socketEndEvent, "disconnect", "connect_error"];
             events.forEach((event) => socket.on(event, resolveAndClear));
             socket.on("connect", () => {
                 socket.emit(config.socketStartEvent, {

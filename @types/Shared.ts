@@ -63,9 +63,10 @@ export const enum SocketEvents {
     BANDWIDTH_ITERATION = 'bandwidth:iteration',
     BANDWIDTH_START = 'bandwidth:start',
     BANDWIDTH_END = 'bandwidth:end',
-    DISCONNECT = 'socket:disconnect',
-    CONNECT_ERROR = 'socket:connect_error',
     CONNECT = 'connect',
+    CONNECT_ERROR = 'connect_error',
+    STOP = 'stop',
+    DISCONNECT = 'disconnect',
 }
 
 export const enum CCTEvents {
@@ -75,5 +76,4 @@ export const enum CCTEvents {
     BANDWIDTH = 'bandwidth',
     BANDWIDTH_ITERATION = 'bandwidth:iteration',
     BANDWIDTH_END = 'bandwidth:end',
-    EXCLUDE = 'exclude',
 }

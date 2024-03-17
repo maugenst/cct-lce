@@ -25,8 +25,8 @@ import {Util} from './Util';
 import GeocoderResult = google.maps.GeocoderResult;
 
 const defaultSocketConfig = {
-    reconnectionAttempts: 3,
-    timeout: 10000,
+    reconnection: false,
+    timeout: 5000,
 };
 
 export class CCT extends EventEmitter {
@@ -176,18 +176,17 @@ export class CCT extends EventEmitter {
         }
     }
 
-    public setIdToExlude(ids?: string[]) {
+    public setIdToExclude(ids?: string[]) {
         this.idsToExclude = ids || [];
         this.setFilters(this.filters);
     }
 
     private clearSocket(type: MeasurementType): void {
-        let socket = this.sockets[type];
+        const socket = this.sockets[type];
         if (!socket) return;
 
-        socket.emit(SocketEvents.DISCONNECT);
+        socket.emit(SocketEvents.STOP);
         socket.removeAllListeners();
-        socket = null;
 
         this.sockets[type] = null;
     }
@@ -208,6 +207,7 @@ export class CCT extends EventEmitter {
 
             abortController.signal.addEventListener('abort', resolveAndClear);
             const socket = io('ws://localhost', {...defaultSocketConfig, query: {id: dc.id}});
+            console.log(socket);
             this.sockets[config.type] = socket;
 
             const events = [config.socketEndEvent, SocketEvents.DISCONNECT, SocketEvents.CONNECT_ERROR];
@@ -314,7 +314,7 @@ export class CCT extends EventEmitter {
         return this.datacenters;
     }
 
-    async getAddress(): Promise<Location> {
+    async getAddress(): Promise<Location | null> {
         const location: Location = {
             address: '',
             latitude: 0,
@@ -353,7 +353,7 @@ export class CCT extends EventEmitter {
                     }
                 );
             } else {
-                resolve(location);
+                resolve(null);
             }
         });
     }

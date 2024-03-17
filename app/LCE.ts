@@ -16,19 +16,15 @@ export class LCE {
     }
 
     async checkIfCompatibleWithSockets(ip: string): Promise<boolean> {
-        try {
-            const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
+        const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
 
-            const droneVersion = result?.headers.get('drone-version');
+        const droneVersion = result?.headers.get('drone-version');
 
-            if (!droneVersion) {
-                return false;
-            }
-
-            return this.isSemverVersionHigher(droneVersion);
-        } catch (e) {
+        if (!droneVersion) {
             return false;
         }
+
+        return this.isSemverVersionHigher(droneVersion);
     }
 
     async getLatencyFor(datacenter: Datacenter): Promise<Latency> {
@@ -65,7 +61,7 @@ export class LCE {
     }
 
     bandwidthFetch(url: string): Promise<Response | null> {
-        const controller = new AbortController();
+        const controller: AbortController = new AbortController();
 
         this.cancelableBandwidthRequests.push(controller);
         return this.abortableFetch(url, controller);
@@ -129,18 +125,22 @@ export class LCE {
         };
     }
 
-    isSemverVersionHigher(version: string, baseVersion = '3.0.0'): boolean {
+    isSemverVersionHigher(version: string, baseVersion = '3.0.0') {
         const versionParts = version.split('.').map(Number);
         const baseParts = baseVersion.split('.').map(Number);
+        const maxLength = Math.max(versionParts.length, baseParts.length);
 
-        for (let i = 0; i < 3; i++) {
-            if (versionParts[i] > baseParts[i]) {
+        for (let i = 0; i < maxLength; i++) {
+            const versionPart = versionParts[i] || 0;
+            const basePart = baseParts[i] || 0;
+
+            if (versionPart > basePart) {
                 return true;
-            } else if (versionParts[i] < baseParts[i]) {
+            } else if (versionPart < basePart) {
                 return false;
             }
         }
 
-        return false;
+        return version === baseVersion;
     }
 }

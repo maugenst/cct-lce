@@ -23,7 +23,7 @@ export declare class CCT extends EventEmitter {
     startLatencyChecks(params?: LatencyChecksParams): Promise<void>;
     startBandwidthChecks(params?: BandwidthChecksParams): Promise<void>;
     private startMeasurements;
-    setIdToExlude(ids?: string[]): void;
+    setIdToExclude(ids?: string[]): void;
     private clearSocket;
     private startCloudMeasurements;
     private startLocalMeasurements;
