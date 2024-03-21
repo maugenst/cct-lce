@@ -1,5 +1,5 @@
 import {v4 as uuid} from 'uuid';
-import fetch, {Response} from 'node-fetch';
+import fetch from 'node-fetch';
 import {EventEmitter} from 'events';
 import {io, Socket} from 'socket.io-client';
 import AbortController from 'abort-controller';
@@ -29,22 +29,24 @@ const defaultSocketConfig = {
     timeout: 5000,
 };
 
+// TODO: all private methods move to Utils and test it there
 export class CCT extends EventEmitter {
     allDatacenters: Datacenter[] = [];
     datacenters: Datacenter[] = [];
     runningLatency = false;
     runningBandwidth = false;
 
-    private idsToExclude: string[] = [];
-    private compatibleDCsWithSockets: Datacenter[] = [];
-    private filters?: FilterKeys;
-    private lce = new LCE();
-    private abortControllers: AbortController[] = [];
-    private sockets: {[key in MeasurementType]: Socket | null} = {
+    // TODO: make private vars
+    idsToExclude: string[] = [];
+    compatibleDCsWithSockets: Datacenter[] = [];
+    filters?: FilterKeys;
+    lce = new LCE();
+    abortControllers: AbortController[] = [];
+    sockets: {[key in MeasurementType]: Socket | null} = {
         latency: null,
         bandwidth: null,
     };
-    private measurementConfigs: {[key in MeasurementType]: MeasurementConfig<any>} = {
+    measurementConfigs: {[key in MeasurementType]: MeasurementConfig<any>} = {
         latency: {
             type: 'latency',
             socketStartEvent: SocketEvents.LATENCY_START,
@@ -74,21 +76,22 @@ export class CCT extends EventEmitter {
         super();
     }
 
-    async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
+    async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
         try {
-            return (await fetch(dictionaryUrl).then((res: Response) => res.json())) as Datacenter[];
+            const response = await fetch(dictionaryUrl);
+            const datacenters: Datacenter[] = await response.json();
+
+            this.allDatacenters = datacenters;
+            this.datacenters = datacenters;
+
+            this.clean();
         } catch (e) {
-            return [];
+            this.allDatacenters = [];
+            this.datacenters = [];
         }
     }
 
-    async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
-        this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
-        this.datacenters = this.allDatacenters;
-        this.clean();
-    }
-
-    public async fetchCompatibleDCsWithSockets(): Promise<Datacenter[]> {
+    async fetchCompatibleDCsWithSockets(): Promise<Datacenter[]> {
         const checks = await Promise.all(
             this.datacenters.map(async (dc) => ({
                 dc,
@@ -152,7 +155,7 @@ export class CCT extends EventEmitter {
         await this.startMeasurements('bandwidth', {...params, iterations, save}, new AbortController());
     }
 
-    private async startMeasurements(
+    async startMeasurements(
         type: MeasurementType,
         params: MeasurementParams,
         abortController: AbortController
@@ -163,7 +166,7 @@ export class CCT extends EventEmitter {
         this[stateProperty] = true;
         this.abortControllers.push(abortController);
 
-        const dc = params.from && this.allDatacenters.find((dc) => dc.id === params.from);
+        const dc = params.from && this.compatibleDCsWithSockets.find((dc) => dc.id === params.from);
         if (dc) {
             await this.startCloudMeasurements(config, params, dc, abortController);
         } else if (this.datacenters.length !== 0) {
@@ -181,7 +184,7 @@ export class CCT extends EventEmitter {
         this.setFilters(this.filters);
     }
 
-    private clearSocket(type: MeasurementType): void {
+    clearSocket(type: MeasurementType): void {
         const socket = this.sockets[type];
         if (!socket) return;
 
@@ -191,14 +194,12 @@ export class CCT extends EventEmitter {
         this.sockets[type] = null;
     }
 
-    private async startCloudMeasurements<T>(
+    async startCloudMeasurements<T>(
         config: MeasurementConfig<T>,
         params: MeasurementParams,
         dc: Datacenter,
         abortController: AbortController
     ): Promise<void> {
-        if (Util.isBackEnd()) return;
-
         return new Promise<void>((resolve) => {
             const resolveAndClear = () => {
                 this.clearSocket(config.type);
@@ -206,8 +207,8 @@ export class CCT extends EventEmitter {
             };
 
             abortController.signal.addEventListener('abort', resolveAndClear);
-            const socket = io('ws://localhost', {...defaultSocketConfig, query: {id: dc.id}});
-            console.log(socket);
+            const socket = io(`ws://${dc.ip}`, {...defaultSocketConfig, query: {id: dc.id}});
+
             this.sockets[config.type] = socket;
 
             const events = [config.socketEndEvent, SocketEvents.DISCONNECT, SocketEvents.CONNECT_ERROR];
@@ -233,7 +234,7 @@ export class CCT extends EventEmitter {
         });
     }
 
-    private async startLocalMeasurements<T>(
+    async startLocalMeasurements<T>(
         config: MeasurementConfig<T>,
         params: MeasurementParams,
         abortController: AbortController
@@ -260,7 +261,7 @@ export class CCT extends EventEmitter {
         }
     }
 
-    private async startMeasurementFor<T>(
+    async startMeasurementFor<T>(
         config: MeasurementConfig<T>,
         dc: Datacenter,
         params: MeasurementParams,
@@ -279,11 +280,7 @@ export class CCT extends EventEmitter {
         return data;
     }
 
-    private handleEventData(
-        {id, data}: LatencyEventData | BandwidthEventData,
-        save: boolean,
-        dataType: MeasurementType
-    ): void {
+    handleEventData({id, data}: LatencyEventData | BandwidthEventData, save: boolean, dataType: MeasurementType): void {
         if (!save) return;
 
         const dcIndex = this.datacenters.findIndex((e) => e.id === id);
@@ -349,7 +346,7 @@ export class CCT extends EventEmitter {
                         );
                     },
                     () => {
-                        resolve(location);
+                        resolve(null);
                     }
                 );
             } else {
@@ -358,15 +355,7 @@ export class CCT extends EventEmitter {
         });
     }
 
-    async storeRequest(body: any): Promise<any> {
-        return fetch('https://cct.demo-education.cloud.sap/measurement', {
-            method: 'post',
-            body: body,
-            headers: {'Content-Type': 'application/json'},
-        }).then((res: Response) => res.json());
-    }
-
-    async store(location?: Location): Promise<boolean> {
+    async store(location?: Location, url = 'https://cct.demo-education.cloud.sap/measurement'): Promise<boolean> {
         if (!location) return false;
 
         const minimumThresholdToSave = 16;
@@ -403,8 +392,15 @@ export class CCT extends EventEmitter {
         const body = JSON.stringify(payload, null, 4);
 
         try {
-            const result = await this.storeRequest(body);
-            return result.status === 'OK';
+            const result = await fetch(url, {
+                method: 'post',
+                body: body,
+                headers: {'Content-Type': 'application/json'},
+            });
+
+            const json = await result.json();
+
+            return json.status === 'OK';
         } catch (error) {
             return false;
         }

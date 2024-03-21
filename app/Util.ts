@@ -3,14 +3,6 @@ import {Latency} from '../@types/Latency';
 import {Bandwidth, BandwidthPerSecond} from '../@types/Bandwidth';
 
 export class Util {
-    static isBackEnd(): boolean {
-        try {
-            return Object.prototype.toString.call(global.process) === '[object process]';
-        } catch (e) {
-            return false;
-        }
-    }
-
     static getAverageLatency(data: Latency[] | undefined, startIndex = 0): number {
         if (!data || data.length === 0 || startIndex >= data.length) {
             return -1;

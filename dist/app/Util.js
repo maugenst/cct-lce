@@ -3,14 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Util = void 0;
 const Datacenter_1 = require("../@types/Datacenter");
 class Util {
-    static isBackEnd() {
-        try {
-            return Object.prototype.toString.call(global.process) === '[object process]';
-        }
-        catch (e) {
-            return false;
-        }
-    }
     static getAverageLatency(data, startIndex = 0) {
         if (!data || data.length === 0 || startIndex >= data.length) {
             return -1;

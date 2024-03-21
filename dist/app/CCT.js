@@ -53,18 +53,18 @@ class CCT extends events_1.EventEmitter {
             },
         };
     }
-    async fetchDatacenterInformationRequest(dictionaryUrl) {
+    async fetchDatacenterInformation(dictionaryUrl) {
         try {
-            return (await (0, node_fetch_1.default)(dictionaryUrl).then((res) => res.json()));
+            const response = await (0, node_fetch_1.default)(dictionaryUrl);
+            const datacenters = await response.json();
+            this.allDatacenters = datacenters;
+            this.datacenters = datacenters;
+            this.clean();
         }
         catch (e) {
-            return [];
+            this.allDatacenters = [];
+            this.datacenters = [];
         }
-    }
-    async fetchDatacenterInformation(dictionaryUrl) {
-        this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
-        this.datacenters = this.allDatacenters;
-        this.clean();
     }
     async fetchCompatibleDCsWithSockets() {
         const checks = await Promise.all(this.datacenters.map(async (dc) => ({
@@ -116,7 +116,7 @@ class CCT extends events_1.EventEmitter {
         const stateProperty = type === 'latency' ? 'runningLatency' : 'runningBandwidth';
         this[stateProperty] = true;
         this.abortControllers.push(abortController);
-        const dc = params.from && this.allDatacenters.find((dc) => dc.id === params.from);
+        const dc = params.from && this.compatibleDCsWithSockets.find((dc) => dc.id === params.from);
         if (dc) {
             await this.startCloudMeasurements(config, params, dc, abortController);
         }
@@ -141,16 +141,13 @@ class CCT extends events_1.EventEmitter {
         this.sockets[type] = null;
     }
     async startCloudMeasurements(config, params, dc, abortController) {
-        if (Util_1.Util.isBackEnd())
-            return;
         return new Promise((resolve) => {
             const resolveAndClear = () => {
                 this.clearSocket(config.type);
                 resolve();
             };
             abortController.signal.addEventListener('abort', resolveAndClear);
-            const socket = (0, socket_io_client_1.io)('ws://localhost', { ...defaultSocketConfig, query: { id: dc.id } });
-            console.log(socket);
+            const socket = (0, socket_io_client_1.io)(`ws://${dc.ip}`, { ...defaultSocketConfig, query: { id: dc.id } });
             this.sockets[config.type] = socket;
             const events = [config.socketEndEvent, "disconnect", "connect_error"];
             events.forEach((event) => socket.on(event, resolveAndClear));
@@ -249,22 +246,15 @@ class CCT extends events_1.EventEmitter {
                         }
                     });
                 }, () => {
-                    resolve(location);
+                    resolve(null);
                 });
             }
             else {
-                resolve(location);
+                resolve(null);
             }
         });
     }
-    async storeRequest(body) {
-        return (0, node_fetch_1.default)('https://cct.demo-education.cloud.sap/measurement', {
-            method: 'post',
-            body: body,
-            headers: { 'Content-Type': 'application/json' },
-        }).then((res) => res.json());
-    }
-    async store(location) {
+    async store(location, url = 'https://cct.demo-education.cloud.sap/measurement') {
         if (!location)
             return false;
         const minimumThresholdToSave = 16;
@@ -293,8 +283,13 @@ class CCT extends events_1.EventEmitter {
         };
         const body = JSON.stringify(payload, null, 4);
         try {
-            const result = await this.storeRequest(body);
-            return result.status === 'OK';
+            const result = await (0, node_fetch_1.default)(url, {
+                method: 'post',
+                body: body,
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const json = await result.json();
+            return json.status === 'OK';
         }
         catch (error) {
             return false;

@@ -10,17 +10,12 @@ class LCE {
         this.cancelableBandwidthRequests = [];
     }
     async checkIfCompatibleWithSockets(ip) {
-        try {
-            const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
-            const droneVersion = result === null || result === void 0 ? void 0 : result.headers.get('drone-version');
-            if (!droneVersion) {
-                return false;
-            }
-            return this.isSemverVersionHigher(droneVersion);
-        }
-        catch (e) {
+        const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
+        const droneVersion = result === null || result === void 0 ? void 0 : result.headers.get('drone-version');
+        if (!droneVersion) {
             return false;
         }
+        return this.isSemverVersionHigher(droneVersion);
     }
     async getLatencyFor(datacenter) {
         const start = Date.now();
@@ -106,15 +101,18 @@ class LCE {
     isSemverVersionHigher(version, baseVersion = '3.0.0') {
         const versionParts = version.split('.').map(Number);
         const baseParts = baseVersion.split('.').map(Number);
-        for (let i = 0; i < 3; i++) {
-            if (versionParts[i] > baseParts[i]) {
+        const maxLength = Math.max(versionParts.length, baseParts.length);
+        for (let i = 0; i < maxLength; i++) {
+            const versionPart = versionParts[i] || 0;
+            const basePart = baseParts[i] || 0;
+            if (versionPart > basePart) {
                 return true;
             }
-            else if (versionParts[i] < baseParts[i]) {
+            else if (versionPart < basePart) {
                 return false;
             }
         }
-        return false;
+        return version === baseVersion;
     }
 }
 exports.LCE = LCE;
