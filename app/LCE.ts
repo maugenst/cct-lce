@@ -1,79 +1,30 @@
 import fetch, {Response} from 'node-fetch';
-import {EventEmitter} from 'events';
-import {Datacenter} from '../@types/Datacenter';
-import {BandwidthMode, Bandwith, BandwithPerSecond} from '../@types/Bandwidth';
-import {Latency} from '../@types/Latency';
 import AbortController from 'abort-controller';
-import {Events} from '../@types/Shared';
 
-export class LCE extends EventEmitter {
-    datacenters: Datacenter[];
+import {Datacenter} from '../@types/Datacenter';
+import {Latency} from '../@types/Latency';
+import {BandwidthMode} from '../@types/Shared';
+import {Bandwidth, BandwidthPerSecond} from '../@types/Bandwidth';
+
+export class LCE {
     cancelableLatencyRequests: AbortController[];
     cancelableBandwidthRequests: AbortController[];
-    terminateAllCalls: boolean;
 
-    constructor(datacenters: Datacenter[]) {
-        super();
-        this.datacenters = datacenters;
+    constructor() {
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
     }
 
-    updateDatacenters(datacenters: Datacenter[]): void {
-        this.datacenters = datacenters;
-    }
+    async checkIfCompatibleWithSockets(ip: string): Promise<boolean> {
+        const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
 
-    async runLatencyCheckForAll(): Promise<Latency[]> {
-        const results: Promise<Latency | null>[] = [];
-        this.datacenters.forEach((datacenter) => {
-            results.push(this.getLatencyFor(datacenter));
-        });
+        const droneVersion = result?.headers.get('drone-version');
 
-        const data = await Promise.all(results);
-        // filter failed requests
-        const filteredData = data.filter((d) => d !== null) as Latency[];
-        filteredData.sort(this.compare);
-        this.cancelableLatencyRequests = [];
-        return filteredData;
-    }
-
-    async runBandwidthCheckForAll(): Promise<Bandwith[]> {
-        const results: Bandwith[] = [];
-
-        for (const datacenter of this.datacenters) {
-            if (this.terminateAllCalls) {
-                break;
-            }
-            const bandwidth = await this.getBandwidthFor(datacenter);
-            if (bandwidth) {
-                results.push(bandwidth);
-            }
+        if (!droneVersion) {
+            return false;
         }
 
-        this.cancelableBandwidthRequests = [];
-        return results;
-    }
-
-    getBandwidthForId(
-        id: string,
-        options?: {
-            bandwidthMode: BandwidthMode;
-        }
-    ): Promise<Bandwith | null> | null {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getBandwidthFor(dc, options);
-    }
-
-    getLatencyForId(id: string): Promise<Latency> | null {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getLatencyFor(dc);
+        return this.isSemverVersionHigher(droneVersion);
     }
 
     async getLatencyFor(datacenter: Datacenter): Promise<Latency> {
@@ -81,63 +32,36 @@ export class LCE extends EventEmitter {
         await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
 
-        this.emit(Events.LATENCY);
-        return {
-            id: datacenter.id,
-            latency: end - start,
-            cloud: datacenter.cloud,
-            name: datacenter.name,
-            town: datacenter.town,
-            country: datacenter.country,
-            latitude: datacenter.latitude,
-            longitude: datacenter.longitude,
-            ip: datacenter.ip,
-            timestamp: Date.now(),
-        };
+        return {value: end - start, timestamp: Date.now()};
     }
 
     async getBandwidthFor(
         datacenter: Datacenter,
-        options: {
-            bandwidthMode: BandwidthMode;
-        } = {
-            bandwidthMode: BandwidthMode.big, // Default
-        }
-    ): Promise<Bandwith | null> {
+        bandwidthMode: BandwidthMode = BandwidthMode.big
+    ): Promise<Bandwidth | null> {
         const start = Date.now();
-        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${bandwidthMode}`);
         const end = Date.now();
 
         if (response !== null) {
-            this.emit(Events.BANDWIDTH);
-
             let rawBody;
+
             try {
                 rawBody = await response.text();
             } catch (error) {
                 console.log(error);
                 return null;
             }
-            const bandwidth: BandwithPerSecond = LCE.calcBandwidth(rawBody.length, end - start);
 
-            return {
-                id: datacenter.id,
-                bandwidth,
-                cloud: datacenter.cloud,
-                name: datacenter.name,
-                town: datacenter.town,
-                country: datacenter.country,
-                latitude: datacenter.latitude,
-                longitude: datacenter.longitude,
-                ip: datacenter.ip,
-                timestamp: Date.now(),
-            };
+            const bandwidth: BandwidthPerSecond = this.calcBandwidth(rawBody.length, end - start);
+
+            return {value: bandwidth, timestamp: Date.now()};
         }
         return null;
     }
 
     bandwidthFetch(url: string): Promise<Response | null> {
-        const controller = new AbortController();
+        const controller: AbortController = new AbortController();
 
         this.cancelableBandwidthRequests.push(controller);
         return this.abortableFetch(url, controller);
@@ -151,9 +75,9 @@ export class LCE extends EventEmitter {
     }
 
     async abortableFetch(url: string, controller: AbortController, timeout = 3000): Promise<Response | null> {
-        try {
-            const timer = setTimeout(() => controller.abort(), timeout);
+        const timer = setTimeout(() => controller.abort(), timeout);
 
+        try {
             const query = new URLSearchParams({
                 t: `${Date.now()}`,
             }).toString();
@@ -166,18 +90,18 @@ export class LCE extends EventEmitter {
             return result;
         } catch (error) {
             console.log(error);
+            clearTimeout(timer);
             return null;
         }
     }
 
-    compare(a: {latency: number | Bandwith}, b: {latency: number | Bandwith}): number {
+    compare(a: {latency: number | Bandwidth}, b: {latency: number | Bandwidth}): number {
         if (a.latency < b.latency) return -1;
         if (a.latency > b.latency) return 1;
         return 0;
     }
 
     terminate(): void {
-        this.terminateAllCalls = true;
         this.cancelableLatencyRequests.forEach((controller) => {
             controller.abort();
         });
@@ -186,13 +110,12 @@ export class LCE extends EventEmitter {
         });
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
     }
 
-    static calcBandwidth(downloadSize: number, latency: number): BandwithPerSecond {
-        const durationinSeconds = latency / 1000;
+    calcBandwidth(downloadSize: number, latency: number): BandwidthPerSecond {
+        const durationInSeconds = latency / 1000;
         const bitsLoaded = downloadSize * 8;
-        const bitsPerSeconds = bitsLoaded / durationinSeconds;
+        const bitsPerSeconds = bitsLoaded / durationInSeconds;
         const kiloBitsPerSeconds = bitsPerSeconds / 1000;
         const megaBitsPerSeconds = kiloBitsPerSeconds / 1000;
         return {
@@ -200,5 +123,24 @@ export class LCE extends EventEmitter {
             kiloBitsPerSecond: kiloBitsPerSeconds,
             megaBitsPerSecond: megaBitsPerSeconds,
         };
+    }
+
+    isSemverVersionHigher(version: string, baseVersion = '3.0.0') {
+        const versionParts = version.split('.').map(Number);
+        const baseParts = baseVersion.split('.').map(Number);
+        const maxLength = Math.max(versionParts.length, baseParts.length);
+
+        for (let i = 0; i < maxLength; i++) {
+            const versionPart = versionParts[i] || 0;
+            const basePart = baseParts[i] || 0;
+
+            if (versionPart > basePart) {
+                return true;
+            } else if (versionPart < basePart) {
+                return false;
+            }
+        }
+
+        return version === baseVersion;
     }
 }

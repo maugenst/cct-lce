@@ -19,3 +19,6 @@ app.yaml
 # Editors / IDEs
 .vscode
 /.idea
+
+# Jest
+coverage/*

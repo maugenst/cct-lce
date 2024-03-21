@@ -2,85 +2,32 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LCE = void 0;
 const node_fetch_1 = require("node-fetch");
-const events_1 = require("events");
-const Bandwidth_1 = require("../@types/Bandwidth");
 const abort_controller_1 = require("abort-controller");
-class LCE extends events_1.EventEmitter {
-    constructor(datacenters) {
-        super();
-        this.datacenters = datacenters;
+const Shared_1 = require("../@types/Shared");
+class LCE {
+    constructor() {
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
     }
-    updateDatacenters(datacenters) {
-        this.datacenters = datacenters;
-    }
-    async runLatencyCheckForAll() {
-        const results = [];
-        this.datacenters.forEach((datacenter) => {
-            results.push(this.getLatencyFor(datacenter));
-        });
-        const data = await Promise.all(results);
-        const filteredData = data.filter((d) => d !== null);
-        filteredData.sort(this.compare);
-        this.cancelableLatencyRequests = [];
-        return filteredData;
-    }
-    async runBandwidthCheckForAll() {
-        const results = [];
-        for (const datacenter of this.datacenters) {
-            if (this.terminateAllCalls) {
-                break;
-            }
-            const bandwidth = await this.getBandwidthFor(datacenter);
-            if (bandwidth) {
-                results.push(bandwidth);
-            }
+    async checkIfCompatibleWithSockets(ip) {
+        const result = await this.latencyFetch(`https://${ip}/drone/index.html`);
+        const droneVersion = result === null || result === void 0 ? void 0 : result.headers.get('drone-version');
+        if (!droneVersion) {
+            return false;
         }
-        this.cancelableBandwidthRequests = [];
-        return results;
-    }
-    getBandwidthForId(id, options) {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getBandwidthFor(dc, options);
-    }
-    getLatencyForId(id) {
-        const dc = this.datacenters.find((datacenter) => datacenter.id === id);
-        if (!dc) {
-            return null;
-        }
-        return this.getLatencyFor(dc);
+        return this.isSemverVersionHigher(droneVersion);
     }
     async getLatencyFor(datacenter) {
         const start = Date.now();
         await this.latencyFetch(`https://${datacenter.ip}/drone/index.html`);
         const end = Date.now();
-        this.emit("latency");
-        return {
-            id: datacenter.id,
-            latency: end - start,
-            cloud: datacenter.cloud,
-            name: datacenter.name,
-            town: datacenter.town,
-            country: datacenter.country,
-            latitude: datacenter.latitude,
-            longitude: datacenter.longitude,
-            ip: datacenter.ip,
-            timestamp: Date.now(),
-        };
+        return { value: end - start, timestamp: Date.now() };
     }
-    async getBandwidthFor(datacenter, options = {
-        bandwidthMode: Bandwidth_1.BandwidthMode.big,
-    }) {
+    async getBandwidthFor(datacenter, bandwidthMode = Shared_1.BandwidthMode.big) {
         const start = Date.now();
-        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${options.bandwidthMode}`);
+        const response = await this.bandwidthFetch(`https://${datacenter.ip}/drone/${bandwidthMode}`);
         const end = Date.now();
         if (response !== null) {
-            this.emit("bandwidth");
             let rawBody;
             try {
                 rawBody = await response.text();
@@ -89,19 +36,8 @@ class LCE extends events_1.EventEmitter {
                 console.log(error);
                 return null;
             }
-            const bandwidth = LCE.calcBandwidth(rawBody.length, end - start);
-            return {
-                id: datacenter.id,
-                bandwidth,
-                cloud: datacenter.cloud,
-                name: datacenter.name,
-                town: datacenter.town,
-                country: datacenter.country,
-                latitude: datacenter.latitude,
-                longitude: datacenter.longitude,
-                ip: datacenter.ip,
-                timestamp: Date.now(),
-            };
+            const bandwidth = this.calcBandwidth(rawBody.length, end - start);
+            return { value: bandwidth, timestamp: Date.now() };
         }
         return null;
     }
@@ -116,8 +52,8 @@ class LCE extends events_1.EventEmitter {
         return this.abortableFetch(url, controller);
     }
     async abortableFetch(url, controller, timeout = 3000) {
+        const timer = setTimeout(() => controller.abort(), timeout);
         try {
-            const timer = setTimeout(() => controller.abort(), timeout);
             const query = new URLSearchParams({
                 t: `${Date.now()}`,
             }).toString();
@@ -129,6 +65,7 @@ class LCE extends events_1.EventEmitter {
         }
         catch (error) {
             console.log(error);
+            clearTimeout(timer);
             return null;
         }
     }
@@ -140,7 +77,6 @@ class LCE extends events_1.EventEmitter {
         return 0;
     }
     terminate() {
-        this.terminateAllCalls = true;
         this.cancelableLatencyRequests.forEach((controller) => {
             controller.abort();
         });
@@ -149,12 +85,11 @@ class LCE extends events_1.EventEmitter {
         });
         this.cancelableLatencyRequests = [];
         this.cancelableBandwidthRequests = [];
-        this.terminateAllCalls = false;
     }
-    static calcBandwidth(downloadSize, latency) {
-        const durationinSeconds = latency / 1000;
+    calcBandwidth(downloadSize, latency) {
+        const durationInSeconds = latency / 1000;
         const bitsLoaded = downloadSize * 8;
-        const bitsPerSeconds = bitsLoaded / durationinSeconds;
+        const bitsPerSeconds = bitsLoaded / durationInSeconds;
         const kiloBitsPerSeconds = bitsPerSeconds / 1000;
         const megaBitsPerSeconds = kiloBitsPerSeconds / 1000;
         return {
@@ -162,6 +97,22 @@ class LCE extends events_1.EventEmitter {
             kiloBitsPerSecond: kiloBitsPerSeconds,
             megaBitsPerSecond: megaBitsPerSeconds,
         };
+    }
+    isSemverVersionHigher(version, baseVersion = '3.0.0') {
+        const versionParts = version.split('.').map(Number);
+        const baseParts = baseVersion.split('.').map(Number);
+        const maxLength = Math.max(versionParts.length, baseParts.length);
+        for (let i = 0; i < maxLength; i++) {
+            const versionPart = versionParts[i] || 0;
+            const basePart = baseParts[i] || 0;
+            if (versionPart > basePart) {
+                return true;
+            }
+            else if (versionPart < basePart) {
+                return false;
+            }
+        }
+        return version === baseVersion;
     }
 }
 exports.LCE = LCE;
