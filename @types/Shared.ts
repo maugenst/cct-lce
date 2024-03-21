@@ -11,7 +11,6 @@ export type LatencyChecksParams = ChecksParams;
 type ChecksParams = {
     interval?: number;
     iterations?: number;
-    saveToLocalStorage?: boolean;
     save?: boolean;
     from?: string;
 };
