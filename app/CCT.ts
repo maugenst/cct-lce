@@ -207,7 +207,7 @@ export class CCT extends EventEmitter {
             };
 
             abortController.signal.addEventListener('abort', resolveAndClear);
-            const socket = io(`ws://${dc.ip}`, {...defaultSocketConfig, query: {id: dc.id}});
+            const socket = io(`wss://${dc.ip}`, {...defaultSocketConfig, query: {id: dc.id}});
 
             this.sockets[config.type] = socket;
 
@@ -428,13 +428,15 @@ export class CCT extends EventEmitter {
         latitude,
         longitude,
         top = 1,
+        url = 'https://cct.demo-education.cloud.sap/datacenters?isActive=true',
     }: {
         latitude: number;
         longitude: number;
+        url: string;
         top?: number;
     }): Promise<Datacenter[]> {
         if (!this.allDatacenters || !this.allDatacenters.length) {
-            await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
+            await this.fetchDatacenterInformation(url);
         }
 
         // Calculate and store distances for each datacenter

@@ -147,7 +147,7 @@ class CCT extends events_1.EventEmitter {
                 resolve();
             };
             abortController.signal.addEventListener('abort', resolveAndClear);
-            const socket = (0, socket_io_client_1.io)(`ws://${dc.ip}`, { ...defaultSocketConfig, query: { id: dc.id } });
+            const socket = (0, socket_io_client_1.io)(`wss://${dc.ip}`, { ...defaultSocketConfig, query: { id: dc.id } });
             this.sockets[config.type] = socket;
             const events = [config.socketEndEvent, "disconnect", "connect_error"];
             events.forEach((event) => socket.on(event, resolveAndClear));
@@ -312,9 +312,9 @@ class CCT extends events_1.EventEmitter {
             dc.storedLatencyCount = 0;
         });
     }
-    async getClosestDatacenters({ latitude, longitude, top = 1, }) {
+    async getClosestDatacenters({ latitude, longitude, top = 1, url = 'https://cct.demo-education.cloud.sap/datacenters?isActive=true', }) {
         if (!this.allDatacenters || !this.allDatacenters.length) {
-            await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
+            await this.fetchDatacenterInformation(url);
         }
         const datacentersWithDistances = this.allDatacenters.map((datacenter) => {
             const distance = Util_1.Util.calculateDistance(latitude, longitude, +datacenter.latitude, +datacenter.longitude);

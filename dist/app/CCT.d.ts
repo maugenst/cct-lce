@@ -44,9 +44,10 @@ export declare class CCT extends EventEmitter {
     getAddress(): Promise<Location | null>;
     store(location?: Location, url?: string): Promise<boolean>;
     clean(): void;
-    getClosestDatacenters({ latitude, longitude, top, }: {
+    getClosestDatacenters({ latitude, longitude, top, url, }: {
         latitude: number;
         longitude: number;
+        url: string;
         top?: number;
     }): Promise<Datacenter[]>;
 }

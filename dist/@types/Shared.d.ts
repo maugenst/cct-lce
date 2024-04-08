@@ -8,7 +8,6 @@ export declare type LatencyChecksParams = ChecksParams;
 declare type ChecksParams = {
     interval?: number;
     iterations?: number;
-    saveToLocalStorage?: boolean;
     save?: boolean;
     from?: string;
 };
