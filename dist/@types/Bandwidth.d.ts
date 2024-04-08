@@ -1,21 +1,13 @@
-export declare type Bandwith = {
-    id: string;
-    bandwidth: BandwithPerSecond;
-    cloud: string;
-    name: string;
-    town: string;
-    country: string;
-    latitude: string;
-    longitude: string;
-    ip: string;
+export declare type Bandwidth = {
+    value: BandwidthPerSecond;
     timestamp: number;
 };
-export declare type BandwithPerSecond = {
+export declare type BandwidthEventData = {
+    id: string;
+    data: Bandwidth;
+};
+export declare type BandwidthPerSecond = {
     bitsPerSecond: number;
     kiloBitsPerSecond: number;
     megaBitsPerSecond: number;
 };
-export declare enum BandwidthMode {
-    big = "big",
-    small = "small"
-}

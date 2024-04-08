@@ -1,6 +1,6 @@
 {
   "name": "cct-lce",
-  "version": "3.0.3",
+  "version": "4.0.1",
   "description": "CCT Latency Check Engine",
   "main": "dist/app/CCT.js",
   "files": [
@@ -8,7 +8,7 @@
     "dist.browser"
   ],
   "scripts": {
-    "test": "jest --runInBand --config ./jest.config.json",
+    "test": "jest --config ./jest.config.json",
     "build": "tsc && webpack",
     "start": "node dist/index.js",
     "watch": "tsc --watch",
@@ -31,6 +31,7 @@
   "dependencies": {
     "abort-controller": "^3.0.0",
     "node-fetch": "^2.2.0",
+    "socket.io-client": "^4.7.4",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

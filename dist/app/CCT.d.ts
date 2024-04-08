@@ -1,47 +1,53 @@
-import { Datacenter, Speed } from '../@types/Datacenter';
-import { Events, FilterKeys, Location, Storage } from '../@types/Shared';
+/// <reference types="node" />
+import { EventEmitter } from 'events';
+import { Socket } from 'socket.io-client';
+import AbortController from 'abort-controller';
+import { BandwidthChecksParams, FilterKeys, LatencyChecksParams, Location, MeasurementConfig, MeasurementParams, MeasurementType } from '../@types/Shared';
+import { Datacenter } from '../@types/Datacenter';
+import { BandwidthEventData } from '../@types/Bandwidth';
+import { LatencyEventData } from '../@types/Latency';
 import { LCE } from './LCE';
-import { BandwidthMode, BandwithPerSecond } from '../@types/Bandwidth';
-export declare class CCT {
+export declare class CCT extends EventEmitter {
     allDatacenters: Datacenter[];
     datacenters: Datacenter[];
-    lce: LCE;
-    storage: Storage[];
     runningLatency: boolean;
     runningBandwidth: boolean;
-    fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]>;
+    idsToExclude: string[];
+    compatibleDCsWithSockets: Datacenter[];
+    filters?: FilterKeys;
+    lce: LCE;
+    abortControllers: AbortController[];
+    sockets: {
+        [key in MeasurementType]: Socket | null;
+    };
+    measurementConfigs: {
+        [key in MeasurementType]: MeasurementConfig<any>;
+    };
+    constructor();
     fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
+    fetchCompatibleDCsWithSockets(): Promise<Datacenter[]>;
     setFilters(filters?: FilterKeys): void;
     stopMeasurements(): void;
-    startLatencyChecks({ iterations, saveToLocalStorage, save, }: {
-        iterations: number;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void>;
-    private startMeasurementForLatency;
-    startBandwidthChecks({ datacenter, iterations, bandwidthMode, saveToLocalStorage, save, }: {
-        datacenter: Datacenter | Datacenter[];
-        iterations: number;
-        bandwidthMode?: BandwidthMode | undefined;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void>;
-    private startMeasurementForBandwidth;
-    judgeLatency(averageLatency: number): Speed;
-    judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed;
+    startLatencyChecks(params?: LatencyChecksParams): Promise<void>;
+    startBandwidthChecks(params?: BandwidthChecksParams): Promise<void>;
+    startMeasurements(type: MeasurementType, params: MeasurementParams, abortController: AbortController): Promise<void>;
+    setIdToExclude(ids?: string[]): void;
+    clearSocket(type: MeasurementType): void;
+    startCloudMeasurements<T>(config: MeasurementConfig<T>, params: MeasurementParams, dc: Datacenter, abortController: AbortController): Promise<void>;
+    startLocalMeasurements<T>(config: MeasurementConfig<T>, params: MeasurementParams, abortController: AbortController): Promise<void>;
+    startMeasurementFor<T>(config: MeasurementConfig<T>, dc: Datacenter, params: MeasurementParams, abortController: AbortController): Promise<{
+        data: T;
+        id: string;
+    } | null>;
+    handleEventData({ id, data }: LatencyEventData | BandwidthEventData, save: boolean, dataType: MeasurementType): void;
     getCurrentDatacentersSorted(): Datacenter[];
-    getAddress(): Promise<Location>;
-    storeRequest(body: any): Promise<any>;
-    store(location?: Location): Promise<boolean>;
-    private addDataToStorage;
-    private setLocalStorage;
-    private readLocalStorage;
-    subscribe(event: Events, callback: () => void): void;
-    unsubscribe(event: Events, callback: () => void): void;
+    getAddress(): Promise<Location | null>;
+    store(location?: Location, url?: string): Promise<boolean>;
     clean(): void;
-    getClosestDatacenters({ latitude, longitude, top, }: {
+    getClosestDatacenters({ latitude, longitude, top, url, }: {
         latitude: number;
         longitude: number;
+        url: string;
         top?: number;
     }): Promise<Datacenter[]>;
 }

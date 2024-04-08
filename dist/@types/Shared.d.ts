@@ -1,34 +1,33 @@
-import { BandwithPerSecond } from './Bandwidth';
-import { Speed } from './Datacenter';
+import { Datacenter } from './Datacenter';
+export declare type MeasurementType = 'latency' | 'bandwidth';
+export declare type MeasurementParams = LatencyChecksParams | BandwidthChecksParams;
+export declare type BandwidthChecksParams = ChecksParams & {
+    bandwidthMode?: BandwidthMode;
+};
+export declare type LatencyChecksParams = ChecksParams;
+declare type ChecksParams = {
+    interval?: number;
+    iterations?: number;
+    save?: boolean;
+    from?: string;
+};
+export interface MeasurementConfig<T> {
+    type: MeasurementType;
+    socketStartEvent: SocketEvents;
+    socketEndEvent: SocketEvents;
+    socketIterationEvent: SocketEvents;
+    socketTickEvent: SocketEvents;
+    iterationEvent: CCTEvents;
+    tickEvent: CCTEvents;
+    endEvent: CCTEvents;
+    getMeasurementResult: (dc: Datacenter, params: MeasurementParams) => Promise<T>;
+}
 export declare type FilterKeys = {
     name?: string[];
     cloud?: string[];
     town?: string[];
     country?: string[];
     tags?: string[];
-};
-export declare type LatencyDataPoint = {
-    value: number;
-    timestamp: number;
-};
-export declare type BandwidthDataPoint = {
-    value: BandwithPerSecond;
-    timestamp: number;
-};
-export declare type LocalStorage = {
-    id: string;
-    averageLatency: number;
-    latencyJudgement?: Speed;
-    averageBandwidth: BandwithPerSecond;
-    bandwidthJudgement?: Speed;
-    latencies: LatencyDataPoint[];
-    bandwidths: BandwidthDataPoint[];
-};
-export declare type Storage = {
-    id: string;
-    latencies: LatencyDataPoint[];
-    bandwidths: BandwidthDataPoint[];
-    shouldSave: boolean;
 };
 export declare type StoreData = {
     latency: string;
@@ -40,7 +39,30 @@ export declare type Location = {
     latitude: number;
     longitude: number;
 };
-export declare const enum Events {
-    LATENCY = "latency",
-    BANDWIDTH = "bandwidth"
+export declare enum BandwidthMode {
+    big = "big",
+    small = "small"
 }
+export declare const enum SocketEvents {
+    LATENCY = "latency",
+    LATENCY_ITERATION = "latency:iteration",
+    LATENCY_START = "latency:start",
+    LATENCY_END = "latency:end",
+    BANDWIDTH = "bandwidth",
+    BANDWIDTH_ITERATION = "bandwidth:iteration",
+    BANDWIDTH_START = "bandwidth:start",
+    BANDWIDTH_END = "bandwidth:end",
+    CONNECT = "connect",
+    CONNECT_ERROR = "connect_error",
+    STOP = "stop",
+    DISCONNECT = "disconnect"
+}
+export declare const enum CCTEvents {
+    LATENCY = "latency",
+    LATENCY_ITERATION = "latency:iteration",
+    LATENCY_END = "latency:end",
+    BANDWIDTH = "bandwidth",
+    BANDWIDTH_ITERATION = "bandwidth:iteration",
+    BANDWIDTH_END = "bandwidth:end"
+}
+export {};

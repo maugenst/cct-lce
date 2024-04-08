@@ -1,62 +1,117 @@
 import {v4 as uuid} from 'uuid';
-import fetch, {Response} from 'node-fetch';
-import {Datacenter, Speed} from '../@types/Datacenter';
+import fetch from 'node-fetch';
+import {EventEmitter} from 'events';
+import {io, Socket} from 'socket.io-client';
+import AbortController from 'abort-controller';
+
 import {
-    BandwidthDataPoint,
-    Events,
+    BandwidthChecksParams,
+    CCTEvents,
     FilterKeys,
-    LatencyDataPoint,
-    LocalStorage,
+    LatencyChecksParams,
     Location,
-    Storage,
+    MeasurementConfig,
+    MeasurementParams,
+    MeasurementType,
+    SocketEvents,
     StoreData,
 } from '../@types/Shared';
+import {Datacenter, Speed} from '../@types/Datacenter';
+import {Bandwidth, BandwidthEventData} from '../@types/Bandwidth';
+import {Latency, LatencyEventData} from '../@types/Latency';
+
 import {LCE} from './LCE';
 import {Util} from './Util';
-import {BandwidthMode, BandwithPerSecond} from '../@types/Bandwidth';
 import GeocoderResult = google.maps.GeocoderResult;
 
-const localStorageName = 'CCT_DATA';
+const defaultSocketConfig = {
+    reconnection: false,
+    timeout: 5000,
+};
 
-export class CCT {
-    allDatacenters: Datacenter[];
-    datacenters: Datacenter[];
-    lce: LCE;
-    storage: Storage[] = [];
+// TODO: all private methods move to Utils and test it there
+export class CCT extends EventEmitter {
+    allDatacenters: Datacenter[] = [];
+    datacenters: Datacenter[] = [];
     runningLatency = false;
     runningBandwidth = false;
 
-    async fetchDatacenterInformationRequest(dictionaryUrl: string): Promise<Datacenter[]> {
-        try {
-            return (await fetch(dictionaryUrl).then((res: Response) => res.json())) as Datacenter[];
-        } catch {
-            return [];
-        }
+    // TODO: make private vars
+    idsToExclude: string[] = [];
+    compatibleDCsWithSockets: Datacenter[] = [];
+    filters?: FilterKeys;
+    lce = new LCE();
+    abortControllers: AbortController[] = [];
+    sockets: {[key in MeasurementType]: Socket | null} = {
+        latency: null,
+        bandwidth: null,
+    };
+    measurementConfigs: {[key in MeasurementType]: MeasurementConfig<any>} = {
+        latency: {
+            type: 'latency',
+            socketStartEvent: SocketEvents.LATENCY_START,
+            socketEndEvent: SocketEvents.LATENCY_END,
+            socketIterationEvent: SocketEvents.LATENCY_ITERATION,
+            socketTickEvent: SocketEvents.LATENCY,
+            iterationEvent: CCTEvents.LATENCY_ITERATION,
+            tickEvent: CCTEvents.LATENCY,
+            endEvent: CCTEvents.LATENCY_END,
+            getMeasurementResult: (dc: Datacenter) => this.lce.getLatencyFor(dc),
+        },
+        bandwidth: {
+            type: 'bandwidth',
+            socketStartEvent: SocketEvents.BANDWIDTH_START,
+            socketEndEvent: SocketEvents.BANDWIDTH_END,
+            socketIterationEvent: SocketEvents.BANDWIDTH_ITERATION,
+            socketTickEvent: SocketEvents.BANDWIDTH,
+            iterationEvent: CCTEvents.BANDWIDTH_ITERATION,
+            tickEvent: CCTEvents.BANDWIDTH,
+            endEvent: CCTEvents.BANDWIDTH_END,
+            getMeasurementResult: (dc: Datacenter, params: BandwidthChecksParams) =>
+                this.lce.getBandwidthFor(dc, params.bandwidthMode),
+        },
+    };
+
+    constructor() {
+        super();
     }
 
     async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
-        this.allDatacenters = await this.fetchDatacenterInformationRequest(dictionaryUrl);
+        try {
+            const response = await fetch(dictionaryUrl);
+            const datacenters: Datacenter[] = await response.json();
 
-        this.datacenters = this.allDatacenters;
-        this.storage = this.allDatacenters.map((dc) => {
-            return {
-                id: dc.id,
-                latencies: [],
-                bandwidths: [],
-                shouldSave: false,
-            };
-        });
+            this.allDatacenters = datacenters;
+            this.datacenters = datacenters;
 
-        this.clean();
-        this.readLocalStorage();
-
-        this.lce = new LCE(this.datacenters);
+            this.clean();
+        } catch (e) {
+            this.allDatacenters = [];
+            this.datacenters = [];
+        }
     }
 
-    setFilters(filters?: FilterKeys) {
+    async fetchCompatibleDCsWithSockets(): Promise<Datacenter[]> {
+        const checks = await Promise.all(
+            this.datacenters.map(async (dc) => ({
+                dc,
+                isCompatible: await this.lce.checkIfCompatibleWithSockets(dc.ip),
+            }))
+        );
+
+        this.compatibleDCsWithSockets = checks.filter(({isCompatible}) => isCompatible).map(({dc}) => dc);
+
+        return this.compatibleDCsWithSockets;
+    }
+
+    setFilters(filters?: FilterKeys): void {
         this.datacenters = filters
-            ? this.allDatacenters.filter((dc) =>
-                  Object.keys(filters).every((key) => {
+            ? this.allDatacenters.filter((dc) => {
+                  if (this.idsToExclude.includes(dc.id)) {
+                      return false;
+                  }
+
+                  return Object.keys(filters).every((key) => {
                       if (key === 'tags') {
                           return filters[key as keyof FilterKeys]!.some((tag) => {
                               return dc[key].toLowerCase().includes(tag.toLowerCase());
@@ -66,155 +121,188 @@ export class CCT {
                       return filters[key as keyof FilterKeys]!.map((filterVal) => filterVal.toLowerCase()).includes(
                           dc[key as keyof FilterKeys]!.toLowerCase()
                       );
-                  })
-              )
-            : this.allDatacenters;
+                  });
+              })
+            : this.allDatacenters.filter((dc) => !this.idsToExclude.includes(dc.id));
 
-        this.lce.updateDatacenters(this.datacenters);
+        this.filters = filters;
     }
 
     stopMeasurements(): void {
         this.runningLatency = false;
         this.runningBandwidth = false;
+
+        this.abortControllers.forEach((o) => {
+            o.abort();
+        });
+        this.abortControllers = [];
+
         this.lce.terminate();
+
+        this.emit(CCTEvents.LATENCY_END);
+        this.emit(CCTEvents.BANDWIDTH_END);
     }
 
-    async startLatencyChecks({
-        iterations,
-        saveToLocalStorage = false,
-        save = true,
-    }: {
-        iterations: number;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void> {
-        this.runningLatency = true;
+    async startLatencyChecks(params: LatencyChecksParams = {}): Promise<void> {
+        const {iterations = 16, save = true} = params;
 
-        const latencyMeasurementPromises: Promise<void>[] = [];
-        for (let dcLength = 0; dcLength < this.datacenters.length; dcLength++) {
-            const dc = this.datacenters[dcLength];
-            latencyMeasurementPromises.push(
-                this.startMeasurementForLatency({iterations, dc, saveToLocalStorage, save})
-            );
+        await this.startMeasurements('latency', {...params, iterations, save}, new AbortController());
+    }
+
+    async startBandwidthChecks(params: BandwidthChecksParams = {}): Promise<void> {
+        const {iterations = 4, save = true} = params;
+
+        await this.startMeasurements('bandwidth', {...params, iterations, save}, new AbortController());
+    }
+
+    async startMeasurements(
+        type: MeasurementType,
+        params: MeasurementParams,
+        abortController: AbortController
+    ): Promise<void> {
+        const config = this.measurementConfigs[type];
+        const stateProperty = type === 'latency' ? 'runningLatency' : 'runningBandwidth';
+
+        this[stateProperty] = true;
+        this.abortControllers.push(abortController);
+
+        const dc = params.from && this.compatibleDCsWithSockets.find((dc) => dc.id === params.from);
+        if (dc) {
+            await this.startCloudMeasurements(config, params, dc, abortController);
+        } else if (this.datacenters.length !== 0) {
+            await this.startLocalMeasurements(config, params, abortController);
         }
 
-        await Promise.all(latencyMeasurementPromises);
-        this.runningLatency = false;
-    }
-
-    private async startMeasurementForLatency({
-        iterations,
-        dc,
-        saveToLocalStorage = false,
-        save = false,
-    }: {
-        iterations: number;
-        dc: Datacenter;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void> {
-        for (let i = 0; i < iterations; i++) {
-            const result = await this.lce.getLatencyForId(dc.id);
-
-            if (!this.runningLatency) {
-                return;
-            }
-
-            if (result && result.latency && save) {
-                const index = this.datacenters.findIndex((e) => e.id === dc.id);
-                const dataPoint: LatencyDataPoint = {value: result.latency, timestamp: result.timestamp};
-
-                this.datacenters[index].latencies?.push(dataPoint);
-                const averageLatency = Util.getAverageLatency(this.datacenters[index].latencies);
-                this.datacenters[index].averageLatency = averageLatency;
-                this.datacenters[index].latencyJudgement = this.judgeLatency(averageLatency);
-                this.addDataToStorage(dc.id, dataPoint);
-
-                if (saveToLocalStorage) {
-                    this.setLocalStorage();
-                }
-            }
+        if (!abortController.signal.aborted) {
+            this[stateProperty] = false;
+            this.emit(config.endEvent);
         }
     }
 
-    async startBandwidthChecks({
-        datacenter,
-        iterations,
-        bandwidthMode,
-        saveToLocalStorage = false,
-        save = true,
-    }: {
-        datacenter: Datacenter | Datacenter[];
-        iterations: number;
-        bandwidthMode?: BandwidthMode | undefined;
-        saveToLocalStorage?: boolean;
-        save?: boolean;
-    }): Promise<void> {
-        this.runningBandwidth = true;
-        if (Array.isArray(datacenter)) {
-            const bandwidthMeasurementPromises: Promise<void>[] = [];
-            datacenter.forEach((dc) => {
-                bandwidthMeasurementPromises.push(
-                    this.startMeasurementForBandwidth(dc, iterations, bandwidthMode, saveToLocalStorage, save)
-                );
+    public setIdToExclude(ids?: string[]) {
+        this.idsToExclude = ids || [];
+        this.setFilters(this.filters);
+    }
+
+    clearSocket(type: MeasurementType): void {
+        const socket = this.sockets[type];
+        if (!socket) return;
+
+        socket.emit(SocketEvents.STOP);
+        socket.removeAllListeners();
+
+        this.sockets[type] = null;
+    }
+
+    async startCloudMeasurements<T>(
+        config: MeasurementConfig<T>,
+        params: MeasurementParams,
+        dc: Datacenter,
+        abortController: AbortController
+    ): Promise<void> {
+        return new Promise<void>((resolve) => {
+            const resolveAndClear = () => {
+                this.clearSocket(config.type);
+                resolve();
+            };
+
+            abortController.signal.addEventListener('abort', resolveAndClear);
+            const socket = io(`wss://${dc.ip}`, {...defaultSocketConfig, query: {id: dc.id}});
+
+            this.sockets[config.type] = socket;
+
+            const events = [config.socketEndEvent, SocketEvents.DISCONNECT, SocketEvents.CONNECT_ERROR];
+            events.forEach((event) => socket.on(event, resolveAndClear));
+
+            socket.on(SocketEvents.CONNECT, () => {
+                socket.emit(config.socketStartEvent, {
+                    ...params,
+                    id: dc.id,
+                    filters: this.filters,
+                });
             });
 
-            await Promise.all(bandwidthMeasurementPromises);
-        } else {
-            await this.startMeasurementForBandwidth(datacenter, iterations, bandwidthMode, saveToLocalStorage, save);
-        }
+            socket.on(config.socketIterationEvent, (data: T) => {
+                this.emit(config.iterationEvent, data);
+            });
 
-        this.runningBandwidth = false;
+            socket.on(config.socketTickEvent, (data: T) => {
+                this.handleEventData(data as LatencyEventData | BandwidthEventData, params.save!, config.type);
+
+                this.emit(config.tickEvent, data);
+            });
+        });
     }
 
-    private async startMeasurementForBandwidth(
-        dc: Datacenter,
-        iterations: number,
-        bandwidthMode: BandwidthMode = BandwidthMode.big,
-        saveToLocalStorage: boolean,
-        save: boolean
+    async startLocalMeasurements<T>(
+        config: MeasurementConfig<T>,
+        params: MeasurementParams,
+        abortController: AbortController
     ): Promise<void> {
-        for (let i = 0; i < iterations; i++) {
-            const result = await this.lce.getBandwidthForId(dc.id, {bandwidthMode});
+        let iterations = params.iterations!;
+        while (iterations-- > 0) {
+            if (abortController.signal.aborted) return;
 
-            if (!this.runningBandwidth) {
+            const eventData = (
+                await Promise.all(
+                    this.datacenters.map((dc) => this.startMeasurementFor(config, dc, params, abortController))
+                )
+            ).filter((entry) => entry !== null);
+
+            if (!abortController.signal.aborted) {
+                this.emit(config.iterationEvent, eventData);
+            } else {
                 return;
             }
 
-            if (result && result.bandwidth && save) {
-                const index = this.datacenters.findIndex((e) => e.id === dc.id);
-                const dataPoint: BandwidthDataPoint = {value: result.bandwidth, timestamp: result.timestamp};
-
-                this.datacenters[index].bandwidths?.push(dataPoint);
-                const averageBandwidth = Util.getAverageBandwidth(this.datacenters[index].bandwidths);
-                this.datacenters[index].averageBandwidth = averageBandwidth;
-                this.datacenters[index].bandwidthJudgement = this.judgeBandwidth(averageBandwidth);
-                this.addDataToStorage(dc.id, dataPoint);
-
-                if (saveToLocalStorage) {
-                    this.setLocalStorage();
-                }
+            if (params.interval) {
+                await Util.sleep(params.interval, abortController);
             }
         }
     }
 
-    judgeLatency(averageLatency: number): Speed {
-        if (averageLatency < 170) {
-            return Speed.good; // green
-        } else if (averageLatency >= 170 && averageLatency < 280) {
-            return Speed.ok; // yellow
-        } else {
-            return Speed.bad; // red
-        }
+    async startMeasurementFor<T>(
+        config: MeasurementConfig<T>,
+        dc: Datacenter,
+        params: MeasurementParams,
+        abortController: AbortController
+    ): Promise<{data: T; id: string} | null> {
+        const result = await config.getMeasurementResult(dc, params);
+
+        if (abortController.signal.aborted || result === null) return null;
+
+        const data = {id: dc.id, data: result};
+
+        this.handleEventData(data as LatencyEventData | BandwidthEventData, params.save!, config.type);
+
+        this.emit(config.tickEvent, data);
+
+        return data;
     }
 
-    judgeBandwidth(averageBandwidth: BandwithPerSecond): Speed {
-        if (averageBandwidth.megaBitsPerSecond > 1) {
-            return Speed.good; // green
-        } else if (averageBandwidth.megaBitsPerSecond <= 1 && averageBandwidth.megaBitsPerSecond > 0.3) {
-            return Speed.ok; // yellow
-        } else {
-            return Speed.bad; // red
+    handleEventData({id, data}: LatencyEventData | BandwidthEventData, save: boolean, dataType: MeasurementType): void {
+        if (!save) return;
+
+        const dcIndex = this.datacenters.findIndex((e) => e.id === id);
+
+        if (dcIndex < 0) return;
+
+        const dc = this.datacenters[dcIndex];
+
+        if (dataType === 'latency') {
+            dc.latencies = dc.latencies || [];
+            dc.latencies.push(data as Latency);
+
+            const averageLatency = Util.getAverageLatency(dc.latencies);
+            dc.averageLatency = averageLatency;
+            dc.latencyJudgement = Util.judgeLatency(averageLatency);
+        } else if (dataType === 'bandwidth') {
+            dc.bandwidths = dc.bandwidths || [];
+            dc.bandwidths.push(data as Bandwidth);
+
+            const averageBandwidth = Util.getAverageBandwidth(dc.bandwidths);
+            dc.averageBandwidth = averageBandwidth;
+            dc.bandwidthJudgement = Util.judgeBandwidth(averageBandwidth);
         }
     }
 
@@ -223,7 +311,7 @@ export class CCT {
         return this.datacenters;
     }
 
-    async getAddress(): Promise<Location> {
+    async getAddress(): Promise<Location | null> {
         const location: Location = {
             address: '',
             latitude: 0,
@@ -258,144 +346,63 @@ export class CCT {
                         );
                     },
                     () => {
-                        resolve(location);
+                        resolve(null);
                     }
                 );
             } else {
-                resolve(location);
+                resolve(null);
             }
         });
     }
 
-    async storeRequest(body: any): Promise<any> {
-        return await fetch('https://cct.demo-education.cloud.sap/measurement', {
-            method: 'post',
-            body: body,
-            headers: {'Content-Type': 'application/json'},
-        }).then((res: Response) => res.json());
-    }
+    async store(location?: Location, url = 'https://cct.demo-education.cloud.sap/measurement'): Promise<boolean> {
+        if (!location) return false;
 
-    async store(
-        location: Location = {
-            address: 'Dietmar-Hopp-Allee 16, 69190 Walldorf, Germany',
-            latitude: 49.2933756,
-            longitude: 8.6421212,
-        }
-    ): Promise<boolean> {
+        const minimumThresholdToSave = 16;
+
         const data: StoreData[] = [];
+        this.datacenters.forEach((dc, index) => {
+            const newLatencyMeasurementsCount = dc.latencies.length - (dc.storedLatencyCount || 0);
 
-        this.storage = this.storage.map((item) => {
-            if (item.shouldSave) {
+            if (newLatencyMeasurementsCount >= minimumThresholdToSave) {
+                const newAverageLatency = Util.getAverageLatency(dc.latencies, dc.storedLatencyCount);
+                const newAverageBandwidth = Util.getAverageBandwidth(dc.bandwidths, dc.storedBandwidthCount);
+
                 data.push({
-                    id: item.id,
-                    latency: `${Util.getAverageLatency(item.latencies)?.toFixed(2)}`,
-                    averageBandwidth: Util.getAverageBandwidth(item.bandwidths).megaBitsPerSecond.toFixed(2),
+                    id: dc.id,
+                    latency: newAverageLatency.toFixed(2),
+                    averageBandwidth: newAverageBandwidth.megaBitsPerSecond.toFixed(2),
                 });
 
-                return {
-                    id: item.id,
-                    latencies: [],
-                    bandwidths: [],
-                    shouldSave: false,
-                };
+                this.datacenters[index].storedLatencyCount = dc.latencies.length;
+                this.datacenters[index].storedBandwidthCount = dc.bandwidths.length;
             }
-            return item;
         });
 
-        const body = JSON.stringify(
-            {
-                uid: uuid(),
-                address: location.address,
-                latitude: location.latitude,
-                longitude: location.longitude,
-                data,
-            },
-            null,
-            4
-        );
-
-        try {
-            const result = await this.storeRequest(body);
-            return result.status === 'OK';
-        } catch (error) {
+        if (data.length === 0) {
             return false;
         }
-    }
 
-    private addDataToStorage(id: string, data: LatencyDataPoint | BandwidthDataPoint) {
-        this.storage = this.storage.map((item: Storage) => {
-            if (item.id === id) {
-                const isLatencyData = 'value' in data && typeof data.value === 'number';
+        const payload = {
+            uid: uuid(),
+            ...location,
+            data,
+        };
 
-                const latencies = isLatencyData ? [...item.latencies, data as LatencyDataPoint] : item.latencies;
+        const body = JSON.stringify(payload, null, 4);
 
-                const bandwidths = isLatencyData ? item.bandwidths : [...item.bandwidths, data as BandwidthDataPoint];
+        try {
+            const result = await fetch(url, {
+                method: 'post',
+                body: body,
+                headers: {'Content-Type': 'application/json'},
+            });
 
-                return {
-                    id: item.id,
-                    latencies,
-                    bandwidths,
-                    shouldSave: latencies.length >= 16,
-                };
-            }
+            const json = await result.json();
 
-            return item;
-        });
-    }
-
-    private setLocalStorage() {
-        window.localStorage.removeItem(localStorageName);
-
-        const data: LocalStorage[] = this.allDatacenters.map((dc) => {
-            return {
-                id: dc.id,
-                latencies: dc.latencies,
-                averageLatency: dc.averageLatency,
-                latencyJudgement: dc.latencyJudgement,
-                bandwidths: dc.bandwidths,
-                averageBandwidth: dc.averageBandwidth,
-                bandwidthJudgement: dc.bandwidthJudgement,
-            };
-        });
-
-        window.localStorage.setItem(localStorageName, JSON.stringify(data));
-    }
-
-    private readLocalStorage(): void {
-        const data: string | null = window.localStorage.getItem(localStorageName);
-
-        if (!data) {
-            return;
-        }
-        const parsedData: LocalStorage[] = JSON.parse(data);
-        this.allDatacenters = this.allDatacenters.map((dc) => {
-            const foundItem = parsedData.find((item) => item.id === dc.id);
-            if (foundItem) {
-                return {
-                    ...dc,
-                    averageLatency: foundItem.averageLatency,
-                    latencyJudgement: foundItem.latencyJudgement,
-                    averageBandwidth: foundItem.averageBandwidth,
-                    bandwidthJudgement: foundItem.bandwidthJudgement,
-                    latencies: foundItem.latencies,
-                    bandwidths: foundItem.bandwidths,
-                };
-            }
-            return dc;
-        });
-
-        window.localStorage.removeItem(localStorageName);
-    }
-
-    subscribe(event: Events, callback: () => void): void {
-        if (this.lce) {
-            this.lce.on(event, callback);
-        }
-    }
-
-    unsubscribe(event: Events, callback: () => void): void {
-        if (this.lce) {
-            this.lce.off(event, callback);
+            return json.status === 'OK';
+        } catch (error) {
+            return false;
         }
     }
 
@@ -410,6 +417,10 @@ export class CCT {
             };
             dc.latencies = [];
             dc.bandwidths = [];
+            dc.bandwidthJudgement = Speed.nothing;
+            dc.latencyJudgement = Speed.nothing;
+            dc.storedBandwidthCount = 0;
+            dc.storedLatencyCount = 0;
         });
     }
 
@@ -417,13 +428,15 @@ export class CCT {
         latitude,
         longitude,
         top = 1,
+        url = 'https://cct.demo-education.cloud.sap/datacenters?isActive=true',
     }: {
         latitude: number;
         longitude: number;
+        url: string;
         top?: number;
     }): Promise<Datacenter[]> {
         if (!this.allDatacenters || !this.allDatacenters.length) {
-            await this.fetchDatacenterInformation('https://cct.demo-education.cloud.sap/datacenters?isActive=true');
+            await this.fetchDatacenterInformation(url);
         }
 
         // Calculate and store distances for each datacenter

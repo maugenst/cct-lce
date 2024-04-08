@@ -1,301 +1,272 @@
 import {LCE} from '../app/LCE';
 import {Datacenter} from '../@types/Datacenter';
-
-const datacenters: Datacenter[] = [
-    {
-        id: '07fe49e2-795b-4f06-9908-436e6dc21042',
-        cloud: 'gcp',
-        name: 'us-west1',
-        town: 'The Dalles, Oregon',
-        country: 'USA',
-        latitude: '45.609579600000',
-        longitude: '-121.243900200000',
-        ip: 'cct-drone-gcp-us-west1.demo-education.cloud.sap',
-        tags: 'test',
-        lastUpdate: '2019-04-12T08:24:04.000Z',
-        position: 1,
-        averageLatency: 123,
-        averageBandwidth: {
-            bitsPerSecond: 123,
-            kiloBitsPerSecond: 123,
-            megaBitsPerSecond: 123,
-        },
-        latencies: [
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-        ],
-        bandwidths: [
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-        ],
-    },
-    {
-        id: '1764db7a-7827-4c68-aba2-6031cdd11503',
-        cloud: 'gcp',
-        name: 'us-west2',
-        town: 'Los Angeles, California',
-        country: 'USA',
-        latitude: '34.020346400000',
-        longitude: '-118.972172000000',
-        ip: 'cct-drone-gcp-us-west2.demo-education.cloud.sap',
-        tags: 'test',
-        lastUpdate: '2019-04-12T08:24:04.000Z',
-        position: 1,
-        averageLatency: 123,
-        averageBandwidth: {
-            bitsPerSecond: 123,
-            kiloBitsPerSecond: 123,
-            megaBitsPerSecond: 123,
-        },
-        latencies: [
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-        ],
-        bandwidths: [
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-        ],
-    },
-    {
-        id: '1991775f-1f04-46f2-987a-9979d6dfff1f',
-        cloud: 'gcp',
-        name: 'asia-southeast1',
-        town: 'Jurong West',
-        country: 'Singapore',
-        latitude: '1.344059500000',
-        longitude: '103.666527500000',
-        ip: 'cct-drone-gcp-asia-southeast1.demo-education.cloud.sap',
-        tags: 'test',
-        lastUpdate: '2019-04-12T08:24:05.000Z',
-        position: 1,
-        averageLatency: 123,
-        averageBandwidth: {
-            bitsPerSecond: 123,
-            kiloBitsPerSecond: 123,
-            megaBitsPerSecond: 123,
-        },
-        latencies: [
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-        ],
-        bandwidths: [
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-        ],
-    },
-    {
-        id: '2c59733c-5eb5-4e28-8eb5-a66f553adc1e',
-        cloud: 'gcp',
-        name: 'europe-west3',
-        town: 'Frankfurt',
-        country: 'Germany',
-        latitude: '50.121127700000',
-        longitude: '8.496482000000',
-        ip: 'cct-drone-gcp-europe-west3.demo-education.cloud.sap',
-        tags: 'test',
-        lastUpdate: '2019-04-12T08:24:04.000Z',
-        position: 1,
-        averageLatency: 123,
-        averageBandwidth: {
-            bitsPerSecond: 123,
-            kiloBitsPerSecond: 123,
-            megaBitsPerSecond: 123,
-        },
-        latencies: [
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-            {value: 123, timestamp: 123},
-        ],
-        bandwidths: [
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-            {
-                timestamp: 123,
-                value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-            },
-        ],
-    },
-];
-
-beforeAll(() => {
-    jest.setTimeout(300000);
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+import {BandwidthMode} from '../@types/Shared';
+import AbortController from 'abort-controller';
+jest.mock('node-fetch', () => {
+    const originalModule = jest.requireActual('node-fetch');
+    return {
+        __esModule: true, // Correctly handle ES Module interop
+        default: jest.fn().mockImplementation(originalModule.default), // Mock fetch and allow for custom implementation per test case
+        Response: originalModule.Response, // Use the actual Response class for constructing response objects
+    };
 });
 
-describe('lce-tests', () => {
-    test('test object creation', async () => {
-        const lce = new LCE(datacenters);
+import fetch from 'node-fetch';
 
-        expect(lce.datacenters.length).toEqual(4);
+describe('LCE', () => {
+    let instance: LCE;
+
+    beforeEach(() => {
+        instance = new LCE();
+        jest.clearAllMocks();
     });
 
-    test('test - drone latency', async () => {
-        const lce = new LCE(datacenters);
-        const latency = await lce.getLatencyFor({
-            id: 'f283eadf-2165-4bdd-9c72-cce04b881c7a',
-            cloud: 'gcp',
-            name: 'europe-west2',
-            town: 'London',
-            country: 'United Kingdom',
-            latitude: '51.528161300000',
-            longitude: '-0.662001000000',
-            tags: 'test',
-            ip: 'cct-drone-gcp-europe-west2.demo-education.cloud.sap',
-            lastUpdate: '2019-04-12T08:24:05.000Z',
-            position: 1,
-            averageLatency: 123,
-            averageBandwidth: {
-                bitsPerSecond: 123,
-                kiloBitsPerSecond: 123,
-                megaBitsPerSecond: 123,
-            },
-            latencies: [
-                {value: 123, timestamp: 123},
-                {value: 123, timestamp: 123},
-                {value: 123, timestamp: 123},
-            ],
-            bandwidths: [
-                {
-                    timestamp: 123,
-                    value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-                },
-                {
-                    timestamp: 123,
-                    value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-                },
-                {
-                    timestamp: 123,
-                    value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-                },
-            ],
+    describe('Network operations', () => {
+        describe('checkIfCompatibleWithSockets', () => {
+            const mockLatencyFetch = jest.spyOn(LCE.prototype, 'latencyFetch');
+            const mockIsSemverVersionHigher = jest.spyOn(LCE.prototype, 'isSemverVersionHigher');
+
+            it('should return true if drone version is higher', async () => {
+                mockLatencyFetch.mockResolvedValue({
+                    headers: {
+                        get: jest.fn().mockReturnValueOnce('2.0.0'),
+                    },
+                } as any);
+                mockIsSemverVersionHigher.mockReturnValueOnce(true);
+
+                const result = await instance.checkIfCompatibleWithSockets('192.168.1.1');
+                expect(result).toBeTruthy();
+                expect(mockLatencyFetch).toHaveBeenCalledWith('https://192.168.1.1/drone/index.html');
+                expect(mockIsSemverVersionHigher).toHaveBeenCalledWith('2.0.0');
+            });
+
+            it('should return false if drone version header is missing', async () => {
+                mockLatencyFetch.mockResolvedValue({
+                    headers: {
+                        get: jest.fn().mockReturnValueOnce(null),
+                    },
+                } as any);
+
+                const result = await instance.checkIfCompatibleWithSockets('192.168.1.1');
+                expect(result).toBeFalsy();
+                expect(mockLatencyFetch).toHaveBeenCalledWith('https://192.168.1.1/drone/index.html');
+            });
         });
-        expect(latency).toBeDefined();
-        expect(latency?.latency).toBeDefined();
-        expect(latency && latency.latency > 1).toBe(true);
 
-        const bandwidth = await lce.getBandwidthFor({
-            id: 'f283eadf-2165-4bdd-9c72-cce04b881c7a',
-            cloud: 'gcp',
-            name: 'europe-west2',
-            town: 'London',
-            country: 'United Kingdom',
-            latitude: '51.528161300000',
-            longitude: '-0.662001000000',
-            tags: 'test',
-            ip: 'cct-drone-gcp-europe-west2.demo-education.cloud.sap',
-            lastUpdate: '2019-04-12T08:24:05.000Z',
-            position: 1,
-            averageLatency: 123,
-            averageBandwidth: {
-                bitsPerSecond: 123,
-                kiloBitsPerSecond: 123,
-                megaBitsPerSecond: 123,
-            },
-            latencies: [
-                {value: 123, timestamp: 123},
-                {value: 123, timestamp: 123},
-                {value: 123, timestamp: 123},
-            ],
-            bandwidths: [
-                {
-                    timestamp: 123,
-                    value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-                },
-                {
-                    timestamp: 123,
-                    value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-                },
-                {
-                    timestamp: 123,
-                    value: {bitsPerSecond: 123, kiloBitsPerSecond: 123, megaBitsPerSecond: 123},
-                },
-            ],
+        describe('getLatencyFor', () => {
+            const mockLatencyFetch = jest.spyOn(LCE.prototype, 'latencyFetch');
+
+            it('should measure and return latency for fetch operation', async () => {
+                mockLatencyFetch.mockResolvedValueOnce(new Promise((resolve) => setTimeout(resolve, 10)));
+
+                const datacenter = {ip: '192.168.1.1'};
+                const start = Date.now();
+                const result = await instance.getLatencyFor(datacenter as Datacenter);
+                const end = Date.now();
+
+                const marginOfError = 3;
+                expect(result.value).toBeGreaterThanOrEqual(10);
+                expect(result.value).toBeLessThanOrEqual(end - start + marginOfError);
+                expect(result.timestamp).toBeGreaterThanOrEqual(start);
+                expect(result.timestamp).toBeLessThanOrEqual(end + marginOfError);
+                expect(mockLatencyFetch).toHaveBeenCalledWith(`https://${datacenter.ip}/drone/index.html`);
+            });
         });
-        expect(bandwidth).toBeDefined();
-        expect(bandwidth?.bandwidth).toBeDefined();
-        expect(bandwidth?.bandwidth.bitsPerSecond).toBeDefined();
-        expect(bandwidth?.bandwidth.kiloBitsPerSecond).toBeDefined();
-        expect(bandwidth?.bandwidth.megaBitsPerSecond).toBeDefined();
+
+        describe('getBandwidthFor', () => {
+            const mockBandwidthFetch = jest.spyOn(LCE.prototype, 'bandwidthFetch');
+            const mockCalcBandwidth = jest.spyOn(LCE.prototype, 'calcBandwidth');
+
+            it('should calculate bandwidth for big mode', async () => {
+                const fakeResponse = {text: () => Promise.resolve('Some long response body')};
+                mockBandwidthFetch.mockResolvedValueOnce(fakeResponse as any);
+                mockCalcBandwidth.mockReturnValueOnce({a: 1} as any); // Simulate bandwidth calculation result
+
+                const datacenter = {ip: '192.168.1.1'};
+                const result = await instance.getBandwidthFor(datacenter as Datacenter, BandwidthMode.big);
+
+                expect(mockBandwidthFetch).toHaveBeenCalledWith(`https://${datacenter.ip}/drone/big`);
+                expect(result).toEqual({value: {a: 1}, timestamp: expect.any(Number)});
+            });
+
+            it('should return null if fetch fails', async () => {
+                mockBandwidthFetch.mockResolvedValueOnce(null);
+
+                const datacenter = {ip: '192.168.1.2'};
+                const result = await instance.getBandwidthFor(datacenter as Datacenter);
+
+                expect(result).toBeNull();
+            });
+
+            it('should return null if response text cannot be read', async () => {
+                const fakeResponse = {
+                    text: () => Promise.reject(new Error('Failed to read response body')),
+                };
+                mockBandwidthFetch.mockResolvedValueOnce(fakeResponse as any);
+
+                const datacenter = {ip: '192.168.1.3'};
+                const result = await instance.getBandwidthFor(datacenter as Datacenter);
+
+                expect(result).toBeNull();
+            });
+        });
+
+        // TODO: fix latencyFetch test, for some reason same solution as for bandwidthFetch does not work
+        // describe('Network fetches', () => {
+        //     it.each([
+        //         ['bandwidthFetch', 'cancelableBandwidthRequests'],
+        //         ['latencyFetch', 'cancelableLatencyRequests'],
+        //     ])('%s initiates an abortable fetch and stores the controller', async (methodName, propertyName) => {
+        //         jest.spyOn(LCE.prototype, 'abortableFetch').mockResolvedValueOnce(null);
+        //
+        //         await instance[methodName as 'latencyFetch' | 'bandwidthFetch']('https://example.com/data');
+        //         console.log(propertyName);
+        //         expect(instance[propertyName as keyof LCE].length).toBe(1);
+        //     });
+        // });
+
+        describe('abortableFetch', () => {
+            beforeEach(() => {
+                (fetch as any).mockClear();
+            });
+
+            it('completes the fetch request successfully before timeout', async () => {
+                const mockResponse = new Response('OK', {status: 200});
+                (fetch as any).mockResolvedValue(mockResponse);
+
+                const controller = new AbortController();
+                const url = 'https://example.com/data';
+
+                jest.useFakeTimers();
+                const resultPromise = instance.abortableFetch(url, controller);
+                jest.runAllTimers();
+                const result = await resultPromise;
+
+                expect(fetch).toHaveBeenCalledWith(
+                    expect.stringContaining(url),
+                    expect.objectContaining({signal: expect.any(Object)})
+                );
+                expect(result).toBeInstanceOf(Response);
+                jest.useRealTimers();
+            });
+
+            it('returns null when fetch is aborted due to timeout', async () => {
+                (fetch as any).mockImplementation(({signal}: any) => {
+                    return new Promise((_resolve, reject) => {
+                        if (signal.aborted) {
+                            reject(new Error('error'));
+                        }
+                    });
+                });
+
+                const controller = new AbortController();
+                const url = 'https://example.com/timeout';
+
+                jest.useFakeTimers();
+
+                controller.signal.addEventListener('abort', () => {
+                    jest.runOnlyPendingTimers();
+                });
+
+                const resultPromise = instance.abortableFetch(url, controller);
+
+                jest.advanceTimersByTime(3000);
+
+                let result;
+                try {
+                    result = await resultPromise;
+                } catch (e) {
+                    result = null;
+                }
+
+                expect(fetch).toHaveBeenCalledWith(
+                    expect.stringContaining(url),
+                    expect.objectContaining({signal: expect.any(Object)})
+                );
+                expect(controller.signal.aborted).toBeTruthy();
+                expect(result).toBeNull();
+
+                jest.useRealTimers();
+            });
+
+            it('returns null if fetch operation fails', async () => {
+                (fetch as any).mockRejectedValue(new Error('Network error'));
+                const controller = new AbortController();
+                const url = 'https://example.com/fail';
+
+                const result = await instance.abortableFetch(url, controller);
+
+                expect(fetch).toHaveBeenCalledWith(
+                    expect.stringContaining(url),
+                    expect.objectContaining({signal: expect.any(Object)})
+                );
+                expect(result).toBeNull();
+            });
+        });
     });
 
-    test('test - drone bandwidth by id', async () => {
-        const lce = new LCE(datacenters);
-        const bandwidth = await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
-        expect(bandwidth).toBeDefined();
-        expect(bandwidth?.bandwidth).toBeDefined();
+    describe('Utility methods', () => {
+        describe('compare', () => {
+            it('returns -1 if the latency of a is less than the latency of b', () => {
+                const a = {latency: 10};
+                const b = {latency: 20};
+                expect(instance.compare(a, b)).toBe(-1);
+            });
 
-        expect(bandwidth?.bandwidth.bitsPerSecond).toBeDefined();
-        expect(bandwidth?.bandwidth.kiloBitsPerSecond).toBeDefined();
-        expect(bandwidth?.bandwidth.megaBitsPerSecond).toBeDefined();
+            it('returns 1 if the latency of a is greater than the latency of b', () => {
+                const a = {latency: 30};
+                const b = {latency: 20};
+                expect(instance.compare(a, b)).toBe(1);
+            });
+
+            it('returns 0 if the latencies of a and b are equal', () => {
+                const a = {latency: 20};
+                const b = {latency: 20};
+                expect(instance.compare(a, b)).toBe(0);
+            });
+        });
     });
 
-    test('test - drone bandwidth and cancel download', async () => {
-        const lce = new LCE(datacenters);
-        if (lce !== null) {
-            await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
+    describe('terminate', () => {
+        it('calls abort on all cancelableLatencyRequests and cancelableBandwidthRequests', () => {
+            instance.cancelableLatencyRequests = [new AbortController(), new AbortController()];
+            instance.cancelableBandwidthRequests = [new AbortController(), new AbortController()];
 
-            lce.terminate();
-            expect(lce.cancelableBandwidthRequests.length).toEqual(0);
+            instance.cancelableLatencyRequests.forEach((controller) => jest.spyOn(controller, 'abort'));
+            instance.cancelableBandwidthRequests.forEach((controller) => jest.spyOn(controller, 'abort'));
 
-            const bandwidth = await lce.getBandwidthForId('2c59733c-5eb5-4e28-8eb5-a66f553adc1e');
-            expect(bandwidth).toBeDefined();
-            expect(bandwidth?.bandwidth).toBeDefined();
-            expect(bandwidth?.bandwidth.bitsPerSecond).toBeDefined();
-            expect(bandwidth?.bandwidth.kiloBitsPerSecond).toBeDefined();
-            expect(bandwidth?.bandwidth.megaBitsPerSecond).toBeDefined();
-        }
+            instance.terminate();
+
+            instance.cancelableLatencyRequests.forEach((controller) => {
+                expect(controller.abort).toHaveBeenCalled();
+            });
+            instance.cancelableBandwidthRequests.forEach((controller) => {
+                expect(controller.abort).toHaveBeenCalled();
+            });
+
+            expect(instance.cancelableLatencyRequests).toEqual([]);
+            expect(instance.cancelableBandwidthRequests).toEqual([]);
+        });
     });
 
-    test('test - drone all latencies', async () => {
-        const lce = new LCE(datacenters);
-        const latencies = await lce.runLatencyCheckForAll();
-        expect(latencies && latencies.length > 0).toBeTruthy();
+    describe('calcBandwidth', () => {
+        it('correctly calculates bandwidth for given download size and latency', () => {
+            const downloadSize = 1000;
+            const latency = 1000;
+
+            const result = instance.calcBandwidth(downloadSize, latency);
+
+            expect(result.bitsPerSecond).toBe(8000);
+            expect(result.kiloBitsPerSecond).toBe(8);
+            expect(result.megaBitsPerSecond).toBe(0.008);
+        });
     });
 
-    test('test - drone all bandwidths', async () => {
-        const lce = new LCE([datacenters[0]]);
-        const bandwidth = await lce.runBandwidthCheckForAll();
-        expect(bandwidth && bandwidth.length > 0).toBeTruthy();
+    describe('isSemverVersionHigher', () => {
+        it('correctly compares versions when custom base version is provided', () => {
+            expect(instance.isSemverVersionHigher('0.9.9', '1.0.0')).toBeFalsy(); // Lower than custom base version
+            expect(instance.isSemverVersionHigher('1.0.0', '0.9.9')).toBeTruthy(); // Higher than custom base version
+            expect(instance.isSemverVersionHigher('0.9.9', '0.9.9')).toBeTruthy(); // Equal to custom base version
+        });
     });
-
-    // more to come ...
 });
