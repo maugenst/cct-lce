@@ -31,7 +31,7 @@ export declare type FilterKeys = {
 };
 export declare type StoreData = {
     latency: string;
-    averageBandwidth: string;
+    averageBandwidth: string | null;
     id: string;
 };
 export declare type Location = {

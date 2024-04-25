@@ -38,7 +38,7 @@ export type FilterKeys = {
 
 export type StoreData = {
     latency: string;
-    averageBandwidth: string;
+    averageBandwidth: string | null;
     id: string;
 };
 
