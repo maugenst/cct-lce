@@ -29,7 +29,6 @@ const defaultSocketConfig = {
     timeout: 5000,
 };
 
-// TODO: all private methods move to Utils and test it there
 export class CCT extends EventEmitter {
     allDatacenters: Datacenter[] = [];
     datacenters: Datacenter[] = [];
@@ -37,6 +36,9 @@ export class CCT extends EventEmitter {
     runningBandwidth = false;
 
     // TODO: make private vars
+    private lastLatencyFrom?: string;
+    private lastBandwidthFrom?: string;
+
     idsToExclude: string[] = [];
     compatibleDCsWithSockets: Datacenter[] = [];
     filters?: FilterKeys;
@@ -76,7 +78,9 @@ export class CCT extends EventEmitter {
         super();
     }
 
-    async fetchDatacenterInformation(dictionaryUrl: string): Promise<void> {
+    async fetchDatacenterInformation(
+        dictionaryUrl = 'https://cct.demo-education.cloud.sap/datacenters?isActive=true'
+    ): Promise<void> {
         try {
             const response = await fetch(dictionaryUrl);
             const datacenters: Datacenter[] = await response.json();
@@ -144,12 +148,30 @@ export class CCT extends EventEmitter {
     }
 
     async startLatencyChecks(params: LatencyChecksParams = {}): Promise<void> {
+        if (!this.compatibleDCsWithSockets.some((el) => el.id === params.from) && params.from !== undefined) {
+            return;
+        }
+
+        if (params.from !== this.lastLatencyFrom) {
+            this.cleanLatencyData();
+            this.lastLatencyFrom = params.from;
+        }
+
         const {iterations = 16, save = true} = params;
 
         await this.startMeasurements('latency', {...params, iterations, save}, new AbortController());
     }
 
     async startBandwidthChecks(params: BandwidthChecksParams = {}): Promise<void> {
+        if (!this.compatibleDCsWithSockets.some((el) => el.id === params.from) && params.from !== undefined) {
+            return;
+        }
+
+        if (params.from !== this.lastBandwidthFrom) {
+            this.cleanBandwidthData();
+            this.lastBandwidthFrom = params.from;
+        }
+
         const {iterations = 4, save = true} = params;
 
         await this.startMeasurements('bandwidth', {...params, iterations, save}, new AbortController());
@@ -207,7 +229,7 @@ export class CCT extends EventEmitter {
             };
 
             abortController.signal.addEventListener('abort', resolveAndClear);
-            const socket = io(`wss://${dc.ip}`, {...defaultSocketConfig, query: {id: dc.id}});
+            const socket = io(`https://${dc.ip}`, {...defaultSocketConfig, query: {id: dc.id}});
 
             this.sockets[config.type] = socket;
 
@@ -358,24 +380,35 @@ export class CCT extends EventEmitter {
     async store(location?: Location, url = 'https://cct.demo-education.cloud.sap/measurement'): Promise<boolean> {
         if (!location) return false;
 
-        const minimumThresholdToSave = 16;
+        const minimumLatencyThresholdToSave = 16;
+        const minimumBandwidthThresholdToCalculateAverage = 4;
 
         const data: StoreData[] = [];
         this.datacenters.forEach((dc, index) => {
             const newLatencyMeasurementsCount = dc.latencies.length - (dc.storedLatencyCount || 0);
 
-            if (newLatencyMeasurementsCount >= minimumThresholdToSave) {
+            if (newLatencyMeasurementsCount >= minimumLatencyThresholdToSave) {
                 const newAverageLatency = Util.getAverageLatency(dc.latencies, dc.storedLatencyCount);
-                const newAverageBandwidth = Util.getAverageBandwidth(dc.bandwidths, dc.storedBandwidthCount);
+
+                const isNewAverageBandwidthCalculable =
+                    this.lastBandwidthFrom === this.lastLatencyFrom &&
+                    dc.bandwidths.length - (dc.storedBandwidthCount || 0) >=
+                        minimumBandwidthThresholdToCalculateAverage;
+
+                const newAverageBandwidth = isNewAverageBandwidthCalculable
+                    ? Util.getAverageBandwidth(dc.bandwidths, dc.storedBandwidthCount)
+                    : null;
 
                 data.push({
                     id: dc.id,
                     latency: newAverageLatency.toFixed(2),
-                    averageBandwidth: newAverageBandwidth.megaBitsPerSecond.toFixed(2),
+                    averageBandwidth: newAverageBandwidth && newAverageBandwidth.megaBitsPerSecond.toFixed(2),
                 });
 
                 this.datacenters[index].storedLatencyCount = dc.latencies.length;
-                this.datacenters[index].storedBandwidthCount = dc.bandwidths.length;
+                this.datacenters[index].storedBandwidthCount = isNewAverageBandwidthCalculable
+                    ? dc.bandwidths.length
+                    : this.datacenters[index].storedBandwidthCount;
             }
         });
 
@@ -385,6 +418,7 @@ export class CCT extends EventEmitter {
 
         const payload = {
             uid: uuid(),
+            source_id: this.lastLatencyFrom,
             ...location,
             data,
         };
@@ -407,20 +441,30 @@ export class CCT extends EventEmitter {
     }
 
     clean(): void {
+        this.cleanBandwidthData();
+        this.cleanLatencyData();
+    }
+
+    private cleanLatencyData(): void {
         this.datacenters.forEach((dc) => {
             dc.position = 0;
             dc.averageLatency = 0;
+            dc.latencies = [];
+            dc.latencyJudgement = Speed.nothing;
+            dc.storedLatencyCount = 0;
+        });
+    }
+
+    private cleanBandwidthData(): void {
+        this.datacenters.forEach((dc) => {
             dc.averageBandwidth = {
                 bitsPerSecond: 0,
                 kiloBitsPerSecond: 0,
                 megaBitsPerSecond: 0,
             };
-            dc.latencies = [];
             dc.bandwidths = [];
             dc.bandwidthJudgement = Speed.nothing;
-            dc.latencyJudgement = Speed.nothing;
             dc.storedBandwidthCount = 0;
-            dc.storedLatencyCount = 0;
         });
     }
 

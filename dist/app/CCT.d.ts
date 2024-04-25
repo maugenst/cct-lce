@@ -12,6 +12,8 @@ export declare class CCT extends EventEmitter {
     datacenters: Datacenter[];
     runningLatency: boolean;
     runningBandwidth: boolean;
+    private lastLatencyFrom?;
+    private lastBandwidthFrom?;
     idsToExclude: string[];
     compatibleDCsWithSockets: Datacenter[];
     filters?: FilterKeys;
@@ -24,7 +26,7 @@ export declare class CCT extends EventEmitter {
         [key in MeasurementType]: MeasurementConfig<any>;
     };
     constructor();
-    fetchDatacenterInformation(dictionaryUrl: string): Promise<void>;
+    fetchDatacenterInformation(dictionaryUrl?: string): Promise<void>;
     fetchCompatibleDCsWithSockets(): Promise<Datacenter[]>;
     setFilters(filters?: FilterKeys): void;
     stopMeasurements(): void;
@@ -44,6 +46,8 @@ export declare class CCT extends EventEmitter {
     getAddress(): Promise<Location | null>;
     store(location?: Location, url?: string): Promise<boolean>;
     clean(): void;
+    private cleanLatencyData;
+    private cleanBandwidthData;
     getClosestDatacenters({ latitude, longitude, top, url, }: {
         latitude: number;
         longitude: number;
