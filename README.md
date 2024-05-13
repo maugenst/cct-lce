@@ -15,6 +15,8 @@ CCT-LCE is specifically tailored for managing and monitoring data centers, with 
   - [fetchCompatibleDCsWithSockets](#fetchcompatibledcswithsockets)
   - [setFilters](#setfilters)
   - [stopMeasurements](#stopmeasurements)
+  - [clean](#clean)
+  - [setIdToExclude](#setIdToExclude)
   - [startLatencyChecks](#startlatencychecks)
   - [startBandwidthChecks](#startbandwidthchecks)
   - [getCurrentDatacentersSorted](#getcurrentdatacenterssorted)
@@ -22,6 +24,7 @@ CCT-LCE is specifically tailored for managing and monitoring data centers, with 
   - [store](#store)
   - [getClosestDatacenters](#getclosestdatacenters)
 - [Events](#events)
+- [Cloud2Cloud](#cloud2cloud)
 - [Types](#types)
   - [Datacenter](#datacenter)
   - [LatencyChecksParams](#latencychecksparams)
@@ -126,9 +129,72 @@ Stops all ongoing measurement processes and clears related resources.
 
 **Example:**
 
-```typescript 
-// TODO
-cct.stopMeasurements();
+```typescript
+const cct = new CCT();
+
+await cct.fetchDatacenterInformation('https://api.example.com/datacenters');
+
+cct.startLatencyChecks({ iterations: 10, interval: 1000 });
+
+await delay(3000) // wait for 3s
+
+cct.stopMeasurements(); // will stop latency measurements after 3s
+```
+
+### clean
+
+Cleans latency and bandwidth calculations for all datacenters. Fields that are cleaned:
+
+- `position`
+- `averageLatency`
+- `latencies`
+- `latencyJudgement`
+- `averageBandwidth`
+- `bandwidths`
+- `bandwidthJudgement`
+
+**Example:**
+
+```typescript
+const cct = new CCT();
+
+await cct.fetchDatacenterInformation('https://api.example.com/datacenters');
+
+await cct.startLatencyChecks({ iterations: 10, interval: 1000 });
+
+console.log(cct.datacenters[0].latencies.length) // 10
+
+cct.clean()
+
+console.log(cct.datacenters[0].latencies.length) // 0
+```
+
+### setIdToExclude
+
+Excludes datacenters from datacenters list by id. 
+
+Example of use: Use this when you're making cloud-to-cloud measurements (by using the `from` parameter in [startBandwidthChecks](#startbandwidthchecks) or [startLatencyChecks](#startlatencychecks)). Exclude the data center where the measurements start (source data center), because this data center does not perform measurements on itself, so any results for it would be empty.
+
+**Parameters:**
+
+- `ids` (string[]): Ids of datacenters you want to exclude from datacetners list.
+
+**Example:**
+
+```typescript
+const cct = new CCT();
+
+await cct.fetchDatacenterInformation(); // fetch datacenters
+
+await cct.fetchCompatibleDCsWithSockets(); // check which datacenters can initiate measurements (cloud2cloud)
+
+console.log(cct.datacenters.length) // N
+
+cct.setIdToExclude(["id_of_compatible_dc"]);
+
+console.log(cct.datacenters.length) // N - 1
+
+await cct.startLatencyChecks({ iterations: 10, interval: 1000, from: "id_of_compatible_dc" });
 ```
 
 ### startLatencyChecks
@@ -288,21 +354,11 @@ The CCT class extends an event emitter, enabling full utilization of its capabil
 
 - `bandwidth:end`: This event is emitted when the bandwidth measurement process has either concluded or been prematurely stopped.
 
-**Example:**
+## Cloud2Cloud
 
-```typescript
-const cct = new CCT();
+Local measurements involves sending a data packet from the user's machine (from a user's machine to a datacenter) and measure the time it takes to receive a response from the datacenter. This round-trip time provides an estimate of both latency and bandwidth capabilities. This is a default behavior of [startLatencyChecks](#startlatencychecks) and [startBandwidthChecks](#startbandwidthchecks).
 
-await cct.fetchDatacenterInformation();
-
-cct.on('latency:iteration', (eventData) => {
-    // react to event
-});
-
-await cct.startLatencyChecks();
-
-cct.removeAllListeners();
-```
+Cloud-to-cloud measurements assess latency and bandwidth between different cloud environments (from datacenter to datacenter). Which is done using `from` parameter in [startLatencyChecks](#startlatencychecks) and [startBandwidthChecks](#startbandwidthchecks). Before starting this type of measurements fetch list of datacenters which can initiate measurements using [fetchCompatibleDCsWithSockets](#fetchcompatibledcswithsockets).
 
 ## Types
 
