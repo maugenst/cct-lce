@@ -1,11 +1,11 @@
 import { Datacenter } from './Datacenter';
-export declare type MeasurementType = 'latency' | 'bandwidth';
-export declare type MeasurementParams = LatencyChecksParams | BandwidthChecksParams;
-export declare type BandwidthChecksParams = ChecksParams & {
+export type MeasurementType = 'latency' | 'bandwidth';
+export type MeasurementParams = LatencyChecksParams | BandwidthChecksParams;
+export type BandwidthChecksParams = ChecksParams & {
     bandwidthMode?: BandwidthMode;
 };
-export declare type LatencyChecksParams = ChecksParams;
-declare type ChecksParams = {
+export type LatencyChecksParams = ChecksParams;
+type ChecksParams = {
     interval?: number;
     iterations?: number;
     save?: boolean;
@@ -22,19 +22,19 @@ export interface MeasurementConfig<T> {
     endEvent: CCTEvents;
     getMeasurementResult: (dc: Datacenter, params: MeasurementParams) => Promise<T>;
 }
-export declare type FilterKeys = {
+export type FilterKeys = {
     name?: string[];
     cloud?: string[];
     town?: string[];
     country?: string[];
     tags?: string[];
 };
-export declare type StoreData = {
+export type StoreData = {
     latency: string;
     averageBandwidth: string | null;
     id: string;
 };
-export declare type Location = {
+export type Location = {
     address: string;
     latitude: number;
     longitude: number;

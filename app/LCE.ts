@@ -1,4 +1,5 @@
 import fetch, {Response} from 'node-fetch';
+import {AbortSignal} from 'node-fetch/externals';
 import AbortController from 'abort-controller';
 
 import {Datacenter} from '../@types/Datacenter';
@@ -83,7 +84,7 @@ export class LCE {
             }).toString();
 
             const result = await fetch(`${url}?${query}`, {
-                signal: controller.signal,
+                signal: controller.signal as AbortSignal,
             });
 
             clearTimeout(timer);
