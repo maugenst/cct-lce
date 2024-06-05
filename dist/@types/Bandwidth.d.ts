@@ -1,12 +1,12 @@
-export declare type Bandwidth = {
+export type Bandwidth = {
     value: BandwidthPerSecond;
     timestamp: number;
 };
-export declare type BandwidthEventData = {
+export type BandwidthEventData = {
     id: string;
     data: Bandwidth;
 };
-export declare type BandwidthPerSecond = {
+export type BandwidthPerSecond = {
     bitsPerSecond: number;
     kiloBitsPerSecond: number;
     megaBitsPerSecond: number;

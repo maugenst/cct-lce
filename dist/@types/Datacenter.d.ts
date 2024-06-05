@@ -1,6 +1,6 @@
 import { Latency } from './Latency';
 import { Bandwidth, BandwidthPerSecond } from './Bandwidth';
-export declare type Datacenter = {
+export type Datacenter = {
     id: string;
     position: number;
     cloud: string;

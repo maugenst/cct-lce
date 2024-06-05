@@ -1,8 +1,8 @@
-export declare type Latency = {
+export type Latency = {
     value: number;
     timestamp: number;
 };
-export declare type LatencyEventData = {
+export type LatencyEventData = {
     id: string;
     data: Latency;
 };
